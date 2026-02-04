@@ -1,4 +1,4 @@
-import { Patient, Visit, Consultation, Medication, LabRequest, ImagingRequest, Invoice, DashboardStats, User } from '@/types';
+import { Patient, Visit, Consultation, Medication, LabRequest, ImagingRequest, Invoice, DashboardStats, User, Prescription } from '@/types';
 
 // Utilisateur courant (simulé)
 export const currentUser: User = {
@@ -171,6 +171,50 @@ export const mockMedications: Medication[] = [
     alertThreshold: 30,
     unitPrice: 100,
   },
+  {
+    id: 'med-005',
+    name: 'Oméprazole 20mg',
+    genericName: 'Oméprazole',
+    category: 'Anti-ulcéreux',
+    form: 'comprimé',
+    dosageUnit: 'mg',
+    stockQuantity: 150,
+    alertThreshold: 40,
+    unitPrice: 200,
+  },
+  {
+    id: 'med-006',
+    name: 'Cotrimoxazole 480mg',
+    genericName: 'Sulfaméthoxazole + Triméthoprime',
+    category: 'Antibiotique',
+    form: 'comprimé',
+    dosageUnit: 'mg',
+    stockQuantity: 80,
+    alertThreshold: 30,
+    unitPrice: 120,
+  },
+  {
+    id: 'med-007',
+    name: 'Artéméther/Luméfantrine',
+    genericName: 'ACT Antipaludique',
+    category: 'Antipaludique',
+    form: 'comprimé',
+    dosageUnit: 'mg',
+    stockQuantity: 200,
+    alertThreshold: 50,
+    unitPrice: 500,
+  },
+  {
+    id: 'med-008',
+    name: 'Diclofénac 50mg',
+    genericName: 'Diclofénac',
+    category: 'Anti-inflammatoire',
+    form: 'comprimé',
+    dosageUnit: 'mg',
+    stockQuantity: 120,
+    alertThreshold: 30,
+    unitPrice: 80,
+  },
 ];
 
 // Demandes de laboratoire
@@ -202,6 +246,32 @@ export const mockLabRequests: LabRequest[] = [
     priority: 'urgente',
     requestedAt: '2024-01-20T10:15:00Z',
   },
+  {
+    id: 'lab-004',
+    consultationId: 'cons-002',
+    patientId: 'pat-002',
+    testType: 'ECBU (Examen cytobactériologique des urines)',
+    status: 'termine',
+    priority: 'normale',
+    results: 'Absence d\'infection urinaire. Leucocytes < 10/mm³. Culture négative.',
+    validatedBy: 'usr-002',
+    validatedAt: '2024-01-19T14:00:00Z',
+    requestedAt: '2024-01-19T09:00:00Z',
+    completedAt: '2024-01-19T14:00:00Z',
+  },
+  {
+    id: 'lab-005',
+    consultationId: 'cons-003',
+    patientId: 'pat-005',
+    testType: 'Bilan lipidique complet',
+    status: 'termine',
+    priority: 'normale',
+    results: 'Cholestérol total: 2.1 g/L (Normal). HDL: 0.55 g/L. LDL: 1.35 g/L. Triglycérides: 1.0 g/L.',
+    validatedBy: 'usr-002',
+    validatedAt: '2024-01-18T16:30:00Z',
+    requestedAt: '2024-01-18T08:00:00Z',
+    completedAt: '2024-01-18T16:30:00Z',
+  },
 ];
 
 // Demandes d'imagerie
@@ -225,6 +295,96 @@ export const mockImagingRequests: ImagingRequest[] = [
     status: 'en_cours',
     priority: 'normale',
     requestedAt: '2024-01-20T09:00:00Z',
+  },
+  {
+    id: 'img-003',
+    consultationId: 'cons-003',
+    patientId: 'pat-003',
+    examType: 'radio',
+    bodyPart: 'Genou droit',
+    status: 'termine',
+    priority: 'normale',
+    report: 'Pas de fracture visible. Espace articulaire conservé. Léger épanchement synovial.',
+    performedBy: 'usr-003',
+    requestedAt: '2024-01-19T10:00:00Z',
+    completedAt: '2024-01-19T11:30:00Z',
+  },
+  {
+    id: 'img-004',
+    consultationId: 'cons-004',
+    patientId: 'pat-004',
+    examType: 'echo',
+    bodyPart: 'Abdomen pédiatrique',
+    status: 'termine',
+    priority: 'urgente',
+    report: 'Foie, rate et reins de taille normale. Pas d\'anomalie décelée. Pas d\'épanchement.',
+    performedBy: 'usr-003',
+    requestedAt: '2024-01-18T14:00:00Z',
+    completedAt: '2024-01-18T15:00:00Z',
+  },
+];
+
+// Consultations de démonstration
+export const mockConsultations: Consultation[] = [
+  {
+    id: 'cons-001',
+    visitId: 'vis-001',
+    patientId: 'pat-001',
+    doctorId: 'usr-001',
+    date: '2024-01-20T08:15:00Z',
+    symptoms: 'Fièvre depuis 3 jours, toux sèche, fatigue générale',
+    diagnosis: 'Syndrome grippal',
+    notes: 'Patiente en bon état général. Pas de signe de gravité.',
+    vitalSigns: {
+      temperature: 38.5,
+      bloodPressure: '120/80',
+      heartRate: 88,
+      weight: 65,
+    },
+    prescriptions: [],
+    labRequests: [],
+    imagingRequests: [],
+    status: 'en_cours',
+    createdAt: '2024-01-20T08:15:00Z',
+  },
+];
+
+// Prescriptions de démonstration
+export const mockPrescriptions: Prescription[] = [
+  {
+    id: 'pres-001',
+    consultationId: 'cons-001',
+    medicationId: 'med-001',
+    medicationName: 'Paracétamol 500mg',
+    dosage: '1000mg',
+    frequency: '3 fois par jour',
+    duration: '5 jours',
+    instructions: 'Prendre pendant les repas',
+    dispensed: false,
+  },
+  {
+    id: 'pres-002',
+    consultationId: 'cons-001',
+    medicationId: 'med-007',
+    medicationName: 'Artéméther/Luméfantrine',
+    dosage: '80/480mg',
+    frequency: '2 fois par jour',
+    duration: '3 jours',
+    instructions: 'Prendre avec un repas gras',
+    dispensed: true,
+    dispensedAt: '2024-01-20T10:00:00Z',
+    dispensedBy: 'usr-004',
+  },
+  {
+    id: 'pres-003',
+    consultationId: 'cons-002',
+    medicationId: 'med-002',
+    medicationName: 'Amoxicilline 500mg',
+    dosage: '500mg',
+    frequency: '3 fois par jour',
+    duration: '7 jours',
+    instructions: 'Prendre à heures fixes',
+    dispensed: false,
   },
 ];
 
@@ -287,4 +447,28 @@ export const mockInvoices: Invoice[] = [
     status: 'en_attente',
     createdAt: '2024-01-20T09:30:00Z',
   },
+];
+
+// Types d'analyses disponibles
+export const labTestTypes = [
+  { id: 'nfs', name: 'Numération Formule Sanguine (NFS)', price: 3500 },
+  { id: 'glycemie', name: 'Glycémie à jeun', price: 1500 },
+  { id: 'ge', name: 'Goutte épaisse (Paludisme)', price: 2000 },
+  { id: 'ecbu', name: 'ECBU', price: 4000 },
+  { id: 'crp', name: 'CRP (Protéine C-Réactive)', price: 3000 },
+  { id: 'bilan_hepatique', name: 'Bilan hépatique', price: 8000 },
+  { id: 'bilan_renal', name: 'Bilan rénal', price: 6000 },
+  { id: 'bilan_lipidique', name: 'Bilan lipidique', price: 7000 },
+  { id: 'hiv', name: 'Sérologie VIH', price: 5000 },
+  { id: 'hepatite_b', name: 'Sérologie Hépatite B', price: 5000 },
+  { id: 'widal', name: 'Sérologie Widal (Typhoïde)', price: 3000 },
+  { id: 'groupage', name: 'Groupage sanguin ABO-Rhésus', price: 2500 },
+];
+
+// Types d'examens d'imagerie disponibles
+export const imagingExamTypes = [
+  { id: 'radio', name: 'Radiographie', price: 5000 },
+  { id: 'echo', name: 'Échographie', price: 10000 },
+  { id: 'scanner', name: 'Scanner', price: 50000 },
+  { id: 'irm', name: 'IRM', price: 100000 },
 ];
