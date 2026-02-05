@@ -106,16 +106,22 @@ export const navigationConfig: NavSection[] = [
         roles: ['admin', 'caissier'],
       },
       {
-        title: 'Paiements',
-        href: '/paiements',
-        icon: CreditCard,
-        roles: ['admin', 'caissier'],
+        title: 'Gestion des stocks',
+        href: '/stocks',
+        icon: Activity,
+        roles: ['admin', 'pharmacien'],
       },
     ],
   },
   {
     title: 'Administration',
     items: [
+      {
+        title: 'Utilisateurs',
+        href: '/utilisateurs',
+        icon: Users,
+        roles: ['admin'],
+      },
       {
         title: 'Paramètres',
         href: '/parametres',
