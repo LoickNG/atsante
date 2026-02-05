@@ -1,209 +1,256 @@
+import { useState, useEffect } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { 
-  Clock, 
-  Check,
-  X,
-  ArrowRight,
-  Stethoscope,
-  AlertTriangle,
-} from 'lucide-react';
-import { mockVisits, mockPatients } from '@/data/mockData';
-import { cn } from '@/lib/utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserPlus, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { QueueStats } from '@/components/waiting-queue/QueueStats';
+import { QueueItem } from '@/components/waiting-queue/QueueItem';
+import { AddPatientDialog } from '@/components/waiting-queue/AddPatientDialog';
+
+interface Visit {
+  id: string;
+  patient_id: string;
+  date: string;
+  type: string;
+  status: string;
+  assigned_doctor_id: string | null;
+}
+
+interface Patient {
+  id: string;
+  code: string;
+  first_name: string;
+  last_name: string;
+}
 
 const WaitingQueue = () => {
-  const visits = mockVisits;
+  const { toast } = useToast();
+  const { user, userRole } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [visits, setVisits] = useState<Visit[]>([]);
+  const [patients, setPatients] = useState<Record<string, Patient>>({});
+  const [doctors, setDoctors] = useState<Record<string, string>>({});
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
 
-  const getPatient = (patientId: string) => {
-    return mockPatients.find(p => p.id === patientId);
+  useEffect(() => {
+    fetchData();
+  }, [user, userRole]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Get today's start
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Fetch visits for today
+      let query = supabase
+        .from('visits')
+        .select('*')
+        .gte('date', today.toISOString())
+        .order('date', { ascending: true });
+
+      // If user is a doctor, only show unassigned or assigned to them
+      if (userRole === 'medecin' && user) {
+        query = query.or(`assigned_doctor_id.is.null,assigned_doctor_id.eq.${user.id}`);
+      }
+
+      const { data: visitsData, error } = await query;
+      if (error) throw error;
+
+      setVisits(visitsData || []);
+
+      // Fetch patients for these visits
+      if (visitsData && visitsData.length > 0) {
+        const patientIds = [...new Set(visitsData.map(v => v.patient_id))];
+        const { data: patientsData } = await supabase
+          .from('patients')
+          .select('id, code, first_name, last_name')
+          .in('id', patientIds);
+
+        if (patientsData) {
+          const patientsMap: Record<string, Patient> = {};
+          patientsData.forEach(p => { patientsMap[p.id] = p; });
+          setPatients(patientsMap);
+        }
+
+        // Fetch doctor names
+        const doctorIds = visitsData
+          .filter(v => v.assigned_doctor_id)
+          .map(v => v.assigned_doctor_id!);
+        
+        if (doctorIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('user_id, full_name')
+            .in('user_id', doctorIds);
+
+          if (profilesData) {
+            const doctorsMap: Record<string, string> = {};
+            profilesData.forEach(p => { doctorsMap[p.user_id] = p.full_name; });
+            setDoctors(doctorsMap);
+          }
+        }
+      }
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const handleCall = async (visitId: string) => {
+    try {
+      const { error } = await supabase
+        .from('visits')
+        .update({ 
+          status: 'en_cours',
+          assigned_doctor_id: user?.id 
+        })
+        .eq('id', visitId);
+
+      if (error) throw error;
+      toast({ title: 'Patient appelé', description: 'Le patient est maintenant en consultation' });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
   };
 
+  const handleComplete = async (visitId: string) => {
+    try {
+      const { error } = await supabase
+        .from('visits')
+        .update({ status: 'termine' })
+        .eq('id', visitId);
+
+      if (error) throw error;
+      toast({ title: 'Consultation terminée', description: 'Le patient a été traité' });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleCancel = async (visitId: string) => {
+    try {
+      const { error } = await supabase
+        .from('visits')
+        .update({ status: 'annule' })
+        .eq('id', visitId);
+
+      if (error) throw error;
+      toast({ title: 'Visite annulée' });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const activeVisits = visits.filter(v => v.status === 'en_attente' || v.status === 'en_cours');
+  const completedVisits = visits.filter(v => v.status === 'termine' || v.status === 'annule');
   const waitingCount = visits.filter(v => v.status === 'en_attente').length;
   const inProgressCount = visits.filter(v => v.status === 'en_cours').length;
-
-  const statusConfig = {
-    en_attente: {
-      label: 'En attente',
-      className: 'bg-warning/10 text-warning-foreground border-warning/30',
-    },
-    en_cours: {
-      label: 'En consultation',
-      className: 'bg-info/10 text-info border-info/30',
-    },
-    termine: {
-      label: 'Terminé',
-      className: 'bg-success/10 text-success border-success/30',
-    },
-    annule: {
-      label: 'Annulé',
-      className: 'bg-muted text-muted-foreground',
-    },
-  };
-
-  const typeConfig = {
-    consultation: {
-      label: 'Consultation',
-      className: 'bg-primary/10 text-primary',
-    },
-    urgence: {
-      label: 'Urgence',
-      className: 'bg-destructive/10 text-destructive',
-    },
-    suivi: {
-      label: 'Suivi',
-      className: 'bg-secondary text-secondary-foreground',
-    },
-  };
+  const completedCount = visits.filter(v => v.status === 'termine').length;
 
   return (
     <AppLayout>
       <div className="p-6 lg:p-8">
-        <PageHeader
-          title="File d'attente"
-          description={`${waitingCount} en attente • ${inProgressCount} en consultation`}
+        <div className="flex items-center justify-between mb-6">
+          <PageHeader
+            title="File d'attente"
+            description={`${waitingCount} en attente • ${inProgressCount} en consultation`}
+          />
+          {(userRole === 'admin' || userRole === 'accueil') && (
+            <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Ajouter un patient
+            </Button>
+          )}
+        </div>
+
+        <QueueStats
+          waitingCount={waitingCount}
+          inProgressCount={inProgressCount}
+          completedCount={completedCount}
         />
 
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                En attente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-warning">{waitingCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                En consultation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-info">{inProgressCount}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Terminés aujourd'hui
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-success">
-                {visits.filter(v => v.status === 'termine').length}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+          <TabsList>
+            <TabsTrigger value="active">
+              En cours ({activeVisits.length})
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              Historique ({completedVisits.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="active" className="mt-4 space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Queue List */}
-        <div className="space-y-4">
-          {visits.map((visit, index) => {
-            const patient = getPatient(visit.patientId);
-            if (!patient) return null;
-
-            const isUrgent = visit.type === 'urgence';
-            const isWaiting = visit.status === 'en_attente';
-            const isInProgress = visit.status === 'en_cours';
-
-            return (
-              <div
-                key={visit.id}
-                className={cn(
-                  'flex items-center gap-4 p-4 rounded-xl border bg-card transition-all',
-                  isUrgent && 'border-destructive/30 bg-destructive/5',
-                  isInProgress && 'border-info/30 bg-info/5'
-                )}
-              >
-                {/* Queue Number */}
-                <div className={cn(
-                  'flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold',
-                  isUrgent ? 'bg-destructive text-destructive-foreground' :
-                  isInProgress ? 'bg-info text-info-foreground' :
-                  'bg-muted text-muted-foreground'
-                )}>
-                  {isUrgent ? (
-                    <AlertTriangle className="h-5 w-5" />
-                  ) : (
-                    index + 1
-                  )}
-                </div>
-
-                {/* Patient Info */}
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    {patient.firstName[0]}{patient.lastName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold truncate">
-                      {patient.firstName} {patient.lastName}
-                    </p>
-                    <Badge variant="outline" className={cn('text-[10px]', typeConfig[visit.type].className)}>
-                      {typeConfig[visit.type].label}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <span className="font-mono">{patient.code}</span>
-                    <span>•</span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatTime(visit.date)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <Badge 
-                  variant="outline" 
-                  className={cn('text-xs', statusConfig[visit.status].className)}
-                >
-                  {statusConfig[visit.status].label}
-                </Badge>
-
-                {/* Actions */}
-                <div className="flex gap-2">
-                  {isWaiting && (
-                    <>
-                      <Button size="sm" className="gap-1.5">
-                        <Stethoscope className="h-4 w-4" />
-                        Appeler
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                  {isInProgress && (
-                    <Button size="sm" variant="secondary" className="gap-1.5">
-                      <Check className="h-4 w-4" />
-                      Terminer
-                    </Button>
-                  )}
-                  {!isWaiting && !isInProgress && (
-                    <Button size="sm" variant="ghost">
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+            ) : activeVisits.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                Aucun patient dans la file d'attente
               </div>
-            );
-          })}
-        </div>
+            ) : (
+              activeVisits.map((visit, index) => {
+                const patient = patients[visit.patient_id];
+                if (!patient) return null;
+
+                return (
+                  <QueueItem
+                    key={visit.id}
+                    visit={visit}
+                    patient={patient}
+                    doctorName={visit.assigned_doctor_id ? doctors[visit.assigned_doctor_id] : undefined}
+                    index={index}
+                    onCall={handleCall}
+                    onComplete={handleComplete}
+                    onCancel={handleCancel}
+                  />
+                );
+              })
+            )}
+          </TabsContent>
+
+          <TabsContent value="completed" className="mt-4 space-y-4">
+            {completedVisits.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                Aucune consultation terminée aujourd'hui
+              </div>
+            ) : (
+              completedVisits.map((visit, index) => {
+                const patient = patients[visit.patient_id];
+                if (!patient) return null;
+
+                return (
+                  <QueueItem
+                    key={visit.id}
+                    visit={visit}
+                    patient={patient}
+                    doctorName={visit.assigned_doctor_id ? doctors[visit.assigned_doctor_id] : undefined}
+                    index={index}
+                    onCall={() => {}}
+                    onComplete={() => {}}
+                    onCancel={() => {}}
+                  />
+                );
+              })
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <AddPatientDialog
+          open={showAddDialog}
+          onOpenChange={setShowAddDialog}
+          onSuccess={fetchData}
+        />
       </div>
     </AppLayout>
   );
