@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -19,15 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Search, 
@@ -38,69 +30,71 @@ import {
   Check,
   Clock,
   FileText,
-  Printer,
   User,
+  Loader2,
 } from 'lucide-react';
-import { mockMedications, mockPrescriptions, mockPatients } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useMedications, Medication } from '@/hooks/useMedications';
+import { usePendingPrescriptions, useDispensePrescription } from '@/hooks/usePrescriptions';
+import { useAuth } from '@/hooks/useAuth';
 
 const Pharmacy = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('prescriptions');
-  const [medications, setMedications] = useState(mockMedications);
-  const [prescriptions, setPrescriptions] = useState(mockPrescriptions);
+  const { user } = useAuth();
+  
+  const { data: medications, isLoading: medsLoading } = useMedications();
+  const { data: prescriptions, isLoading: prescLoading } = usePendingPrescriptions();
+  const dispensePrescription = useDispensePrescription();
 
-  const pendingPrescriptions = prescriptions.filter(p => !p.dispensed);
-  const dispensedPrescriptions = prescriptions.filter(p => p.dispensed);
-  const lowStockMeds = medications.filter(m => m.stockQuantity <= m.alertThreshold);
+  const pendingPrescriptions = prescriptions?.filter(p => !p.dispensed) || [];
+  const lowStockMeds = (medications || []).filter(m => m.stock_quantity <= m.alert_threshold);
 
-  const filteredMedications = medications.filter(med => {
+  const filteredMedications = (medications || []).filter(med => {
     const searchLower = searchQuery.toLowerCase();
     return (
       med.name.toLowerCase().includes(searchLower) ||
-      (med.genericName && med.genericName.toLowerCase().includes(searchLower)) ||
+      (med.generic_name && med.generic_name.toLowerCase().includes(searchLower)) ||
       med.category.toLowerCase().includes(searchLower)
     );
   });
 
-  const getPatientName = (consultationId: string) => {
-    // In real app, would get patient from consultation
-    const patientId = consultationId === 'cons-001' ? 'pat-001' : 'pat-003';
-    const patient = mockPatients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
-  };
-
-  const getMedicationById = (id: string) => {
-    return medications.find(m => m.id === id);
-  };
-
-  const handleDispense = (prescriptionId: string) => {
-    setPrescriptions(prev => prev.map(p => 
-      p.id === prescriptionId 
-        ? { ...p, dispensed: true, dispensedAt: new Date().toISOString(), dispensedBy: 'usr-004' }
-        : p
-    ));
-
-    // Update stock
-    const prescription = prescriptions.find(p => p.id === prescriptionId);
-    if (prescription) {
-      setMedications(prev => prev.map(m =>
-        m.id === prescription.medicationId
-          ? { ...m, stockQuantity: Math.max(0, m.stockQuantity - 1) }
-          : m
-      ));
+  const handleDispense = async (prescriptionId: string) => {
+    if (!user?.id) {
+      toast.error('Utilisateur non connecté');
+      return;
     }
-
-    toast.success('Médicament délivré avec succès');
+    
+    try {
+      await dispensePrescription.mutateAsync({
+        id: prescriptionId,
+        dispensedBy: user.id,
+      });
+      toast.success('Médicament délivré avec succès');
+    } catch (error) {
+      toast.error('Erreur lors de la délivrance');
+    }
   };
 
-  const getStockStatus = (med: typeof medications[0]) => {
-    const percentage = (med.stockQuantity / med.alertThreshold) * 100;
+  const getStockStatus = (med: Medication) => {
+    const percentage = (med.stock_quantity / med.alert_threshold) * 100;
     if (percentage <= 50) return { label: 'Critique', className: 'bg-destructive text-destructive-foreground' };
     if (percentage <= 100) return { label: 'Faible', className: 'bg-warning text-warning-foreground' };
     return { label: 'Normal', className: 'bg-success text-success-foreground' };
   };
+
+  if (medsLoading || prescLoading) {
+    return (
+      <AppLayout>
+        <div className="p-6 lg:p-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -137,7 +131,9 @@ const Pharmacy = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Délivrées aujourd'hui</p>
-                  <p className="text-2xl font-bold">{dispensedPrescriptions.length}</p>
+                  <p className="text-2xl font-bold">
+                    {prescriptions?.filter(p => p.dispensed).length || 0}
+                  </p>
                 </div>
                 <Check className="h-8 w-8 text-success" />
               </div>
@@ -159,7 +155,7 @@ const Pharmacy = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total médicaments</p>
-                  <p className="text-2xl font-bold">{medications.length}</p>
+                  <p className="text-2xl font-bold">{medications?.length || 0}</p>
                 </div>
                 <Pill className="h-8 w-8 text-primary" />
               </div>
@@ -201,8 +197,11 @@ const Pharmacy = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {pendingPrescriptions.map(prescription => {
-                      const medication = getMedicationById(prescription.medicationId);
+                    {pendingPrescriptions.map((prescription: any) => {
+                      const medication = prescription.medications;
+                      const consultation = prescription.consultations;
+                      const patient = consultation?.patients;
+                      
                       return (
                         <div
                           key={prescription.id}
@@ -213,7 +212,7 @@ const Pharmacy = () => {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <p className="font-semibold">{prescription.medicationName}</p>
+                              <p className="font-semibold">{medication?.name || 'Médicament'}</p>
                               <Badge variant="outline" className="text-[10px]">
                                 {prescription.dosage}
                               </Badge>
@@ -221,10 +220,12 @@ const Pharmacy = () => {
                             <p className="text-sm text-muted-foreground">
                               {prescription.frequency} • {prescription.duration}
                             </p>
-                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                              <User className="h-3 w-3" />
-                              <span>{getPatientName(prescription.consultationId)}</span>
-                            </div>
+                            {patient && (
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                <User className="h-3 w-3" />
+                                <span>{patient.first_name} {patient.last_name}</span>
+                              </div>
+                            )}
                             {prescription.instructions && (
                               <p className="text-xs text-muted-foreground mt-1 italic">
                                 "{prescription.instructions}"
@@ -235,15 +236,15 @@ const Pharmacy = () => {
                             {medication && (
                               <p className={cn(
                                 'text-sm font-medium mb-2',
-                                medication.stockQuantity < 10 && 'text-destructive'
+                                medication.stock_quantity < 10 && 'text-destructive'
                               )}>
-                                Stock: {medication.stockQuantity}
+                                Stock: {medication.stock_quantity}
                               </p>
                             )}
                             <Button
                               size="sm"
                               onClick={() => handleDispense(prescription.id)}
-                              disabled={medication && medication.stockQuantity <= 0}
+                              disabled={dispensePrescription.isPending || (medication && medication.stock_quantity <= 0)}
                               className="gap-1.5"
                             >
                               <Check className="h-4 w-4" />
@@ -257,39 +258,6 @@ const Pharmacy = () => {
                 )}
               </CardContent>
             </Card>
-
-            {/* Dispensed Today */}
-            {dispensedPrescriptions.length > 0 && (
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-base">Délivrées aujourd'hui</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {dispensedPrescriptions.map(prescription => (
-                      <div
-                        key={prescription.id}
-                        className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20"
-                      >
-                        <Check className="h-5 w-5 text-success" />
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{prescription.medicationName}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {getPatientName(prescription.consultationId)}
-                          </p>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {prescription.dispensedAt && new Date(prescription.dispensedAt).toLocaleTimeString('fr-FR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
           {/* Stock Tab */}
@@ -320,7 +288,7 @@ const Pharmacy = () => {
                     {lowStockMeds.map(med => (
                       <Badge key={med.id} variant="destructive" className="gap-1">
                         {med.name}
-                        <span className="opacity-70">({med.stockQuantity})</span>
+                        <span className="opacity-70">({med.stock_quantity})</span>
                       </Badge>
                     ))}
                   </div>
@@ -344,15 +312,15 @@ const Pharmacy = () => {
                   <TableBody>
                     {filteredMedications.map(med => {
                       const status = getStockStatus(med);
-                      const stockPercentage = Math.min(100, (med.stockQuantity / (med.alertThreshold * 2)) * 100);
+                      const stockPercentage = Math.min(100, (med.stock_quantity / (med.alert_threshold * 2)) * 100);
                       
                       return (
                         <TableRow key={med.id}>
                           <TableCell>
                             <div>
                               <p className="font-medium">{med.name}</p>
-                              {med.genericName && (
-                                <p className="text-xs text-muted-foreground">{med.genericName}</p>
+                              {med.generic_name && (
+                                <p className="text-xs text-muted-foreground">{med.generic_name}</p>
                               )}
                             </div>
                           </TableCell>
@@ -362,13 +330,13 @@ const Pharmacy = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="capitalize">{med.form}</TableCell>
-                          <TableCell>{med.unitPrice.toLocaleString()} FCFA</TableCell>
+                          <TableCell>{Number(med.unit_price).toLocaleString()} FCFA</TableCell>
                           <TableCell>
                             <div className="w-32">
                               <div className="flex justify-between text-sm mb-1">
-                                <span>{med.stockQuantity}</span>
+                                <span>{med.stock_quantity}</span>
                                 <span className="text-muted-foreground text-xs">
-                                  min: {med.alertThreshold}
+                                  min: {med.alert_threshold}
                                 </span>
                               </div>
                               <Progress 
