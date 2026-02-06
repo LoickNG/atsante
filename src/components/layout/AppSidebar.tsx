@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -7,8 +7,10 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, Bell, Activity, Type } from 'lucide-react';
 import { getFilteredNavigation, getRoleLabel, getRoleColor } from '@/config/navigation';
-import { currentUser } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+
 interface AppSidebarProps {
   className?: string;
 }
@@ -17,7 +19,19 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const navigation = getFilteredNavigation(currentUser.role);
+  const navigate = useNavigate();
+  const { user, role, signOut } = useAuth();
+  
+  const userRole = role || 'medecin';
+  const navigation = getFilteredNavigation(userRole);
+  
+  const userName = user?.user_metadata?.full_name || user?.email || 'Utilisateur';
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+  
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
     return location.pathname.startsWith(href);
@@ -84,16 +98,16 @@ export function AppSidebar({
       <div className="border-t border-sidebar-border p-3">
         <div className={cn('flex items-center gap-3 rounded-lg p-2', collapsed && 'justify-center')}>
           <Avatar className="h-9 w-9 border-2 border-sidebar-accent">
-            <AvatarFallback className={cn(getRoleColor(currentUser.role), 'text-white text-xs')}>
-              {currentUser.name.split(' ').map(n => n[0]).join('')}
+            <AvatarFallback className={cn(getRoleColor(userRole), 'text-white text-xs')}>
+              {userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           {!collapsed && <div className="flex-1 overflow-hidden">
               <p className="truncate text-sm font-medium text-sidebar-foreground">
-                {currentUser.name}
+                {userName}
               </p>
               <p className="truncate text-[11px] text-sidebar-foreground/60">
-                {getRoleLabel(currentUser.role)}
+                {getRoleLabel(userRole)}
               </p>
             </div>}
           {!collapsed && <div className="flex gap-1">
@@ -107,7 +121,12 @@ export function AppSidebar({
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleSignOut}
+                    className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  >
                     <LogOut className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>

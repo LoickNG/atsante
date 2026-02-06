@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import PatientsList from "./pages/PatientsList";
 import NewPatient from "./pages/NewPatient";
@@ -12,6 +14,7 @@ import Consultations from "./pages/Consultations";
 import Pharmacy from "./pages/Pharmacy";
 import Laboratory from "./pages/Laboratory";
 import Imaging from "./pages/Imaging";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,19 +25,22 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/patients" element={<PatientsList />} />
-          <Route path="/patients/nouveau" element={<NewPatient />} />
-          <Route path="/patients/:id" element={<PatientDetail />} />
-          <Route path="/file-attente" element={<WaitingQueue />} />
-          <Route path="/consultations" element={<Consultations />} />
-          <Route path="/pharmacie" element={<Pharmacy />} />
-          <Route path="/laboratoire" element={<Laboratory />} />
-          <Route path="/imagerie" element={<Imaging />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
+            <Route path="/patients/nouveau" element={<ProtectedRoute><NewPatient /></ProtectedRoute>} />
+            <Route path="/patients/:id" element={<ProtectedRoute><PatientDetail /></ProtectedRoute>} />
+            <Route path="/file-attente" element={<ProtectedRoute><WaitingQueue /></ProtectedRoute>} />
+            <Route path="/consultations" element={<ProtectedRoute><Consultations /></ProtectedRoute>} />
+            <Route path="/pharmacie" element={<ProtectedRoute><Pharmacy /></ProtectedRoute>} />
+            <Route path="/laboratoire" element={<ProtectedRoute><Laboratory /></ProtectedRoute>} />
+            <Route path="/imagerie" element={<ProtectedRoute><Imaging /></ProtectedRoute>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
