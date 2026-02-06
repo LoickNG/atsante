@@ -1,5 +1,5 @@
 import { AppLayout, PageHeader } from '@/components/layout';
-import { StatCard, WaitingList, PendingLabs, LowStockAlerts } from '@/components/dashboard';
+import { StatCard } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { 
   Users, 
@@ -11,19 +11,27 @@ import {
   UserPlus,
   QrCode,
   Calendar,
+  Loader2,
 } from 'lucide-react';
-import { 
-  mockDashboardStats, 
-  mockVisits, 
-  mockLabRequests, 
-  mockMedications,
-  currentUser,
-} from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { getRoleLabel } from '@/config/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useWaitingQueue } from '@/hooks/useVisits';
+import { usePendingLabRequests } from '@/hooks/useLabRequests';
+import { useMedications } from '@/hooks/useMedications';
+import { DashboardWaitingList } from '@/components/dashboard/DashboardWaitingList';
+import { DashboardPendingLabs } from '@/components/dashboard/DashboardPendingLabs';
+import { DashboardLowStock } from '@/components/dashboard/DashboardLowStock';
 
 const Dashboard = () => {
-  const stats = mockDashboardStats;
+  const { user, role } = useAuth();
+  const { data: stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: waitingVisits, isLoading: visitsLoading } = useWaitingQueue();
+  const { data: pendingLabs, isLoading: labsLoading } = usePendingLabRequests();
+  const { data: medications, isLoading: medsLoading } = useMedications();
+
+  const lowStockMeds = medications?.filter(m => m.stock_quantity <= m.alert_threshold) || [];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -39,13 +47,25 @@ const Dashboard = () => {
     day: 'numeric',
   });
 
+  const userName = user?.email?.split('@')[0] || 'Utilisateur';
+
+  if (statsLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
         <PageHeader
-          title={`Bonjour, ${currentUser.name.split(' ')[0]} 👋`}
-          description={`${getRoleLabel(currentUser.role)} • ${today}`}
+          title={`Bonjour, ${userName} 👋`}
+          description={`${role ? getRoleLabel(role) : ''} • ${today}`}
         >
           <Button variant="outline" size="default" className="gap-2" asChild>
             <Link to="/patients">
@@ -65,41 +85,39 @@ const Dashboard = () => {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
           <StatCard
             title="Patients aujourd'hui"
-            value={stats.patientsToday}
+            value={stats?.patientsToday || 0}
             icon={Users}
             variant="primary"
-            trend={{ value: 12, isPositive: true }}
           />
           <StatCard
             title="Consultations"
-            value={stats.consultationsToday}
+            value={stats?.consultationsToday || 0}
             icon={Stethoscope}
             variant="success"
           />
           <StatCard
             title="Recettes du jour"
-            value={formatCurrency(stats.revenueToday)}
+            value={formatCurrency(stats?.revenueToday || 0)}
             icon={Banknote}
             variant="default"
-            trend={{ value: 8, isPositive: true }}
           />
           <StatCard
             title="Analyses en attente"
-            value={stats.pendingLabs}
+            value={stats?.pendingLabs || 0}
             icon={FlaskConical}
-            variant={stats.pendingLabs > 5 ? 'warning' : 'default'}
+            variant={(stats?.pendingLabs || 0) > 5 ? 'warning' : 'default'}
           />
           <StatCard
             title="Imagerie en attente"
-            value={stats.pendingImaging}
+            value={stats?.pendingImaging || 0}
             icon={ImageIcon}
             variant="default"
           />
           <StatCard
             title="Stock faible"
-            value={stats.lowStockMedications}
+            value={stats?.lowStockMedications || 0}
             icon={AlertTriangle}
-            variant={stats.lowStockMedications > 0 ? 'danger' : 'default'}
+            variant={(stats?.lowStockMedications || 0) > 0 ? 'danger' : 'default'}
           />
         </div>
 
@@ -157,15 +175,15 @@ const Dashboard = () => {
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Waiting List */}
-          <WaitingList visits={mockVisits} />
+          <DashboardWaitingList visits={waitingVisits || []} isLoading={visitsLoading} />
 
           {/* Right Column */}
           <div className="space-y-6">
             {/* Pending Labs */}
-            <PendingLabs requests={mockLabRequests} />
+            <DashboardPendingLabs requests={pendingLabs || []} isLoading={labsLoading} />
 
             {/* Low Stock Alerts */}
-            <LowStockAlerts medications={mockMedications} />
+            <DashboardLowStock medications={lowStockMeds} isLoading={medsLoading} />
           </div>
         </div>
       </div>

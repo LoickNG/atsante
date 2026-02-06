@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -22,7 +21,6 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Search, 
   FlaskConical,
   Clock,
   Check,
@@ -31,31 +29,25 @@ import {
   FileText,
   Printer,
   Eye,
+  Loader2,
 } from 'lucide-react';
-import { mockLabRequests, mockPatients } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { LabRequest } from '@/types';
+import { useLabRequests, usePendingLabRequests, useUpdateLabRequest, LabRequestWithPatient } from '@/hooks/useLabRequests';
+import { useAuth } from '@/hooks/useAuth';
 
 const Laboratory = () => {
   const [activeTab, setActiveTab] = useState('pending');
-  const [labRequests, setLabRequests] = useState(mockLabRequests);
-  const [selectedRequest, setSelectedRequest] = useState<LabRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<LabRequestWithPatient | null>(null);
   const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
   const [resultText, setResultText] = useState('');
+  const { user } = useAuth();
 
-  const pendingRequests = labRequests.filter(r => r.status === 'demande' || r.status === 'en_cours');
-  const completedRequests = labRequests.filter(r => r.status === 'termine');
+  const { data: allRequests, isLoading } = useLabRequests();
+  const { data: pendingRequests } = usePendingLabRequests();
+  const updateLabRequest = useUpdateLabRequest();
 
-  const getPatientName = (patientId: string) => {
-    const patient = mockPatients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
-  };
-
-  const getPatientCode = (patientId: string) => {
-    const patient = mockPatients.find(p => p.id === patientId);
-    return patient?.code || '';
-  };
+  const completedRequests = allRequests?.filter(r => r.status === 'termine') || [];
 
   const formatDateTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('fr-FR', {
@@ -66,45 +58,50 @@ const Laboratory = () => {
     });
   };
 
-  const handleStartAnalysis = (requestId: string) => {
-    setLabRequests(prev => prev.map(r =>
-      r.id === requestId ? { ...r, status: 'en_cours' as const } : r
-    ));
-    toast.info('Analyse démarrée');
+  const handleStartAnalysis = async (requestId: string) => {
+    try {
+      await updateLabRequest.mutateAsync({
+        id: requestId,
+        status: 'en_cours',
+      });
+      toast.info('Analyse démarrée');
+    } catch (error) {
+      toast.error('Erreur lors du démarrage');
+    }
   };
 
-  const handleOpenResultDialog = (request: LabRequest) => {
+  const handleOpenResultDialog = (request: LabRequestWithPatient) => {
     setSelectedRequest(request);
     setResultText(request.results || '');
     setIsResultDialogOpen(true);
   };
 
-  const handleSaveResults = () => {
+  const handleSaveResults = async () => {
     if (!selectedRequest || !resultText.trim()) {
       toast.error('Veuillez saisir les résultats');
       return;
     }
 
-    setLabRequests(prev => prev.map(r =>
-      r.id === selectedRequest.id
-        ? {
-            ...r,
-            status: 'termine' as const,
-            results: resultText,
-            validatedBy: 'usr-002',
-            validatedAt: new Date().toISOString(),
-            completedAt: new Date().toISOString(),
-          }
-        : r
-    ));
+    try {
+      await updateLabRequest.mutateAsync({
+        id: selectedRequest.id,
+        status: 'termine',
+        results: resultText,
+        validated_by: user?.id,
+        validated_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+      });
 
-    setIsResultDialogOpen(false);
-    setSelectedRequest(null);
-    setResultText('');
-    toast.success('Résultats enregistrés et validés');
+      setIsResultDialogOpen(false);
+      setSelectedRequest(null);
+      setResultText('');
+      toast.success('Résultats enregistrés et validés');
+    } catch (error) {
+      toast.error('Erreur lors de l\'enregistrement');
+    }
   };
 
-  const statusConfig = {
+  const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
     demande: {
       label: 'Nouveau',
       className: 'bg-warning/10 text-warning-foreground border-warning/30',
@@ -127,6 +124,18 @@ const Laboratory = () => {
     },
   };
 
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="p-6 lg:p-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="p-6 lg:p-8">
@@ -148,7 +157,7 @@ const Laboratory = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">En attente</p>
                   <p className="text-2xl font-bold text-warning">
-                    {labRequests.filter(r => r.status === 'demande').length}
+                    {allRequests?.filter(r => r.status === 'demande').length || 0}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-warning" />
@@ -161,7 +170,7 @@ const Laboratory = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">En cours</p>
                   <p className="text-2xl font-bold text-info">
-                    {labRequests.filter(r => r.status === 'en_cours').length}
+                    {allRequests?.filter(r => r.status === 'en_cours').length || 0}
                   </p>
                 </div>
                 <FlaskConical className="h-8 w-8 text-info" />
@@ -188,9 +197,9 @@ const Laboratory = () => {
             <TabsTrigger value="pending" className="gap-2">
               <FlaskConical className="h-4 w-4" />
               À traiter
-              {pendingRequests.length > 0 && (
+              {(pendingRequests?.length || 0) > 0 && (
                 <Badge variant="destructive" className="ml-1 text-[10px]">
-                  {pendingRequests.length}
+                  {pendingRequests?.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -210,22 +219,22 @@ const Laboratory = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {pendingRequests.length === 0 ? (
+                {(pendingRequests?.length || 0) === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Check className="h-12 w-12 mx-auto mb-3 text-success" />
                     <p className="font-medium">Toutes les analyses ont été traitées</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {/* Urgent requests first */}
                     {pendingRequests
-                      .sort((a, b) => {
+                      ?.sort((a, b) => {
                         if (a.priority === 'urgente' && b.priority !== 'urgente') return -1;
                         if (a.priority !== 'urgente' && b.priority === 'urgente') return 1;
-                        return new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime();
+                        return new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime();
                       })
                       .map(request => {
-                        const StatusIcon = statusConfig[request.status].icon;
+                        const StatusIcon = statusConfig[request.status]?.icon || Clock;
+                        const patient = request.patients;
                         
                         return (
                           <div
@@ -249,7 +258,7 @@ const Laboratory = () => {
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <p className="font-semibold">{request.testType}</p>
+                                <p className="font-semibold">{request.test_type}</p>
                                 {request.priority === 'urgente' && (
                                   <Badge variant="destructive" className="text-[10px]">
                                     URGENT
@@ -259,21 +268,21 @@ const Laboratory = () => {
                               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
-                                  <span>{getPatientName(request.patientId)}</span>
+                                  <span>{patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu'}</span>
                                 </div>
                                 <span>•</span>
-                                <span className="font-mono text-xs">{getPatientCode(request.patientId)}</span>
+                                <span className="font-mono text-xs">{patient?.code || ''}</span>
                               </div>
                               <p className="text-xs text-muted-foreground mt-1">
-                                Demandé le {formatDateTime(request.requestedAt)}
+                                Demandé le {formatDateTime(request.requested_at)}
                               </p>
                             </div>
                             <Badge 
                               variant="outline" 
-                              className={cn('text-xs', statusConfig[request.status].className)}
+                              className={cn('text-xs', statusConfig[request.status]?.className)}
                             >
                               <StatusIcon className="h-3 w-3 mr-1" />
-                              {statusConfig[request.status].label}
+                              {statusConfig[request.status]?.label || request.status}
                             </Badge>
                             <div className="flex gap-2">
                               {request.status === 'demande' && (
@@ -281,6 +290,7 @@ const Laboratory = () => {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleStartAnalysis(request.id)}
+                                  disabled={updateLabRequest.isPending}
                                 >
                                   Démarrer
                                 </Button>
@@ -320,49 +330,53 @@ const Laboratory = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {completedRequests.map(request => (
-                      <div
-                        key={request.id}
-                        className="p-4 border rounded-lg bg-success/5 border-success/20"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold">{request.testType}</p>
-                              <Badge className="bg-success text-success-foreground text-[10px]">
-                                Validé
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                <span>{getPatientName(request.patientId)}</span>
+                    {completedRequests.map(request => {
+                      const patient = request.patients;
+                      
+                      return (
+                        <div
+                          key={request.id}
+                          className="p-4 border rounded-lg bg-success/5 border-success/20"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold">{request.test_type}</p>
+                                <Badge className="bg-success text-success-foreground text-[10px]">
+                                  Validé
+                                </Badge>
                               </div>
-                              <span>•</span>
-                              <span className="font-mono text-xs">{getPatientCode(request.patientId)}</span>
+                              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <User className="h-3 w-3" />
+                                  <span>{patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu'}</span>
+                                </div>
+                                <span>•</span>
+                                <span className="font-mono text-xs">{patient?.code || ''}</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="gap-1.5">
+                                <Eye className="h-4 w-4" />
+                                Voir
+                              </Button>
+                              <Button size="sm" variant="outline" className="gap-1.5">
+                                <Printer className="h-4 w-4" />
+                                Imprimer
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" className="gap-1.5">
-                              <Eye className="h-4 w-4" />
-                              Voir
-                            </Button>
-                            <Button size="sm" variant="outline" className="gap-1.5">
-                              <Printer className="h-4 w-4" />
-                              Imprimer
-                            </Button>
-                          </div>
+                          {request.results && (
+                            <div className="p-3 bg-background rounded border text-sm">
+                              <p className="whitespace-pre-wrap">{request.results}</p>
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Validé le {request.completed_at && formatDateTime(request.completed_at)}
+                          </p>
                         </div>
-                        {request.results && (
-                          <div className="p-3 bg-background rounded border text-sm">
-                            <p className="whitespace-pre-wrap">{request.results}</p>
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Validé le {request.completedAt && formatDateTime(request.completedAt)}
-                        </p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -376,7 +390,7 @@ const Laboratory = () => {
             <DialogHeader>
               <DialogTitle>Saisie des résultats</DialogTitle>
               <DialogDescription>
-                {selectedRequest?.testType} - {selectedRequest && getPatientName(selectedRequest.patientId)}
+                {selectedRequest?.test_type} - {selectedRequest?.patients && `${selectedRequest.patients.first_name} ${selectedRequest.patients.last_name}`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -394,7 +408,7 @@ const Laboratory = () => {
               <Button variant="outline" onClick={() => setIsResultDialogOpen(false)}>
                 Annuler
               </Button>
-              <Button onClick={handleSaveResults} className="gap-1.5">
+              <Button onClick={handleSaveResults} disabled={updateLabRequest.isPending} className="gap-1.5">
                 <Check className="h-4 w-4" />
                 Valider et enregistrer
               </Button>

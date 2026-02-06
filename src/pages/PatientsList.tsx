@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -28,20 +29,21 @@ import {
   FileText,
   Phone,
   Calendar,
+  Loader2,
 } from 'lucide-react';
-import { mockPatients } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { usePatients, Patient } from '@/hooks/usePatients';
 
 const PatientsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const patients = mockPatients;
+  const { data: patients, isLoading, error } = usePatients();
 
-  const filteredPatients = patients.filter(patient => {
+  const filteredPatients = (patients || []).filter(patient => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      patient.firstName.toLowerCase().includes(searchLower) ||
-      patient.lastName.toLowerCase().includes(searchLower) ||
+      patient.first_name.toLowerCase().includes(searchLower) ||
+      patient.last_name.toLowerCase().includes(searchLower) ||
       patient.code.toLowerCase().includes(searchLower) ||
       patient.phone.includes(searchQuery)
     );
@@ -66,12 +68,24 @@ const PatientsList = () => {
     });
   };
 
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="p-6 lg:p-8">
+          <div className="text-center text-destructive">
+            Erreur lors du chargement des patients
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="p-6 lg:p-8">
         <PageHeader
           title="Patients"
-          description={`${patients.length} patient(s) enregistré(s)`}
+          description={`${patients?.length || 0} patient(s) enregistré(s)`}
         >
           <Button variant="outline" size="default" className="gap-2">
             <QrCode className="h-4 w-4" />
@@ -113,10 +127,27 @@ const PatientsList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPatients.length === 0 ? (
+              {isLoading ? (
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                    </TableCell>
+                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredPatients.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                    Aucun patient trouvé
+                    {searchQuery ? 'Aucun patient trouvé' : 'Aucun patient enregistré'}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -131,16 +162,16 @@ const PatientsList = () => {
                               ? 'bg-pink-100 text-pink-700' 
                               : 'bg-blue-100 text-blue-700'
                           )}>
-                            {patient.firstName[0]}{patient.lastName[0]}
+                            {patient.first_name[0]}{patient.last_name[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">
-                            {patient.firstName} {patient.lastName}
+                            {patient.first_name} {patient.last_name}
                           </p>
-                          {patient.bloodType && (
+                          {patient.blood_type && (
                             <Badge variant="outline" className="text-[10px] mt-0.5">
-                              {patient.bloodType}
+                              {patient.blood_type}
                             </Badge>
                           )}
                         </div>
@@ -168,7 +199,7 @@ const PatientsList = () => {
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
                         <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                        {calculateAge(patient.dateOfBirth)} ans
+                        {calculateAge(patient.date_of_birth)} ans
                       </div>
                     </TableCell>
                     <TableCell>
@@ -178,7 +209,7 @@ const PatientsList = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(patient.createdAt)}
+                      {formatDate(patient.created_at)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

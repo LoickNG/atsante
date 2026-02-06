@@ -31,31 +31,32 @@ import {
   Eye,
   Camera,
   Upload,
+  Loader2,
 } from 'lucide-react';
-import { mockImagingRequests, mockPatients, imagingExamTypes } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ImagingRequest } from '@/types';
+import { useImagingRequests, usePendingImagingRequests, useUpdateImagingRequest, ImagingRequestWithPatient } from '@/hooks/useImagingRequests';
+import { useAuth } from '@/hooks/useAuth';
+
+const imagingExamTypes = [
+  { id: 'radio', name: 'Radiographie' },
+  { id: 'echo', name: 'Échographie' },
+  { id: 'scanner', name: 'Scanner' },
+  { id: 'irm', name: 'IRM' },
+];
 
 const Imaging = () => {
   const [activeTab, setActiveTab] = useState('pending');
-  const [imagingRequests, setImagingRequests] = useState(mockImagingRequests);
-  const [selectedRequest, setSelectedRequest] = useState<ImagingRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ImagingRequestWithPatient | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportText, setReportText] = useState('');
+  const { user } = useAuth();
 
-  const pendingRequests = imagingRequests.filter(r => r.status === 'demande' || r.status === 'en_cours');
-  const completedRequests = imagingRequests.filter(r => r.status === 'termine');
+  const { data: allRequests, isLoading } = useImagingRequests();
+  const { data: pendingRequests } = usePendingImagingRequests();
+  const updateImagingRequest = useUpdateImagingRequest();
 
-  const getPatientName = (patientId: string) => {
-    const patient = mockPatients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : 'Patient inconnu';
-  };
-
-  const getPatientCode = (patientId: string) => {
-    const patient = mockPatients.find(p => p.id === patientId);
-    return patient?.code || '';
-  };
+  const completedRequests = allRequests?.filter(r => r.status === 'termine') || [];
 
   const getExamTypeName = (examType: string) => {
     const type = imagingExamTypes.find(t => t.id === examType);
@@ -71,44 +72,49 @@ const Imaging = () => {
     });
   };
 
-  const handleStartExam = (requestId: string) => {
-    setImagingRequests(prev => prev.map(r =>
-      r.id === requestId ? { ...r, status: 'en_cours' as const } : r
-    ));
-    toast.info('Examen démarré');
+  const handleStartExam = async (requestId: string) => {
+    try {
+      await updateImagingRequest.mutateAsync({
+        id: requestId,
+        status: 'en_cours',
+      });
+      toast.info('Examen démarré');
+    } catch (error) {
+      toast.error('Erreur lors du démarrage');
+    }
   };
 
-  const handleOpenReportDialog = (request: ImagingRequest) => {
+  const handleOpenReportDialog = (request: ImagingRequestWithPatient) => {
     setSelectedRequest(request);
     setReportText(request.report || '');
     setIsReportDialogOpen(true);
   };
 
-  const handleSaveReport = () => {
+  const handleSaveReport = async () => {
     if (!selectedRequest || !reportText.trim()) {
       toast.error('Veuillez saisir le compte rendu');
       return;
     }
 
-    setImagingRequests(prev => prev.map(r =>
-      r.id === selectedRequest.id
-        ? {
-            ...r,
-            status: 'termine' as const,
-            report: reportText,
-            performedBy: 'usr-003',
-            completedAt: new Date().toISOString(),
-          }
-        : r
-    ));
+    try {
+      await updateImagingRequest.mutateAsync({
+        id: selectedRequest.id,
+        status: 'termine',
+        report: reportText,
+        performed_by: user?.id,
+        completed_at: new Date().toISOString(),
+      });
 
-    setIsReportDialogOpen(false);
-    setSelectedRequest(null);
-    setReportText('');
-    toast.success('Compte rendu enregistré');
+      setIsReportDialogOpen(false);
+      setSelectedRequest(null);
+      setReportText('');
+      toast.success('Compte rendu enregistré');
+    } catch (error) {
+      toast.error('Erreur lors de l\'enregistrement');
+    }
   };
 
-  const statusConfig = {
+  const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
     demande: {
       label: 'Nouveau',
       className: 'bg-warning/10 text-warning-foreground border-warning/30',
@@ -131,12 +137,24 @@ const Imaging = () => {
     },
   };
 
-  const examTypeIcons: Record<string, React.ReactNode> = {
+  const examTypeIcons: Record<string, string> = {
     radio: '🦴',
     echo: '🔊',
     scanner: '🔬',
     irm: '🧲',
   };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="p-6 lg:p-8">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -159,7 +177,7 @@ const Imaging = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">En attente</p>
                   <p className="text-2xl font-bold text-warning">
-                    {imagingRequests.filter(r => r.status === 'demande').length}
+                    {allRequests?.filter(r => r.status === 'demande').length || 0}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-warning" />
@@ -172,7 +190,7 @@ const Imaging = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">En cours</p>
                   <p className="text-2xl font-bold text-info">
-                    {imagingRequests.filter(r => r.status === 'en_cours').length}
+                    {allRequests?.filter(r => r.status === 'en_cours').length || 0}
                   </p>
                 </div>
                 <Camera className="h-8 w-8 text-info" />
@@ -199,9 +217,9 @@ const Imaging = () => {
             <TabsTrigger value="pending" className="gap-2">
               <ImageIcon className="h-4 w-4" />
               À réaliser
-              {pendingRequests.length > 0 && (
+              {(pendingRequests?.length || 0) > 0 && (
                 <Badge variant="destructive" className="ml-1 text-[10px]">
-                  {pendingRequests.length}
+                  {pendingRequests?.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -221,7 +239,7 @@ const Imaging = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {pendingRequests.length === 0 ? (
+                {(pendingRequests?.length || 0) === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Check className="h-12 w-12 mx-auto mb-3 text-success" />
                     <p className="font-medium">Tous les examens ont été réalisés</p>
@@ -229,13 +247,14 @@ const Imaging = () => {
                 ) : (
                   <div className="space-y-4">
                     {pendingRequests
-                      .sort((a, b) => {
+                      ?.sort((a, b) => {
                         if (a.priority === 'urgente' && b.priority !== 'urgente') return -1;
                         if (a.priority !== 'urgente' && b.priority === 'urgente') return 1;
-                        return new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime();
+                        return new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime();
                       })
                       .map(request => {
-                        const StatusIcon = statusConfig[request.status].icon;
+                        const StatusIcon = statusConfig[request.status]?.icon || Clock;
+                        const patient = request.patients;
                         
                         return (
                           <div
@@ -251,13 +270,13 @@ const Imaging = () => {
                                 ? 'bg-destructive/10' 
                                 : 'bg-primary/10'
                             )}>
-                              {examTypeIcons[request.examType] || '📷'}
+                              {examTypeIcons[request.exam_type] || '📷'}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <p className="font-semibold">{getExamTypeName(request.examType)}</p>
+                                <p className="font-semibold">{getExamTypeName(request.exam_type)}</p>
                                 <Badge variant="outline" className="text-xs">
-                                  {request.bodyPart}
+                                  {request.body_part}
                                 </Badge>
                                 {request.priority === 'urgente' && (
                                   <Badge variant="destructive" className="text-[10px]">
@@ -268,21 +287,21 @@ const Imaging = () => {
                               <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <User className="h-3 w-3" />
-                                  <span>{getPatientName(request.patientId)}</span>
+                                  <span>{patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu'}</span>
                                 </div>
                                 <span>•</span>
-                                <span className="font-mono text-xs">{getPatientCode(request.patientId)}</span>
+                                <span className="font-mono text-xs">{patient?.code || ''}</span>
                               </div>
                               <p className="text-xs text-muted-foreground mt-1">
-                                Demandé le {formatDateTime(request.requestedAt)}
+                                Demandé le {formatDateTime(request.requested_at)}
                               </p>
                             </div>
                             <Badge 
                               variant="outline" 
-                              className={cn('text-xs', statusConfig[request.status].className)}
+                              className={cn('text-xs', statusConfig[request.status]?.className)}
                             >
                               <StatusIcon className="h-3 w-3 mr-1" />
-                              {statusConfig[request.status].label}
+                              {statusConfig[request.status]?.label || request.status}
                             </Badge>
                             <div className="flex gap-2">
                               {request.status === 'demande' && (
@@ -290,6 +309,7 @@ const Imaging = () => {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleStartExam(request.id)}
+                                  disabled={updateImagingRequest.isPending}
                                   className="gap-1.5"
                                 >
                                   <Camera className="h-4 w-4" />
@@ -333,60 +353,64 @@ const Imaging = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {completedRequests.map(request => (
-                      <div
-                        key={request.id}
-                        className="p-4 border rounded-lg bg-success/5 border-success/20"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-start gap-3">
-                            <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center text-xl">
-                              {examTypeIcons[request.examType] || '📷'}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold">{getExamTypeName(request.examType)}</p>
-                                <Badge variant="outline" className="text-xs">
-                                  {request.bodyPart}
-                                </Badge>
-                                <Badge className="bg-success text-success-foreground text-[10px]">
-                                  Terminé
-                                </Badge>
+                    {completedRequests.map(request => {
+                      const patient = request.patients;
+                      
+                      return (
+                        <div
+                          key={request.id}
+                          className="p-4 border rounded-lg bg-success/5 border-success/20"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-start gap-3">
+                              <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center text-xl">
+                                {examTypeIcons[request.exam_type] || '📷'}
                               </div>
-                              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  <span>{getPatientName(request.patientId)}</span>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="font-semibold">{getExamTypeName(request.exam_type)}</p>
+                                  <Badge variant="outline" className="text-xs">
+                                    {request.body_part}
+                                  </Badge>
+                                  <Badge className="bg-success text-success-foreground text-[10px]">
+                                    Terminé
+                                  </Badge>
                                 </div>
-                                <span>•</span>
-                                <span className="font-mono text-xs">{getPatientCode(request.patientId)}</span>
+                                <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    <span>{patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu'}</span>
+                                  </div>
+                                  <span>•</span>
+                                  <span className="font-mono text-xs">{patient?.code || ''}</span>
+                                </div>
                               </div>
                             </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" className="gap-1.5">
+                                <Eye className="h-4 w-4" />
+                                Voir image
+                              </Button>
+                              <Button size="sm" variant="outline" className="gap-1.5">
+                                <Printer className="h-4 w-4" />
+                                Imprimer
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" className="gap-1.5">
-                              <Eye className="h-4 w-4" />
-                              Voir image
-                            </Button>
-                            <Button size="sm" variant="outline" className="gap-1.5">
-                              <Printer className="h-4 w-4" />
-                              Imprimer
-                            </Button>
-                          </div>
+                          {request.report && (
+                            <div className="p-3 bg-background rounded border text-sm">
+                              <p className="text-xs font-medium text-muted-foreground mb-1">
+                                Compte rendu :
+                              </p>
+                              <p className="whitespace-pre-wrap">{request.report}</p>
+                            </div>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Réalisé le {request.completed_at && formatDateTime(request.completed_at)}
+                          </p>
                         </div>
-                        {request.report && (
-                          <div className="p-3 bg-background rounded border text-sm">
-                            <p className="text-xs font-medium text-muted-foreground mb-1">
-                              Compte rendu :
-                            </p>
-                            <p className="whitespace-pre-wrap">{request.report}</p>
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Réalisé le {request.completedAt && formatDateTime(request.completedAt)}
-                        </p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -400,9 +424,9 @@ const Imaging = () => {
             <DialogHeader>
               <DialogTitle>Compte rendu d'imagerie</DialogTitle>
               <DialogDescription>
-                {selectedRequest && getExamTypeName(selectedRequest.examType)} - {selectedRequest?.bodyPart}
+                {selectedRequest && getExamTypeName(selectedRequest.exam_type)} - {selectedRequest?.body_part}
                 <br />
-                Patient : {selectedRequest && getPatientName(selectedRequest.patientId)}
+                Patient : {selectedRequest?.patients && `${selectedRequest.patients.first_name} ${selectedRequest.patients.last_name}`}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -429,7 +453,7 @@ const Imaging = () => {
               <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>
                 Annuler
               </Button>
-              <Button onClick={handleSaveReport} className="gap-1.5">
+              <Button onClick={handleSaveReport} disabled={updateImagingRequest.isPending} className="gap-1.5">
                 <Check className="h-4 w-4" />
                 Enregistrer
               </Button>

@@ -19,6 +19,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, 
@@ -29,13 +36,20 @@ import {
   Heart,
   AlertTriangle,
   UserPlus,
+  QrCode,
+  Printer,
+  Check,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { QRCodeSVG } from 'qrcode.react';
+import { useCreatePatient, Patient } from '@/hooks/usePatients';
 
 const NewPatient = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createPatient = useCreatePatient();
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const [createdPatient, setCreatedPatient] = useState<Patient | null>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -55,36 +69,55 @@ const NewPatient = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const generatePatientCode = () => {
-    const year = new Date().getFullYear();
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `PAT-${year}-${random}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
 
     // Validation
     if (!formData.firstName || !formData.lastName || !formData.dateOfBirth || !formData.gender || !formData.phone) {
       toast.error('Veuillez remplir tous les champs obligatoires');
-      setIsSubmitting(false);
       return;
     }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const allergiesArray = formData.allergies 
+        ? formData.allergies.split(',').map(a => a.trim()).filter(a => a)
+        : null;
 
-    const patientCode = generatePatientCode();
-    
-    toast.success(
-      <div className="flex flex-col gap-1">
-        <span className="font-semibold">Patient enregistré avec succès!</span>
-        <span className="text-sm text-muted-foreground">Code: {patientCode}</span>
-      </div>
-    );
+      const patient = await createPatient.mutateAsync({
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        date_of_birth: formData.dateOfBirth,
+        gender: formData.gender,
+        phone: formData.phone,
+        address: formData.address || null,
+        blood_type: formData.bloodType || null,
+        allergies: allergiesArray,
+        emergency_contact_name: formData.emergencyName || null,
+        emergency_contact_phone: formData.emergencyPhone || null,
+        emergency_contact_relationship: formData.emergencyRelationship || null,
+      });
 
-    setIsSubmitting(false);
+      setCreatedPatient(patient);
+      setShowQRDialog(true);
+      
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold">Patient enregistré avec succès!</span>
+          <span className="text-sm text-muted-foreground">Code: {patient.code}</span>
+        </div>
+      );
+    } catch (error) {
+      console.error('Error creating patient:', error);
+      toast.error('Erreur lors de l\'enregistrement du patient');
+    }
+  };
+
+  const handlePrintCard = () => {
+    window.print();
+  };
+
+  const handleCloseDialog = () => {
+    setShowQRDialog(false);
     navigate('/patients');
   };
 
@@ -237,7 +270,7 @@ const NewPatient = () => {
                 </Label>
                 <Textarea
                   id="allergies"
-                  placeholder="Ex: Pénicilline, Aspirine..."
+                  placeholder="Ex: Pénicilline, Aspirine... (séparées par des virgules)"
                   value={formData.allergies}
                   onChange={(e) => handleChange('allergies', e.target.value)}
                 />
@@ -301,8 +334,8 @@ const NewPatient = () => {
             <Button type="button" variant="outline" asChild>
               <Link to="/patients">Annuler</Link>
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="gap-2">
-              {isSubmitting ? (
+            <Button type="submit" disabled={createPatient.isPending} className="gap-2">
+              {createPatient.isPending ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   Enregistrement...
@@ -316,6 +349,65 @@ const NewPatient = () => {
             </Button>
           </div>
         </form>
+
+        {/* QR Code Dialog */}
+        <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Check className="h-5 w-5 text-success" />
+                Patient enregistré avec succès
+              </DialogTitle>
+              <DialogDescription>
+                La carte patient avec QR code a été générée
+              </DialogDescription>
+            </DialogHeader>
+            
+            {createdPatient && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                {/* Patient Card Preview */}
+                <div className="w-full max-w-[300px] p-4 border-2 border-dashed rounded-xl bg-card">
+                  <div className="text-center mb-4">
+                    <h4 className="font-bold text-lg">Clinique Médicale</h4>
+                    <p className="text-xs text-muted-foreground">Carte Patient</p>
+                  </div>
+                  
+                  <div className="flex justify-center mb-4">
+                    <div className="p-2 bg-white rounded-lg">
+                      <QRCodeSVG 
+                        value={createdPatient.code} 
+                        size={120}
+                        level="H"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="font-mono text-lg font-bold text-primary">
+                      {createdPatient.code}
+                    </p>
+                    <p className="font-semibold mt-2">
+                      {createdPatient.first_name} {createdPatient.last_name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {createdPatient.gender === 'F' ? 'Féminin' : 'Masculin'} • {createdPatient.blood_type || 'Groupe non renseigné'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 w-full">
+                  <Button variant="outline" className="flex-1 gap-2" onClick={handlePrintCard}>
+                    <Printer className="h-4 w-4" />
+                    Imprimer
+                  </Button>
+                  <Button className="flex-1" onClick={handleCloseDialog}>
+                    Terminer
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
