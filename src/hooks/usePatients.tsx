@@ -87,13 +87,18 @@ export function useSearchPatients(query: string) {
     queryKey: ['patients', 'search', query],
     queryFn: async () => {
       if (!query.trim()) return [];
-      
+
+      // Sanitize: remove special chars that could exploit PostgREST filters
+      const sanitized = query.replace(/[%_,()'"\\;]/g, '').trim();
+      if (sanitized.length === 0 || sanitized.length > 100) return [];
+
+      const term = `%${sanitized}%`;
       const { data, error } = await supabase
         .from('patients')
         .select('*')
-        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,code.ilike.%${query}%,phone.ilike.%${query}%`)
+        .or(`first_name.ilike.${term},last_name.ilike.${term},code.ilike.${term},phone.ilike.${term}`)
         .limit(20);
-      
+
       if (error) throw error;
       return data as Patient[];
     },
