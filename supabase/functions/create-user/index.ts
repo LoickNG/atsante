@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie"];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -31,14 +33,36 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Accès réservé aux administrateurs" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { email, password, full_name, role } = await req.json();
+    const body = await req.json();
+    const { email, password, full_name, role } = body;
+
+    // Server-side input validation
+    if (!email || typeof email !== "string" || email.length > 255) {
+      return new Response(JSON.stringify({ error: "Email invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(JSON.stringify({ error: "Format d'email invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!password || typeof password !== "string" || password.length < 6 || password.length > 128) {
+      return new Response(JSON.stringify({ error: "Mot de passe requis (6-128 caractères)" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!full_name || typeof full_name !== "string" || full_name.trim().length === 0 || full_name.length > 255) {
+      return new Response(JSON.stringify({ error: "Nom complet requis (max 255 caractères)" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (!role || !VALID_ROLES.includes(role)) {
+      return new Response(JSON.stringify({ error: `Rôle invalide. Valeurs acceptées: ${VALID_ROLES.join(", ")}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Create user with admin API
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
+      email: email.trim(),
       password,
       email_confirm: true,
-      user_metadata: { full_name },
+      user_metadata: { full_name: full_name.trim() },
     });
 
     if (createError) {
@@ -48,8 +72,8 @@ serve(async (req) => {
     // Create profile
     await adminClient.from("profiles").insert({
       user_id: newUser.user!.id,
-      email,
-      full_name,
+      email: email.trim(),
+      full_name: full_name.trim(),
     });
 
     // Assign role
@@ -62,6 +86,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: "Erreur interne du serveur" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
