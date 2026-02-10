@@ -14,6 +14,8 @@ import Consultations from "./pages/Consultations";
 import Pharmacy from "./pages/Pharmacy";
 import Laboratory from "./pages/Laboratory";
 import Imaging from "./pages/Imaging";
+import Billing from "./pages/Billing";
+import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
