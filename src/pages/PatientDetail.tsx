@@ -19,22 +19,40 @@ import {
   Phone,
   MapPin,
   Calendar,
-  Heart,
   AlertTriangle,
   Stethoscope,
   Pill,
   FlaskConical,
-  FileText,
   Clock,
+  Loader2,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { mockPatients, mockVisits } from '@/data/mockData';
 import { cn } from '@/lib/utils';
+import { usePatient } from '@/hooks/usePatients';
+import { useVisits } from '@/hooks/useVisits';
+import { useConsultations } from '@/hooks/useConsultations';
+import { usePrescriptions } from '@/hooks/usePrescriptions';
+import { useLabRequests } from '@/hooks/useLabRequests';
 
 const PatientDetail = () => {
   const { id } = useParams();
-  const patient = mockPatients.find(p => p.id === id);
-  const patientVisits = mockVisits.filter(v => v.patientId === id);
+  const { data: patient, isLoading: patientLoading } = usePatient(id);
+  const { data: allVisits, isLoading: visitsLoading } = useVisits();
+  const { data: consultations } = useConsultations(id);
+  const { data: allLabRequests } = useLabRequests();
+
+  const patientVisits = (allVisits || []).filter(v => v.patient_id === id);
+  const patientLabs = (allLabRequests || []).filter(r => r.patient_id === id);
+
+  if (patientLoading || visitsLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!patient) {
     return (
@@ -88,7 +106,6 @@ const PatientDetail = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - Patient Card */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Patient Info Card */}
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
@@ -99,19 +116,19 @@ const PatientDetail = () => {
                         ? 'bg-pink-100 text-pink-700' 
                         : 'bg-blue-100 text-blue-700'
                     )}>
-                      {patient.firstName[0]}{patient.lastName[0]}
+                      {patient.first_name[0]}{patient.last_name[0]}
                     </AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-bold">
-                    {patient.firstName} {patient.lastName}
+                    {patient.first_name} {patient.last_name}
                   </h2>
                   <p className="text-sm text-muted-foreground mb-3">
-                    {calculateAge(patient.dateOfBirth)} ans • {patient.gender === 'F' ? 'Féminin' : 'Masculin'}
+                    {calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'Féminin' : 'Masculin'}
                   </p>
                   <div className="flex gap-2 mb-4">
-                    {patient.bloodType && (
+                    {patient.blood_type && (
                       <Badge variant="secondary" className="bg-destructive/10 text-destructive">
-                        {patient.bloodType}
+                        {patient.blood_type}
                       </Badge>
                     )}
                     <Badge variant="outline">
@@ -160,7 +177,7 @@ const PatientDetail = () => {
                   )}
                   <div className="flex items-center gap-3 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Né(e) le {formatDate(patient.dateOfBirth)}</span>
+                    <span>Né(e) le {formatDate(patient.date_of_birth)}</span>
                   </div>
                 </div>
 
@@ -185,15 +202,17 @@ const PatientDetail = () => {
                 )}
 
                 {/* Emergency Contact */}
-                {patient.emergencyContact && (
+                {patient.emergency_contact_name && (
                   <>
                     <Separator className="my-4" />
                     <div>
                       <p className="text-sm font-medium mb-2">Contact d'urgence</p>
                       <div className="text-sm text-muted-foreground">
-                        <p>{patient.emergencyContact.name}</p>
-                        <p>{patient.emergencyContact.phone}</p>
-                        <p className="text-xs">{patient.emergencyContact.relationship}</p>
+                        <p>{patient.emergency_contact_name}</p>
+                        {patient.emergency_contact_phone && <p>{patient.emergency_contact_phone}</p>}
+                        {patient.emergency_contact_relationship && (
+                          <p className="text-xs">{patient.emergency_contact_relationship}</p>
+                        )}
                       </div>
                     </div>
                   </>
@@ -280,15 +299,40 @@ const PatientDetail = () => {
                       <CardTitle>Consultations</CardTitle>
                       <CardDescription>Dossier médical du patient</CardDescription>
                     </div>
-                    <Button className="gap-2 no-print">
-                      <Stethoscope className="h-4 w-4" />
-                      Nouvelle consultation
+                    <Button className="gap-2 no-print" asChild>
+                      <Link to="/consultations">
+                        <Stethoscope className="h-4 w-4" />
+                        Nouvelle consultation
+                      </Link>
                     </Button>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      Aucune consultation enregistrée
-                    </div>
+                    {(!consultations || consultations.length === 0) ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Aucune consultation enregistrée
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {consultations.map((c) => (
+                          <div key={c.id} className="p-4 border rounded-lg bg-muted/30">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-semibold">{c.diagnosis || 'Diagnostic non renseigné'}</p>
+                              <Badge variant={c.status === 'termine' ? 'default' : 'secondary'}>
+                                {c.status === 'termine' ? 'Terminée' : 'En cours'}
+                              </Badge>
+                            </div>
+                            {c.symptoms && (
+                              <p className="text-sm text-muted-foreground mb-1">
+                                <span className="font-medium">Symptômes:</span> {c.symptoms}
+                              </p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(c.date)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -301,7 +345,7 @@ const PatientDetail = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-center py-8 text-muted-foreground">
-                      Aucune ordonnance enregistrée
+                      Consultez l'onglet Consultations pour voir les prescriptions associées
                     </div>
                   </CardContent>
                 </Card>
@@ -314,9 +358,30 @@ const PatientDetail = () => {
                     <CardDescription>Laboratoire et imagerie</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      Aucun résultat disponible
-                    </div>
+                    {patientLabs.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Aucun résultat disponible
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {patientLabs.map((lab) => (
+                          <div key={lab.id} className="p-4 border rounded-lg bg-muted/30">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-semibold">{lab.test_type}</p>
+                              <Badge variant={lab.status === 'termine' ? 'default' : 'outline'}>
+                                {lab.status === 'termine' ? 'Terminé' : lab.status === 'en_cours' ? 'En cours' : 'Demandé'}
+                              </Badge>
+                            </div>
+                            {lab.results && (
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{lab.results}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Demandé le {formatDate(lab.requested_at)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -332,10 +397,10 @@ const PatientDetail = () => {
                 <h3 className="font-bold text-lg text-primary mb-1">SantéPro</h3>
                 <p className="text-xs text-muted-foreground mb-3">Clinique Médicale</p>
                 <div className="space-y-1">
-                  <p className="font-semibold">{patient.firstName} {patient.lastName}</p>
+                  <p className="font-semibold">{patient.first_name} {patient.last_name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {calculateAge(patient.dateOfBirth)} ans • {patient.gender === 'F' ? 'F' : 'M'}
-                    {patient.bloodType && ` • ${patient.bloodType}`}
+                    {calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'F' : 'M'}
+                    {patient.blood_type && ` • ${patient.blood_type}`}
                   </p>
                   <p className="text-xs font-mono mt-2">{patient.code}</p>
                 </div>
