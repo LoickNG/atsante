@@ -14,15 +14,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,7 +27,6 @@ import {
   Stethoscope,
   Plus,
   Clock,
-  User,
   Thermometer,
   Heart,
   Activity,
@@ -44,28 +34,58 @@ import {
   FlaskConical,
   ImageIcon,
   Save,
-  FileText,
   Check,
   AlertTriangle,
+  Loader2,
 } from 'lucide-react';
-import { 
-  mockPatients, 
-  mockVisits, 
-  mockConsultations,
-  mockMedications,
-  labTestTypes,
-  imagingExamTypes,
-} from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Patient, Visit } from '@/types';
 import { AIDiagnosticAssistant } from '@/components/consultation/AIDiagnosticAssistant';
+import { useWaitingQueue, useUpdateVisit, VisitWithPatient } from '@/hooks/useVisits';
+import { useMedications } from '@/hooks/useMedications';
+import { useCreateConsultation } from '@/hooks/useConsultations';
+import { useCreateLabRequest } from '@/hooks/useLabRequests';
+import { useCreateImagingRequest } from '@/hooks/useImagingRequests';
+import { useCreatePrescription } from '@/hooks/usePrescriptions';
+import { useAuth } from '@/hooks/useAuth';
+import { Tables } from '@/integrations/supabase/types';
+
+// Types d'analyses disponibles
+const labTestTypes = [
+  { id: 'nfs', name: 'Numération Formule Sanguine (NFS)', price: 3500 },
+  { id: 'glycemie', name: 'Glycémie à jeun', price: 1500 },
+  { id: 'ge', name: 'Goutte épaisse (Paludisme)', price: 2000 },
+  { id: 'ecbu', name: 'ECBU', price: 4000 },
+  { id: 'crp', name: 'CRP (Protéine C-Réactive)', price: 3000 },
+  { id: 'bilan_hepatique', name: 'Bilan hépatique', price: 8000 },
+  { id: 'bilan_renal', name: 'Bilan rénal', price: 6000 },
+  { id: 'bilan_lipidique', name: 'Bilan lipidique', price: 7000 },
+  { id: 'hiv', name: 'Sérologie VIH', price: 5000 },
+  { id: 'hepatite_b', name: 'Sérologie Hépatite B', price: 5000 },
+  { id: 'widal', name: 'Sérologie Widal (Typhoïde)', price: 3000 },
+  { id: 'groupage', name: 'Groupage sanguin ABO-Rhésus', price: 2500 },
+];
+
+// Types d'examens d'imagerie disponibles
+const imagingExamTypes = [
+  { id: 'radio', name: 'Radiographie', price: 5000 },
+  { id: 'echo', name: 'Échographie', price: 10000 },
+  { id: 'scanner', name: 'Scanner', price: 50000 },
+  { id: 'irm', name: 'IRM', price: 100000 },
+];
 
 const Consultations = () => {
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
+  const { user } = useAuth();
+  const { data: queueVisits, isLoading: queueLoading } = useWaitingQueue();
+  const { data: medications } = useMedications();
+  const createConsultation = useCreateConsultation();
+  const updateVisit = useUpdateVisit();
+  const createLabRequest = useCreateLabRequest();
+  const createImagingRequest = useCreateImagingRequest();
+  const createPrescription = useCreatePrescription();
+
+  const [selectedVisit, setSelectedVisit] = useState<VisitWithPatient | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isNewConsultationOpen, setIsNewConsultationOpen] = useState(false);
   
   // Form states
   const [symptoms, setSymptoms] = useState('');
@@ -91,21 +111,19 @@ const Consultations = () => {
   // Lab and imaging requests
   const [selectedLabTests, setSelectedLabTests] = useState<string[]>([]);
   const [selectedImagingExams, setSelectedImagingExams] = useState<string[]>([]);
+  const [imagingBodyPart, setImagingBodyPart] = useState('');
 
-  const waitingPatients = mockVisits
-    .filter(v => v.status === 'en_attente' || v.status === 'en_cours')
-    .map(v => ({
-      visit: v,
-      patient: mockPatients.find(p => p.id === v.patientId)!,
-    }))
-    .filter(item => item.patient);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const filteredPatients = waitingPatients.filter(({ patient }) => {
+  const selectedPatient = selectedVisit?.patients || null;
+
+  const filteredVisits = (queueVisits || []).filter(({ patients }) => {
+    if (!patients) return false;
     const searchLower = searchQuery.toLowerCase();
     return (
-      patient.firstName.toLowerCase().includes(searchLower) ||
-      patient.lastName.toLowerCase().includes(searchLower) ||
-      patient.code.toLowerCase().includes(searchLower)
+      patients.first_name.toLowerCase().includes(searchLower) ||
+      patients.last_name.toLowerCase().includes(searchLower) ||
+      patients.code.toLowerCase().includes(searchLower)
     );
   });
 
@@ -116,8 +134,7 @@ const Consultations = () => {
     });
   };
 
-  const handleSelectPatient = (patient: Patient, visit: Visit) => {
-    setSelectedPatient(patient);
+  const handleSelectVisit = (visit: VisitWithPatient) => {
     setSelectedVisit(visit);
     // Reset form
     setSymptoms('');
@@ -127,6 +144,7 @@ const Consultations = () => {
     setPrescriptions([]);
     setSelectedLabTests([]);
     setSelectedImagingExams([]);
+    setImagingBodyPart('');
   };
 
   const addPrescription = () => {
@@ -149,24 +167,97 @@ const Consultations = () => {
     setPrescriptions(prescriptions.filter((_, i) => i !== index));
   };
 
-  const handleSaveConsultation = () => {
+  const handleSaveConsultation = async () => {
     if (!symptoms || !diagnosis) {
       toast.error('Veuillez remplir les symptômes et le diagnostic');
       return;
     }
 
-    toast.success(
-      <div className="flex flex-col gap-1">
-        <span className="font-semibold">Consultation enregistrée</span>
-        <span className="text-sm">
-          {prescriptions.length} prescription(s), {selectedLabTests.length} analyse(s), {selectedImagingExams.length} imagerie(s)
-        </span>
-      </div>
-    );
+    if (!selectedVisit || !selectedPatient || !user) {
+      toast.error('Données manquantes');
+      return;
+    }
 
-    // Reset selection
-    setSelectedPatient(null);
-    setSelectedVisit(null);
+    setIsSaving(true);
+
+    try {
+      // 1. Create consultation
+      const consultation = await createConsultation.mutateAsync({
+        visit_id: selectedVisit.id,
+        patient_id: selectedPatient.id,
+        doctor_id: user.id,
+        symptoms,
+        diagnosis,
+        notes: notes || null,
+        temperature: vitalSigns.temperature ? parseFloat(vitalSigns.temperature) : null,
+        blood_pressure: vitalSigns.bloodPressure || null,
+        heart_rate: vitalSigns.heartRate ? parseInt(vitalSigns.heartRate) : null,
+        weight: vitalSigns.weight ? parseFloat(vitalSigns.weight) : null,
+        height: vitalSigns.height ? parseFloat(vitalSigns.height) : null,
+        status: 'termine',
+      });
+
+      // 2. Create prescriptions
+      for (const p of prescriptions) {
+        if (p.medicationId) {
+          await createPrescription.mutateAsync({
+            consultation_id: consultation.id,
+            medication_id: p.medicationId,
+            dosage: p.dosage,
+            frequency: p.frequency,
+            duration: p.duration,
+            instructions: p.instructions || null,
+          });
+        }
+      }
+
+      // 3. Create lab requests
+      for (const testId of selectedLabTests) {
+        const test = labTestTypes.find(t => t.id === testId);
+        if (test) {
+          await createLabRequest.mutateAsync({
+            consultation_id: consultation.id,
+            patient_id: selectedPatient.id,
+            test_type: test.name,
+            priority: 'normale',
+          });
+        }
+      }
+
+      // 4. Create imaging requests
+      for (const examId of selectedImagingExams) {
+        await createImagingRequest.mutateAsync({
+          consultation_id: consultation.id,
+          patient_id: selectedPatient.id,
+          exam_type: examId,
+          body_part: imagingBodyPart || 'Non précisé',
+          priority: 'normale',
+        });
+      }
+
+      // 5. Update visit status to termine
+      await updateVisit.mutateAsync({
+        id: selectedVisit.id,
+        status: 'termine',
+      });
+
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-semibold">Consultation enregistrée</span>
+          <span className="text-sm">
+            {prescriptions.filter(p => p.medicationId).length} prescription(s), {selectedLabTests.length} analyse(s), {selectedImagingExams.length} imagerie(s)
+          </span>
+        </div>
+      );
+
+      // Reset selection
+      setSelectedVisit(null);
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast.error('Erreur lors de l\'enregistrement de la consultation');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const toggleLabTest = (testId: string) => {
@@ -196,6 +287,16 @@ const Consultations = () => {
     return age;
   };
 
+  if (queueLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex h-[calc(100vh-2rem)]">
@@ -215,53 +316,58 @@ const Consultations = () => {
           </div>
           
           <div className="flex-1 overflow-auto">
-            {filteredPatients.length === 0 ? (
+            {filteredVisits.length === 0 ? (
               <div className="p-4 text-center text-muted-foreground">
                 Aucun patient en attente
               </div>
             ) : (
               <div className="divide-y">
-                {filteredPatients.map(({ patient, visit }) => (
-                  <button
-                    key={visit.id}
-                    onClick={() => handleSelectPatient(patient, visit)}
-                    className={cn(
-                      'w-full p-4 text-left hover:bg-muted/50 transition-colors',
-                      selectedPatient?.id === patient.id && 'bg-primary/5 border-l-2 border-l-primary'
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                          {patient.firstName[0]}{patient.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {patient.firstName} {patient.lastName}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>{formatTime(visit.date)}</span>
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              'text-[10px]',
-                              visit.type === 'urgence' && 'bg-destructive/10 text-destructive animate-pulse'
-                            )}
-                          >
-                            {visit.type}
-                          </Badge>
-                        </div>
-                      </div>
-                      {visit.status === 'en_cours' && (
-                        <Badge className="bg-info text-info-foreground text-[10px]">
-                          En cours
-                        </Badge>
+                {filteredVisits.map((visit) => {
+                  const patient = visit.patients;
+                  if (!patient) return null;
+
+                  return (
+                    <button
+                      key={visit.id}
+                      onClick={() => handleSelectVisit(visit)}
+                      className={cn(
+                        'w-full p-4 text-left hover:bg-muted/50 transition-colors',
+                        selectedVisit?.id === visit.id && 'bg-primary/5 border-l-2 border-l-primary'
                       )}
-                    </div>
-                  </button>
-                ))}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                            {patient.first_name[0]}{patient.last_name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">
+                            {patient.first_name} {patient.last_name}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatTime(visit.date)}</span>
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                'text-[10px]',
+                                visit.type === 'urgence' && 'bg-destructive/10 text-destructive animate-pulse'
+                              )}
+                            >
+                              {visit.type}
+                            </Badge>
+                          </div>
+                        </div>
+                        {visit.status === 'en_cours' && (
+                          <Badge className="bg-info text-info-foreground text-[10px]">
+                            En cours
+                          </Badge>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -282,16 +388,16 @@ const Consultations = () => {
                 <div className="flex items-center gap-4">
                   <Avatar className="h-14 w-14">
                     <AvatarFallback className="bg-primary/10 text-primary text-lg">
-                      {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
+                      {selectedPatient.first_name[0]}{selectedPatient.last_name[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <h2 className="text-xl font-bold">
-                      {selectedPatient.firstName} {selectedPatient.lastName}
+                      {selectedPatient.first_name} {selectedPatient.last_name}
                     </h2>
                     <p className="text-muted-foreground">
-                      {calculateAge(selectedPatient.dateOfBirth)} ans • {selectedPatient.code}
-                      {selectedPatient.bloodType && ` • ${selectedPatient.bloodType}`}
+                      {calculateAge(selectedPatient.date_of_birth)} ans • {selectedPatient.code}
+                      {selectedPatient.blood_type && ` • ${selectedPatient.blood_type}`}
                     </p>
                     {selectedPatient.allergies && selectedPatient.allergies.length > 0 && (
                       <div className="flex items-center gap-1 mt-1">
@@ -303,9 +409,9 @@ const Consultations = () => {
                     )}
                   </div>
                 </div>
-                <Button onClick={handleSaveConsultation} className="gap-2">
-                  <Save className="h-4 w-4" />
-                  Enregistrer
+                <Button onClick={handleSaveConsultation} className="gap-2" disabled={isSaving}>
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {isSaving ? 'Enregistrement...' : 'Enregistrer'}
                 </Button>
               </div>
 
@@ -427,10 +533,10 @@ const Consultations = () => {
                           symptoms={symptoms}
                           vitalSigns={vitalSigns}
                           patientInfo={{
-                            age: calculateAge(selectedPatient.dateOfBirth),
+                            age: calculateAge(selectedPatient.date_of_birth),
                             gender: selectedPatient.gender,
-                            bloodType: selectedPatient.bloodType,
-                            allergies: selectedPatient.allergies,
+                            bloodType: selectedPatient.blood_type || undefined,
+                            allergies: selectedPatient.allergies || undefined,
                           }}
                         />
                       </CardContent>
@@ -498,7 +604,7 @@ const Consultations = () => {
                                       <SelectValue placeholder="Sélectionner..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {mockMedications.map(med => (
+                                      {(medications || []).map(med => (
                                         <SelectItem key={med.id} value={med.id}>
                                           {med.name}
                                         </SelectItem>
@@ -641,6 +747,8 @@ const Consultations = () => {
                           <Input
                             className="mt-1"
                             placeholder="Ex: Thorax face, Abdomen complet..."
+                            value={imagingBodyPart}
+                            onChange={(e) => setImagingBodyPart(e.target.value)}
                           />
                         </div>
                       )}
