@@ -1,1 +1,4 @@
 project_id = "wziwaoqxnteklnuwpnpi"
+
+[functions.diagnostic-assistant]
+verify_jwt = false

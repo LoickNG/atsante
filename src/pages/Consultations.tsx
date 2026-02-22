@@ -59,6 +59,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Patient, Visit } from '@/types';
+import { AIDiagnosticAssistant } from '@/components/consultation/AIDiagnosticAssistant';
 
 const Consultations = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -415,12 +416,22 @@ const Consultations = () => {
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base">Motif & Symptômes</CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-3">
                         <Textarea
                           placeholder="Décrivez les symptômes du patient..."
                           className="min-h-[150px]"
                           value={symptoms}
                           onChange={(e) => setSymptoms(e.target.value)}
+                        />
+                        <AIDiagnosticAssistant
+                          symptoms={symptoms}
+                          vitalSigns={vitalSigns}
+                          patientInfo={{
+                            age: calculateAge(selectedPatient.dateOfBirth),
+                            gender: selectedPatient.gender,
+                            bloodType: selectedPatient.bloodType,
+                            allergies: selectedPatient.allergies,
+                          }}
                         />
                       </CardContent>
                     </Card>
