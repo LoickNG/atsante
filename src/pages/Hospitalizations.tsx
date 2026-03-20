@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BedDouble, Plus, Search, Clock, LogOut, Stethoscope, Loader2,
-  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList,
+  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList, DollarSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -23,9 +23,13 @@ import {
   useDischargePatient, useAssignRoom, useHospitalizationCare,
   useAddCare, calculateStayDays, Hospitalization,
 } from '@/hooks/useHospitalizations';
+import { useMedications } from '@/hooks/useMedications';
+import { useMedicalActs } from '@/hooks/useBilling';
 
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { useSearchPatients, Patient } from '@/hooks/usePatients';
+
+
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 const formatDateTime = (d: string) => new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -75,6 +79,13 @@ export default function Hospitalizations() {
   const [careType, setCareType] = useState('');
   const [careDescription, setCareDescription] = useState('');
   const [careNotes, setCareNotes] = useState('');
+  const [careUnitPrice, setCareUnitPrice] = useState('');
+  const [careQuantity, setCareQuantity] = useState('1');
+  const [careMedicationId, setCareMedicationId] = useState('');
+  const [careMedSearch, setCareMedSearch] = useState('');
+
+  const { data: medications } = useMedications();
+  const { data: medicalActs } = useMedicalActs();
 
   const { data: careList } = useHospitalizationCare(selectedHosp?.id);
   const addCare = useAddCare();
@@ -134,6 +145,8 @@ export default function Hospitalizations() {
 
   const handleAddCare = async () => {
     if (!selectedHosp || !careType || !careDescription || !user) return;
+    const qty = parseInt(careQuantity) || 1;
+    const price = parseFloat(careUnitPrice) || 0;
     try {
       await addCare.mutateAsync({
         hospitalization_id: selectedHosp.id,
@@ -141,10 +154,15 @@ export default function Hospitalizations() {
         description: careDescription,
         administered_by: user.id,
         notes: careNotes || undefined,
+        unit_price: price,
+        quantity: qty,
+        total_price: price * qty,
+        medication_id: careMedicationId || undefined,
       });
       toast.success('Soin enregistré');
       setCareDialogOpen(false);
       setCareType(''); setCareDescription(''); setCareNotes('');
+      setCareUnitPrice(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch('');
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -438,9 +456,21 @@ export default function Hospitalizations() {
                             <span className="text-xs text-muted-foreground">{formatDateTime(c.administered_at)}</span>
                           </div>
                           <p>{c.description}</p>
-                          {c.notes && <p className="text-xs text-muted-foreground mt-1">{c.notes}</p>}
+                          <div className="flex items-center justify-between mt-1">
+                            {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+                            {c.total_price > 0 && (
+                              <span className="text-xs font-semibold text-primary ml-auto">
+                                {c.quantity > 1 ? `${c.quantity} × ${formatCurrency(c.unit_price)} = ` : ''}{formatCurrency(c.total_price)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
+                      {/* Total soins */}
+                      <div className="flex justify-between items-center p-2 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+                        <span className="font-medium">Total soins</span>
+                        <span className="font-bold text-primary">{formatCurrency(careList.reduce((s, c) => s + Number(c.total_price || 0), 0))}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -516,25 +546,101 @@ export default function Hospitalizations() {
 
       {/* Add Care Dialog */}
       <Dialog open={careDialogOpen} onOpenChange={setCareDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Enregistrer un soin</DialogTitle>
-            <DialogDescription>Ajoutez un soin pour ce patient</DialogDescription>
+            <DialogDescription>Ajoutez un soin facturable pour ce patient</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Type de soin *</Label>
-              <Select value={careType} onValueChange={setCareType}>
+              <Select value={careType} onValueChange={(val) => {
+                setCareType(val);
+                // Auto-fill price from medical_acts if match found
+                const act = (medicalActs || []).find(a => a.name.toLowerCase().includes(val.toLowerCase()));
+                if (act) setCareUnitPrice(String(act.unit_price));
+                // Reset medication if not medication type
+                if (val !== 'Administration médicament' && val !== 'Injection' && val !== 'Perfusion') {
+                  setCareMedicationId(''); setCareMedSearch('');
+                }
+              }}>
                 <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                 <SelectContent>
                   {CARE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Medication selection for relevant care types */}
+            {(careType === 'Administration médicament' || careType === 'Injection' || careType === 'Perfusion') && (
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <Pill className="h-3.5 w-3.5" />Médicament / Consommable
+                </Label>
+                <Input
+                  placeholder="Rechercher un médicament..."
+                  value={careMedSearch}
+                  onChange={e => { setCareMedSearch(e.target.value); setCareMedicationId(''); }}
+                />
+                {careMedSearch && !careMedicationId && (
+                  <div className="border rounded-lg max-h-40 overflow-auto">
+                    {(medications || [])
+                      .filter(m => m.name.toLowerCase().includes(careMedSearch.toLowerCase()))
+                      .slice(0, 8)
+                      .map(m => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          className="w-full p-2.5 text-left hover:bg-muted/50 border-b last:border-b-0 text-sm"
+                          onClick={() => {
+                            setCareMedicationId(m.id);
+                            setCareMedSearch(m.name);
+                            setCareUnitPrice(String(m.unit_price));
+                            setCareDescription(m.name);
+                          }}
+                        >
+                          <div className="flex justify-between">
+                            <span className="font-medium">{m.name}</span>
+                            <span className="text-muted-foreground">{formatCurrency(Number(m.unit_price))}</span>
+                          </div>
+                          <div className="flex gap-2 text-xs text-muted-foreground">
+                            <span>Stock: {m.stock_quantity}</span>
+                            <span>•</span>
+                            <span>{m.form}</span>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label>Description *</Label>
-              <Textarea value={careDescription} onChange={e => setCareDescription(e.target.value)} placeholder="Détails du soin..." rows={3} />
+              <Textarea value={careDescription} onChange={e => setCareDescription(e.target.value)} placeholder="Détails du soin..." rows={2} />
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5" />Prix unitaire (FCFA)
+                </Label>
+                <Input type="number" value={careUnitPrice} onChange={e => setCareUnitPrice(e.target.value)} placeholder="0" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Quantité</Label>
+                <Input type="number" min="1" value={careQuantity} onChange={e => setCareQuantity(e.target.value)} placeholder="1" />
+              </div>
+            </div>
+
+            {/* Total preview */}
+            {(parseFloat(careUnitPrice) || 0) > 0 && (
+              <div className="flex justify-between items-center p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <span className="text-sm font-medium">Total</span>
+                <span className="font-bold text-primary">{formatCurrency((parseFloat(careUnitPrice) || 0) * (parseInt(careQuantity) || 1))}</span>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label>Notes</Label>
               <Input value={careNotes} onChange={e => setCareNotes(e.target.value)} placeholder="Observations" />

@@ -158,7 +158,11 @@ export type Database = {
           description: string
           hospitalization_id: string
           id: string
+          medication_id: string | null
           notes: string | null
+          quantity: number
+          total_price: number
+          unit_price: number
         }
         Insert: {
           administered_at?: string
@@ -168,7 +172,11 @@ export type Database = {
           description: string
           hospitalization_id: string
           id?: string
+          medication_id?: string | null
           notes?: string | null
+          quantity?: number
+          total_price?: number
+          unit_price?: number
         }
         Update: {
           administered_at?: string
@@ -178,7 +186,11 @@ export type Database = {
           description?: string
           hospitalization_id?: string
           id?: string
+          medication_id?: string | null
           notes?: string | null
+          quantity?: number
+          total_price?: number
+          unit_price?: number
         }
         Relationships: [
           {
@@ -186,6 +198,13 @@ export type Database = {
             columns: ["hospitalization_id"]
             isOneToOne: false
             referencedRelation: "hospitalizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospitalization_care_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
             referencedColumns: ["id"]
           },
         ]

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BillableItem {
-  type: 'consultation' | 'medicament' | 'analyse' | 'imagerie';
+  type: 'consultation' | 'medicament' | 'analyse' | 'imagerie' | 'soin_hospitalisation' | 'hebergement';
   description: string;
   quantity: number;
   unit_price: number;
@@ -150,6 +150,56 @@ export function usePatientBillableItems(patientId: string | undefined) {
             unit_price: matchAct ? Number(matchAct.unit_price) : 0,
             reference_id: ir.id,
             source_table: 'imaging_requests',
+          });
+        }
+      }
+
+      // 6. Hospitalization care items
+      const { data: hospitalizations } = await supabase
+        .from('hospitalizations')
+        .select('id')
+        .eq('patient_id', patientId);
+
+      const hospIds = (hospitalizations || []).map(h => h.id);
+      if (hospIds.length > 0) {
+        const { data: careItems } = await supabase
+          .from('hospitalization_care')
+          .select('*')
+          .in('hospitalization_id', hospIds);
+
+        for (const ci of (careItems || []) as any[]) {
+          if (!billedReferenceIds.includes(ci.id) && Number(ci.total_price) > 0) {
+            items.push({
+              type: 'soin_hospitalisation',
+              description: `${ci.care_type}: ${ci.description}`,
+              quantity: ci.quantity || 1,
+              unit_price: Number(ci.unit_price) || 0,
+              reference_id: ci.id,
+              source_table: 'hospitalization_care',
+            });
+          }
+        }
+      }
+
+      // 7. Hébergement (room charges) from active/completed hospitalizations
+      const { data: hospWithRooms } = await supabase
+        .from('hospitalizations')
+        .select('id, admission_date, discharge_date, status, rooms(id, room_number, price_per_night)')
+        .eq('patient_id', patientId)
+        .not('room_id', 'is', null);
+
+      for (const h of (hospWithRooms || []) as any[]) {
+        if (!billedReferenceIds.includes(h.id) && h.rooms?.price_per_night > 0) {
+          const start = new Date(h.admission_date);
+          const end = h.discharge_date ? new Date(h.discharge_date) : new Date();
+          const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+          items.push({
+            type: 'hebergement',
+            description: `Hébergement chambre ${h.rooms.room_number} (${days} jour${days > 1 ? 's' : ''})`,
+            quantity: days,
+            unit_price: Number(h.rooms.price_per_night),
+            reference_id: h.id,
+            source_table: 'hospitalizations',
           });
         }
       }

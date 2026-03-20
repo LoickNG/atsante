@@ -38,6 +38,8 @@ const typeIcons: Record<string, React.ReactNode> = {
   medicament: <Pill className="h-4 w-4 text-emerald-600" />,
   analyse: <FlaskConical className="h-4 w-4 text-amber-600" />,
   imagerie: <ScanLine className="h-4 w-4 text-blue-600" />,
+  soin_hospitalisation: <Stethoscope className="h-4 w-4 text-rose-600" />,
+  hebergement: <Building2 className="h-4 w-4 text-violet-600" />,
 };
 
 const typeLabels: Record<string, string> = {
@@ -45,6 +47,8 @@ const typeLabels: Record<string, string> = {
   medicament: 'Médicament',
   analyse: 'Analyse',
   imagerie: 'Imagerie',
+  soin_hospitalisation: 'Soin hospi.',
+  hebergement: 'Hébergement',
 };
 
 export default function Billing() {
