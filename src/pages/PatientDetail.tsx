@@ -659,6 +659,11 @@ const PatientDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Patient Dialog */}
+      {patient && (
+        <EditPatientDialog patient={patient} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+      )}
     </AppLayout>
   );
 };
