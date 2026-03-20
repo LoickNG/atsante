@@ -164,7 +164,7 @@ const PatientDetail = () => {
         @media print { body { padding: 20px; } }
       </style></head><body>
       <div class="header">
-        <h2>TétimianPro</h2>
+        <h2>ATSanté</h2>
         <p>Centre Médical</p>
         <p>Ordonnance Médicale</p>
       </div>
@@ -596,7 +596,7 @@ const PatientDetail = () => {
           <div className="patient-card-print mx-auto">
             <div className="flex items-start justify-between h-full">
               <div className="flex-1">
-                <h3 className="font-bold text-lg text-primary mb-1">TétimianPro</h3>
+                <h3 className="font-bold text-lg text-primary mb-1">ATSanté</h3>
                 <p className="text-xs text-muted-foreground mb-3">Centre Médical</p>
                 <div className="space-y-1">
                   <p className="font-semibold">{patient.first_name} {patient.last_name}</p>

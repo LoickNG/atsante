@@ -86,7 +86,7 @@ export default function Auth() {
     } else {
       toast({
         title: 'Connexion réussie',
-        description: 'Bienvenue sur TétimianPro',
+        description: 'Bienvenue sur ATSanté',
       });
     }
     setLoading(false);
@@ -153,7 +153,7 @@ export default function Auth() {
               <Activity className="h-7 w-7 text-primary-foreground" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">TétimianPro</CardTitle>
+          <CardTitle className="text-2xl font-bold">ATSanté</CardTitle>
           <CardDescription>Système de Gestion Hospitalier</CardDescription>
         </CardHeader>
         <CardContent>

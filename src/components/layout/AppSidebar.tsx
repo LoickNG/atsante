@@ -46,7 +46,7 @@ export function AppSidebar({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">
-                ​TétimianPro
+                ATSanté
               </span>
               <span className="text-[10px] text-sidebar-foreground/60">
                 Système Hospitalier
