@@ -3,41 +3,31 @@ import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
-  Search, 
-  UserPlus, 
-  QrCode, 
-  MoreHorizontal,
-  Eye,
-  Edit,
-  FileText,
-  Phone,
-  Calendar,
-  Loader2,
+  Search, UserPlus, QrCode, MoreHorizontal, Eye, Edit, FileText, Phone, Calendar, Printer,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { usePatients, Patient } from '@/hooks/usePatients';
+import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
+import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
+import { PatientHistoryDialog } from '@/components/patient/PatientHistoryDialog';
 
 const PatientsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { data: patients, isLoading, error } = usePatients();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const filteredPatients = (patients || []).filter(patient => {
     const searchLower = searchQuery.toLowerCase();
