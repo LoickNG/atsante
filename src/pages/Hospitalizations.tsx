@@ -65,6 +65,13 @@ export default function Hospitalizations() {
   const [dischargeDialogOpen, setDischargeDialogOpen] = useState(false);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [careDialogOpen, setCareDialogOpen] = useState(false);
+  const [examDialogOpen, setExamDialogOpen] = useState(false);
+
+  // Exam form
+  const [examCategory, setExamCategory] = useState<'laboratoire' | 'imagerie'>('laboratoire');
+  const [examTestType, setExamTestType] = useState('');
+  const [examBodyPart, setExamBodyPart] = useState('');
+  const [examPriority, setExamPriority] = useState<'normale' | 'urgente'>('normale');
 
   // Admit form
   const [admitPatient, setAdmitPatient] = useState<Patient | null>(null);
