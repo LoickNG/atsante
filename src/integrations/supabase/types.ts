@@ -149,6 +149,124 @@ export type Database = {
           },
         ]
       }
+      hospitalization_care: {
+        Row: {
+          administered_at: string
+          administered_by: string
+          care_type: string
+          created_at: string
+          description: string
+          hospitalization_id: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          administered_at?: string
+          administered_by: string
+          care_type: string
+          created_at?: string
+          description: string
+          hospitalization_id: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          administered_at?: string
+          administered_by?: string
+          care_type?: string
+          created_at?: string
+          description?: string
+          hospitalization_id?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospitalization_care_hospitalization_id_fkey"
+            columns: ["hospitalization_id"]
+            isOneToOne: false
+            referencedRelation: "hospitalizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitalizations: {
+        Row: {
+          admission_date: string
+          consultation_id: string | null
+          created_at: string
+          discharge_date: string | null
+          discharge_notes: string | null
+          doctor_id: string
+          id: string
+          patient_id: string
+          reason: string
+          room_id: string | null
+          status: string
+          updated_at: string
+          visit_id: string | null
+        }
+        Insert: {
+          admission_date?: string
+          consultation_id?: string | null
+          created_at?: string
+          discharge_date?: string | null
+          discharge_notes?: string | null
+          doctor_id: string
+          id?: string
+          patient_id: string
+          reason: string
+          room_id?: string | null
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Update: {
+          admission_date?: string
+          consultation_id?: string | null
+          created_at?: string
+          discharge_date?: string | null
+          discharge_notes?: string | null
+          doctor_id?: string
+          id?: string
+          patient_id?: string
+          reason?: string
+          room_id?: string | null
+          status?: string
+          updated_at?: string
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospitalizations_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospitalizations_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospitalizations_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospitalizations_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imaging_requests: {
         Row: {
           body_part: string
@@ -745,6 +863,42 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          category: string
+          comfort: string
+          created_at: string
+          floor: string | null
+          id: string
+          is_available: boolean
+          notes: string | null
+          room_number: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          comfort: string
+          created_at?: string
+          floor?: string | null
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          room_number: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          comfort?: string
+          created_at?: string
+          floor?: string | null
+          id?: string
+          is_available?: boolean
+          notes?: string | null
+          room_number?: string
+          updated_at?: string
         }
         Relationships: []
       }
