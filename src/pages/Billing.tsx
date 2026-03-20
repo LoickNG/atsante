@@ -127,8 +127,15 @@ export default function Billing() {
     }
   };
 
+  const getItemPrice = useCallback((item: BillableItem, idx: number) => {
+    return priceOverrides[idx] !== undefined ? priceOverrides[idx] : item.unit_price;
+  }, [priceOverrides]);
+
   const selectedBillable = (billableItems || []).filter((_, i) => selectedItems.has(i));
-  const invoiceTotal = selectedBillable.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const invoiceTotal = selectedBillable.reduce((s, item) => {
+    const idx = (billableItems || []).indexOf(item);
+    return s + item.quantity * getItemPrice(item, idx);
+  }, 0);
   const companyAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.company_coverage_percent / 100) : 0;
   const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
   const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
