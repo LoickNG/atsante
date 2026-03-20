@@ -8,6 +8,8 @@ import { FileText, Printer, Calendar, MapPin, User } from 'lucide-react';
 import { Patient } from '@/hooks/usePatients';
 import { printDeathCertificate } from './DeathCertificates';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DeceasedPatientActionsProps {
   patient: Patient | null;
