@@ -209,14 +209,24 @@ const PatientDetail = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
-                  <Avatar className="h-20 w-20 mb-4">
-                    {(patient as any).photo_url && (
-                      <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
-                    )}
-                    <AvatarFallback className={cn('text-2xl font-semibold', patient.gender === 'F' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700')}>
-                      {patient.first_name[0]}{patient.last_name[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative group mb-4">
+                    <Avatar className="h-20 w-20">
+                      {(patient as any).photo_url && (
+                        <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
+                      )}
+                      <AvatarFallback className={cn('text-2xl font-semibold', patient.gender === 'F' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700')}>
+                        {patient.first_name[0]}{patient.last_name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={() => setEditDialogOpen(true)}
+                      className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      title="Modifier la photo"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                   <h2 className="text-xl font-bold">{patient.first_name} {patient.last_name}</h2>
                   <p className="text-sm text-muted-foreground mb-3">{calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'Féminin' : 'Masculin'}</p>
                   <div className="flex gap-2 mb-4">
@@ -228,9 +238,14 @@ const PatientDetail = () => {
                     <p className="text-xs text-muted-foreground mt-2 font-mono">{patient.code}</p>
                   </div>
                   <div className="flex gap-2 w-full no-print">
+                    <Button variant="outline" className="flex-1 gap-2" onClick={() => setEditDialogOpen(true)}>
+                      <Pencil className="h-4 w-4" />Modifier
+                    </Button>
                     <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
                       <Printer className="h-4 w-4" />Imprimer
                     </Button>
+                  </div>
+                  <div className="mt-2 w-full no-print">
                     <PatientPDFExport
                       patient={patient}
                       consultations={consultations || []}
