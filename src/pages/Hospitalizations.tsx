@@ -480,8 +480,11 @@ export default function Hospitalizations() {
                     <Button variant="outline" className="gap-2" onClick={() => { setRoomDialogOpen(true); setNewRoomId(''); }}>
                       <BedDouble className="h-4 w-4" />{selectedHosp.room_id ? 'Changer chambre' : 'Attribuer chambre'}
                     </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => { setCareDialogOpen(true); setCareType(''); setCareDescription(''); setCareNotes(''); }}>
+                     <Button variant="outline" className="gap-2" onClick={() => { setCareDialogOpen(true); setCareType(''); setCareDescription(''); setCareNotes(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch(''); }}>
                       <Stethoscope className="h-4 w-4" />Ajouter un soin
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={() => { setExamDialogOpen(true); setExamCategory('laboratoire'); setExamTestType(''); setExamBodyPart(''); setExamPriority('normale'); }}>
+                      <FlaskConical className="h-4 w-4" />Demander un examen
                     </Button>
                     <Button variant="destructive" className="gap-2 ml-auto" onClick={() => { setDischargeDialogOpen(true); setDischargeNotes(''); }}>
                       <LogOut className="h-4 w-4" />Sortie du patient
