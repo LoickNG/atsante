@@ -12,7 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
-  Search, UserPlus, QrCode, MoreHorizontal, Eye, Edit, FileText, Phone, Calendar, Printer,
+  Search, UserPlus, QrCode, MoreHorizontal, Eye, Edit, FileText, Phone, Calendar, Printer, Archive, Skull,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,9 @@ import { usePatients, Patient } from '@/hooks/usePatients';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
 import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
 import { PatientHistoryDialog } from '@/components/patient/PatientHistoryDialog';
+import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
+import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
+import { DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const PatientsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,8 +31,18 @@ const PatientsList = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [deceasedOpen, setDeceasedOpen] = useState(false);
+  const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const filteredPatients = (patients || []).filter(patient => {
+    const p = patient as any;
+    // Filter by alive/deceased
+    if (showArchived) {
+      if (!p.is_deceased) return false;
+    } else {
+      if (p.is_deceased) return false;
+    }
     const searchLower = searchQuery.toLowerCase();
     return (
       patient.first_name.toLowerCase().includes(searchLower) ||
@@ -38,6 +51,8 @@ const PatientsList = () => {
       patient.phone.includes(searchQuery)
     );
   });
+
+  const deceasedCount = (patients || []).filter((p: any) => p.is_deceased).length;
 
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
@@ -89,9 +104,9 @@ const PatientsList = () => {
           </Button>
         </PageHeader>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        {/* Search + Filter */}
+        <div className="mb-6 flex items-center gap-3 flex-wrap">
+          <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Rechercher par nom, code ou téléphone..."
@@ -100,7 +115,24 @@ const PatientsList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          {deceasedCount > 0 && (
+            <Button
+              variant={showArchived ? 'default' : 'outline'}
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowArchived(!showArchived)}
+            >
+              <Archive className="h-4 w-4" />
+              {showArchived ? 'Voir patients actifs' : `Archivés (${deceasedCount})`}
+            </Button>
+          )}
         </div>
+
+        {showArchived && (
+          <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-muted text-sm text-muted-foreground">
+            Vous consultez les fiches des patients décédés. Ces dossiers sont archivés.
+          </div>
+        )}
 
         {/* Table */}
         <div className="rounded-xl border bg-card overflow-hidden">
@@ -222,18 +254,42 @@ const PatientsList = () => {
                               Voir le dossier
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setEditOpen(true); }}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setCardOpen(true); }}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Imprimer carte
-                          </DropdownMenuItem>
+                          {!showArchived && (
+                            <>
+                              <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setEditOpen(true); }}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setCardOpen(true); }}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Imprimer carte
+                              </DropdownMenuItem>
+                            </>
+                          )}
                           <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setHistoryOpen(true); }}>
                             <FileText className="mr-2 h-4 w-4" />
                             Historique
                           </DropdownMenuItem>
+                          {showArchived ? (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setDeceasedActionsOpen(true); }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Certificats de décès
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => { setSelectedPatient(patient); setDeceasedOpen(true); }}
+                              >
+                                <Skull className="mr-2 h-4 w-4" />
+                                Déclarer décédé
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -250,6 +306,8 @@ const PatientsList = () => {
             <EditPatientDialog patient={selectedPatient} open={editOpen} onOpenChange={setEditOpen} />
             <PatientCardPreview patient={selectedPatient} open={cardOpen} onOpenChange={setCardOpen} />
             <PatientHistoryDialog patient={selectedPatient} open={historyOpen} onOpenChange={setHistoryOpen} />
+            <DeclareDeceasedDialog patient={selectedPatient} open={deceasedOpen} onOpenChange={setDeceasedOpen} />
+            <DeceasedPatientActions patient={selectedPatient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
           </>
         )}
       </div>

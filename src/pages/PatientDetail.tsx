@@ -15,9 +15,11 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText,
 } from 'lucide-react';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
+import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
+import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
@@ -47,6 +49,8 @@ const PatientDetail = () => {
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deceasedDialogOpen, setDeceasedDialogOpen] = useState(false);
+  const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
 
   const handleReopenConsultation = async (consultationId: string, visitId: string) => {
     setIsReopening(true);
@@ -237,24 +241,49 @@ const PatientDetail = () => {
                     <QRCodeSVG value={patient.code} size={140} level="H" includeMargin={false} />
                     <p className="text-xs text-muted-foreground mt-2 font-mono">{patient.code}</p>
                   </div>
-                  <div className="flex gap-2 w-full no-print">
-                    <Button variant="outline" className="flex-1 gap-2" onClick={() => setEditDialogOpen(true)}>
-                      <Pencil className="h-4 w-4" />Modifier
-                    </Button>
-                    <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
-                      <Printer className="h-4 w-4" />Imprimer
-                    </Button>
-                  </div>
-                  <div className="mt-2 w-full no-print">
-                    <PatientPDFExport
-                      patient={patient}
-                      consultations={consultations || []}
-                      prescriptions={patientPrescriptions}
-                      labRequests={patientLabs}
-                      imagingRequests={patientImaging}
-                      visits={patientVisits}
-                    />
-                  </div>
+                  {!(patient as any).is_deceased ? (
+                    <>
+                      <div className="flex gap-2 w-full no-print">
+                        <Button variant="outline" className="flex-1 gap-2" onClick={() => setEditDialogOpen(true)}>
+                          <Pencil className="h-4 w-4" />Modifier
+                        </Button>
+                        <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
+                          <Printer className="h-4 w-4" />Imprimer
+                        </Button>
+                      </div>
+                      <div className="mt-2 w-full no-print">
+                        <PatientPDFExport
+                          patient={patient}
+                          consultations={consultations || []}
+                          prescriptions={patientPrescriptions}
+                          labRequests={patientLabs}
+                          imagingRequests={patientImaging}
+                          visits={patientVisits}
+                        />
+                      </div>
+                      <div className="mt-2 w-full no-print">
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => setDeceasedDialogOpen(true)}
+                        >
+                          <Skull className="h-4 w-4" />Déclarer décédé
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Badge variant="destructive" className="mb-2">Décédé(e)</Badge>
+                      <div className="flex gap-2 w-full no-print">
+                        <Button variant="outline" className="flex-1 gap-2" onClick={() => setDeceasedActionsOpen(true)}>
+                          <FileText className="h-4 w-4" />Certificats
+                        </Button>
+                        <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
+                          <Printer className="h-4 w-4" />Imprimer
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <Separator className="my-6" />
@@ -673,7 +702,11 @@ const PatientDetail = () => {
 
       {/* Edit Patient Dialog */}
       {patient && (
-        <EditPatientDialog patient={patient} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+        <>
+          <EditPatientDialog patient={patient} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+          <DeclareDeceasedDialog patient={patient} open={deceasedDialogOpen} onOpenChange={setDeceasedDialogOpen} />
+          <DeceasedPatientActions patient={patient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
+        </>
       )}
     </AppLayout>
   );
