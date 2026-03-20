@@ -146,13 +146,17 @@ export default function Billing() {
       return;
     }
 
-    const items: NewInvoiceItem[] = selectedBillable.map(b => ({
-      type: b.type,
-      description: b.description,
-      quantity: b.quantity,
-      unit_price: b.unit_price,
-      reference_id: b.reference_id,
-    }));
+    const items: NewInvoiceItem[] = selectedBillable.map(b => {
+      const idx = (billableItems || []).indexOf(b);
+      const price = getItemPrice(b, idx);
+      return {
+        type: b.type,
+        description: b.description,
+        quantity: b.quantity,
+        unit_price: price,
+        reference_id: b.reference_id,
+      };
+    });
 
     try {
       await createInvoice.mutateAsync({
