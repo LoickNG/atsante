@@ -93,7 +93,7 @@ export default function Hospitalizations() {
       });
       toast.success('Patient admis en hospitalisation');
       setAdmitDialogOpen(false);
-      setAdmitPatientId(''); setAdmitRoomId(''); setAdmitReason('');
+      setAdmitPatient(null); setAdmitRoomId(''); setAdmitReason('');
     } catch (e: any) {
       toast.error(e.message);
     }
