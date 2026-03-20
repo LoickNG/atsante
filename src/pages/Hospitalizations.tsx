@@ -25,6 +25,7 @@ import {
 } from '@/hooks/useHospitalizations';
 import { useMedicalActs } from '@/hooks/useMedicalActs';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
+import { useSearchPatients, Patient } from '@/hooks/usePatients';
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 const formatDateTime = (d: string) => new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
