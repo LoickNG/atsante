@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,29 +9,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Activity, Loader2 } from 'lucide-react';
 import { z } from 'zod';
+import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
 
 const emailSchema = z.string().email('Email invalide');
 const passwordSchema = z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères');
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setShowChangePassword(true);
+        return;
+      }
       if (session?.user) {
-        navigate('/');
+        const mustChange = session.user.user_metadata?.must_change_password;
+        if (mustChange) {
+          setShowChangePassword(true);
+        } else if (!showChangePassword) {
+          navigate('/');
+        }
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        navigate('/');
+        const mustChange = session.user.user_metadata?.must_change_password;
+        if (mustChange) {
+          setShowChangePassword(true);
+        } else {
+          navigate('/');
+        }
       }
     });
 
