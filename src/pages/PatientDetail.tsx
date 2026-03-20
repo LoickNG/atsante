@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
@@ -5,37 +6,48 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
 import {
-  ArrowLeft, Printer, Edit, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileText, Eye, FileDown,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
 import { useVisits } from '@/hooks/useVisits';
-import { useConsultations } from '@/hooks/useConsultations';
+import { useConsultations, useUpdateConsultation } from '@/hooks/useConsultations';
 import { usePrescriptions } from '@/hooks/usePrescriptions';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 const PatientDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const { data: patient, isLoading: patientLoading } = usePatient(id);
   const { data: allVisits, isLoading: visitsLoading } = useVisits();
   const { data: consultations } = useConsultations(id);
   const { data: allPrescriptions } = usePrescriptions();
   const { data: allLabRequests } = useLabRequests();
   const { data: allImagingRequests } = useImagingRequests();
+  const updateConsultation = useUpdateConsultation();
+
+  const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
+  const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
+  const [followUpNote, setFollowUpNote] = useState('');
 
   const patientVisits = (allVisits || []).filter(v => v.patient_id === id);
   const patientLabs = (allLabRequests || []).filter(r => r.patient_id === id);
   const patientImaging = (allImagingRequests || []).filter(r => r.patient_id === id);
 
-  // Get prescriptions for this patient's consultations
   const patientConsultationIds = (consultations || []).map(c => c.id);
   const patientPrescriptions = (allPrescriptions || []).filter(
     p => patientConsultationIds.includes(p.consultation_id)
@@ -73,15 +85,97 @@ const PatientDetail = () => {
   };
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-
   const formatDateTime = (dateStr: string) => new Date(dateStr).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  // Group prescriptions by consultation
   const prescriptionsByConsultation = patientPrescriptions.reduce((acc, p) => {
     if (!acc[p.consultation_id]) acc[p.consultation_id] = [];
     acc[p.consultation_id].push(p);
     return acc;
   }, {} as Record<string, typeof patientPrescriptions>);
+
+  const handleOpenFollowUp = (consultationId: string) => {
+    setSelectedConsultationId(consultationId);
+    setFollowUpNote('');
+    setFollowUpDialogOpen(true);
+  };
+
+  const handleSaveFollowUp = async () => {
+    if (!selectedConsultationId || !followUpNote.trim()) return;
+    const consultation = (consultations || []).find(c => c.id === selectedConsultationId);
+    if (!consultation) return;
+
+    const existingNotes = Array.isArray(consultation.follow_up_notes) ? consultation.follow_up_notes : [];
+    const newNote = {
+      date: new Date().toISOString(),
+      author: user?.email || 'Médecin',
+      text: followUpNote.trim(),
+    };
+    const updatedNotes = [...existingNotes, newNote];
+
+    try {
+      await updateConsultation.mutateAsync({
+        id: selectedConsultationId,
+        follow_up_notes: updatedNotes as any,
+      });
+      toast.success('Commentaire de suivi ajouté');
+      setFollowUpDialogOpen(false);
+    } catch {
+      toast.error("Erreur lors de l'ajout du commentaire");
+    }
+  };
+
+  const handlePrintPrescriptions = (consultationId: string) => {
+    const presc = prescriptionsByConsultation[consultationId] || [];
+    if (presc.length === 0) return;
+    const consultation = (consultations || []).find(c => c.id === consultationId);
+    const html = `
+      <html><head><title>Ordonnance</title>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 700px; margin: 0 auto; }
+        h1 { font-size: 20px; color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 8px; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h2 { margin: 0; font-size: 24px; color: #1a365d; }
+        .header p { margin: 2px 0; color: #666; font-size: 12px; }
+        .patient-info { background: #f7fafc; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; }
+        .patient-info p { margin: 4px 0; font-size: 14px; }
+        .med { padding: 12px 0; border-bottom: 1px dashed #e2e8f0; }
+        .med:last-child { border-bottom: none; }
+        .med-name { font-weight: 700; font-size: 15px; }
+        .med-detail { color: #555; font-size: 13px; margin-top: 4px; }
+        .med-instructions { font-style: italic; color: #888; font-size: 12px; margin-top: 2px; }
+        .footer { margin-top: 40px; display: flex; justify-content: space-between; }
+        .footer div { text-align: center; }
+        .footer .line { border-top: 1px solid #333; width: 200px; margin-top: 60px; padding-top: 5px; font-size: 12px; }
+        @media print { body { padding: 20px; } }
+      </style></head><body>
+      <div class="header">
+        <h2>TétimianPro</h2>
+        <p>Centre Médical</p>
+        <p>Ordonnance Médicale</p>
+      </div>
+      <div class="patient-info">
+        <p><strong>Patient :</strong> ${patient.first_name} ${patient.last_name}</p>
+        <p><strong>Code :</strong> ${patient.code}</p>
+        <p><strong>Diagnostic :</strong> ${consultation?.diagnosis || 'N/A'}</p>
+        <p><strong>Date :</strong> ${consultation ? formatDate(consultation.date) : formatDate(new Date().toISOString())}</p>
+      </div>
+      <h1>Prescription</h1>
+      ${presc.map((p: any, i: number) => {
+        const medName = p.medication_name || p.medications?.name || 'Médicament';
+        return `<div class="med">
+          <div class="med-name">${i + 1}. ${medName}</div>
+          <div class="med-detail">${p.dosage} — ${p.frequency} — ${p.duration}</div>
+          ${p.instructions ? `<div class="med-instructions">"${p.instructions}"</div>` : ''}
+        </div>`;
+      }).join('')}
+      <div class="footer">
+        <div><div class="line">Date et cachet</div></div>
+        <div><div class="line">Signature du médecin</div></div>
+      </div>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); w.print(); }
+  };
 
   return (
     <AppLayout>
@@ -104,9 +198,7 @@ const PatientDetail = () => {
                     </AvatarFallback>
                   </Avatar>
                   <h2 className="text-xl font-bold">{patient.first_name} {patient.last_name}</h2>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'Féminin' : 'Masculin'}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-3">{calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'Féminin' : 'Masculin'}</p>
                   <div className="flex gap-2 mb-4">
                     {patient.blood_type && <Badge variant="secondary" className="bg-destructive/10 text-destructive">{patient.blood_type}</Badge>}
                     <Badge variant="outline">{patient.code}</Badge>
@@ -169,7 +261,6 @@ const PatientDetail = () => {
                   </>
                 )}
 
-                {/* Summary stats */}
                 <Separator className="my-4" />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
@@ -197,21 +288,11 @@ const PatientDetail = () => {
           <div className="lg:col-span-2">
             <Tabs defaultValue="consultations" className="w-full">
               <TabsList className="grid w-full grid-cols-5 no-print">
-                <TabsTrigger value="consultations" className="gap-1.5 text-xs">
-                  <Stethoscope className="h-3.5 w-3.5" />Consultations
-                </TabsTrigger>
-                <TabsTrigger value="prescriptions" className="gap-1.5 text-xs">
-                  <Pill className="h-3.5 w-3.5" />Ordonnances
-                </TabsTrigger>
-                <TabsTrigger value="analyses" className="gap-1.5 text-xs">
-                  <FlaskConical className="h-3.5 w-3.5" />Analyses
-                </TabsTrigger>
-                <TabsTrigger value="imagerie" className="gap-1.5 text-xs">
-                  <ImageIcon className="h-3.5 w-3.5" />Imagerie
-                </TabsTrigger>
-                <TabsTrigger value="historique" className="gap-1.5 text-xs">
-                  <Clock className="h-3.5 w-3.5" />Visites
-                </TabsTrigger>
+                <TabsTrigger value="consultations" className="gap-1.5 text-xs"><Stethoscope className="h-3.5 w-3.5" />Consultations</TabsTrigger>
+                <TabsTrigger value="prescriptions" className="gap-1.5 text-xs"><Pill className="h-3.5 w-3.5" />Ordonnances</TabsTrigger>
+                <TabsTrigger value="analyses" className="gap-1.5 text-xs"><FlaskConical className="h-3.5 w-3.5" />Analyses</TabsTrigger>
+                <TabsTrigger value="imagerie" className="gap-1.5 text-xs"><ImageIcon className="h-3.5 w-3.5" />Imagerie</TabsTrigger>
+                <TabsTrigger value="historique" className="gap-1.5 text-xs"><Clock className="h-3.5 w-3.5" />Visites</TabsTrigger>
               </TabsList>
 
               {/* Consultations Tab */}
@@ -230,6 +311,7 @@ const PatientDetail = () => {
                       <div className="space-y-4">
                         {consultations.map((c) => {
                           const consultPrescriptions = prescriptionsByConsultation[c.id] || [];
+                          const followUpNotes = Array.isArray(c.follow_up_notes) ? c.follow_up_notes : [];
                           return (
                             <div key={c.id} className="p-4 border rounded-lg bg-muted/30">
                               <div className="flex items-center justify-between mb-3">
@@ -237,9 +319,19 @@ const PatientDetail = () => {
                                   <p className="font-semibold text-base">{c.diagnosis || 'Diagnostic non renseigné'}</p>
                                   <p className="text-xs text-muted-foreground">{formatDateTime(c.date)}</p>
                                 </div>
-                                <Badge variant={c.status === 'termine' ? 'default' : 'secondary'}>
-                                  {c.status === 'termine' ? 'Terminée' : 'En cours'}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleOpenFollowUp(c.id)}>
+                                    <MessageSquarePlus className="h-3.5 w-3.5" />Suivi
+                                  </Button>
+                                  {consultPrescriptions.length > 0 && (
+                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handlePrintPrescriptions(c.id)}>
+                                      <Printer className="h-3.5 w-3.5" />Ordonnance
+                                    </Button>
+                                  )}
+                                  <Badge variant={c.status === 'termine' ? 'default' : 'secondary'}>
+                                    {c.status === 'termine' ? 'Terminée' : 'En cours'}
+                                  </Badge>
+                                </div>
                               </div>
 
                               {c.symptoms && (
@@ -256,7 +348,6 @@ const PatientDetail = () => {
                                 </div>
                               )}
 
-                              {/* Vitals */}
                               {(c.temperature || c.heart_rate || c.blood_pressure || c.weight || c.height) && (
                                 <div className="flex flex-wrap gap-2 mt-2 mb-2">
                                   {c.temperature && <Badge variant="outline" className="text-xs">🌡️ {c.temperature}°C</Badge>}
@@ -267,7 +358,7 @@ const PatientDetail = () => {
                                 </div>
                               )}
 
-                              {/* Prescriptions for this consultation */}
+                              {/* Prescriptions */}
                               {consultPrescriptions.length > 0 && (
                                 <div className="mt-3 p-3 bg-background rounded border">
                                   <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
@@ -277,12 +368,29 @@ const PatientDetail = () => {
                                     {consultPrescriptions.map((p: any) => (
                                       <div key={p.id} className="flex items-center justify-between text-sm">
                                         <div>
-                                          <span className="font-medium">{p.medications?.name || 'Médicament'}</span>
+                                          <span className="font-medium">{p.medication_name || p.medications?.name || 'Médicament'}</span>
                                           <span className="text-muted-foreground ml-2">{p.dosage} • {p.frequency} • {p.duration}</span>
                                         </div>
                                         <Badge variant={p.dispensed ? 'default' : 'outline'} className="text-[10px]">
-                                          {p.dispensed ? 'Délivré' : 'En attente'}
+                                          {p.dispensed ? 'Délivré' : p.medication_id ? 'En attente' : 'Externe'}
                                         </Badge>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Follow-up notes */}
+                              {followUpNotes.length > 0 && (
+                                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded border border-blue-200 dark:border-blue-800">
+                                  <p className="text-xs font-medium text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-1">
+                                    <MessageSquarePlus className="h-3 w-3" /> Notes de suivi ({followUpNotes.length})
+                                  </p>
+                                  <div className="space-y-2">
+                                    {(followUpNotes as any[]).map((note: any, idx: number) => (
+                                      <div key={idx} className="text-sm border-l-2 border-blue-300 pl-3">
+                                        <p className="text-xs text-muted-foreground">{formatDateTime(note.date)} — {note.author}</p>
+                                        <p className="mt-0.5">{note.text}</p>
                                       </div>
                                     ))}
                                   </div>
@@ -317,7 +425,7 @@ const PatientDetail = () => {
                                 <Pill className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex-1">
-                                <p className="font-medium">{p.medications?.name || 'Médicament'}</p>
+                                <p className="font-medium">{p.medication_name || p.medications?.name || 'Médicament'}</p>
                                 <p className="text-xs text-muted-foreground">{p.dosage} • {p.frequency} • {p.duration}</p>
                                 {p.instructions && <p className="text-xs text-muted-foreground italic mt-0.5">"{p.instructions}"</p>}
                                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -327,12 +435,10 @@ const PatientDetail = () => {
                               </div>
                               <div className="text-right">
                                 <Badge variant={p.dispensed ? 'default' : 'outline'} className="text-[10px]">
-                                  {p.dispensed ? 'Délivré' : 'En attente'}
+                                  {p.dispensed ? 'Délivré' : p.medication_id ? 'En attente' : 'Externe'}
                                 </Badge>
                                 {p.dispensed_at && (
-                                  <p className="text-[10px] text-muted-foreground mt-1">
-                                    le {formatDate(p.dispensed_at)}
-                                  </p>
+                                  <p className="text-[10px] text-muted-foreground mt-1">le {formatDate(p.dispensed_at)}</p>
                                 )}
                               </div>
                             </div>
@@ -469,8 +575,8 @@ const PatientDetail = () => {
           <div className="patient-card-print mx-auto">
             <div className="flex items-start justify-between h-full">
               <div className="flex-1">
-                <h3 className="font-bold text-lg text-primary mb-1">SantéPro</h3>
-                <p className="text-xs text-muted-foreground mb-3">Clinique Médicale</p>
+                <h3 className="font-bold text-lg text-primary mb-1">TétimianPro</h3>
+                <p className="text-xs text-muted-foreground mb-3">Centre Médical</p>
                 <div className="space-y-1">
                   <p className="font-semibold">{patient.first_name} {patient.last_name}</p>
                   <p className="text-sm text-muted-foreground">
@@ -487,6 +593,31 @@ const PatientDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Follow-up Notes Dialog */}
+      <Dialog open={followUpDialogOpen} onOpenChange={setFollowUpDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ajouter un commentaire de suivi</DialogTitle>
+            <DialogDescription>
+              Ajoutez un commentaire basé sur les résultats d'analyses ou le suivi du patient
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            placeholder="Ex: Résultats NFS normaux, poursuivre le traitement..."
+            className="min-h-[120px]"
+            value={followUpNote}
+            onChange={(e) => setFollowUpNote(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFollowUpDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleSaveFollowUp} disabled={!followUpNote.trim() || updateConsultation.isPending} className="gap-1.5">
+              {updateConsultation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
