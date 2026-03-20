@@ -179,6 +179,9 @@ const NewPatient = () => {
               <CardDescription>Données d'identification du patient</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2 flex justify-center pb-2">
+                <WebcamCapture onCapture={handlePhotoCapture} capturedUrl={photoPreviewUrl} onClear={handlePhotoClear} />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Nom *</Label>
                 <Input id="lastName" placeholder="Ex: Mahamat" value={formData.lastName} onChange={(e) => handleChange('lastName', e.target.value)} required />
