@@ -68,6 +68,12 @@ export const navigationConfig: NavSection[] = [
         roles: ['admin', 'medecin', 'infirmier'],
       },
       {
+        title: 'Hospitalisations',
+        href: '/hospitalisations',
+        icon: BedDouble,
+        roles: ['admin', 'medecin', 'infirmier'],
+      },
+      {
         title: 'File d\'attente',
         href: '/file-attente',
         icon: Activity,
