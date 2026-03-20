@@ -30,6 +30,7 @@ import { usePrescriptions } from '@/hooks/usePrescriptions';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
+import { useHospitalizations } from '@/hooks/useHospitalizations';
 import { toast } from 'sonner';
 
 const PatientDetail = () => {
