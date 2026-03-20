@@ -104,9 +104,9 @@ const PatientsList = () => {
           </Button>
         </PageHeader>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        {/* Search + Filter */}
+        <div className="mb-6 flex items-center gap-3 flex-wrap">
+          <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Rechercher par nom, code ou téléphone..."
@@ -115,7 +115,24 @@ const PatientsList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          {deceasedCount > 0 && (
+            <Button
+              variant={showArchived ? 'default' : 'outline'}
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowArchived(!showArchived)}
+            >
+              <Archive className="h-4 w-4" />
+              {showArchived ? 'Voir patients actifs' : `Archivés (${deceasedCount})`}
+            </Button>
+          )}
         </div>
+
+        {showArchived && (
+          <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-muted text-sm text-muted-foreground">
+            Vous consultez les fiches des patients décédés. Ces dossiers sont archivés.
+          </div>
+        )}
 
         {/* Table */}
         <div className="rounded-xl border bg-card overflow-hidden">
