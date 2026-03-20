@@ -91,9 +91,9 @@ export function MedicalActsManagement() {
     onError: (e: any) => toast({ title: 'Erreur', description: e.message, variant: 'destructive' }),
   });
 
-  const openCreate = () => {
+  const openCreate = (category?: string) => {
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, category: category || 'consultation' });
     setDialogOpen(true);
   };
 
