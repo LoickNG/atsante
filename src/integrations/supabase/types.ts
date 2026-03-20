@@ -717,11 +717,15 @@ export type Database = {
           address: string | null
           allergies: string[] | null
           blood_type: string | null
+          cause_of_death: string | null
           code: string
           company_id: string | null
           convention_id: string | null
           created_at: string
           date_of_birth: string
+          death_declared_by: string | null
+          death_notes: string | null
+          deceased_at: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           emergency_contact_relationship: string | null
@@ -729,20 +733,26 @@ export type Database = {
           first_name: string
           gender: string
           id: string
+          is_deceased: boolean
           last_name: string
           phone: string
           photo_url: string | null
+          place_of_death: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
           allergies?: string[] | null
           blood_type?: string | null
+          cause_of_death?: string | null
           code: string
           company_id?: string | null
           convention_id?: string | null
           created_at?: string
           date_of_birth: string
+          death_declared_by?: string | null
+          death_notes?: string | null
+          deceased_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relationship?: string | null
@@ -750,20 +760,26 @@ export type Database = {
           first_name: string
           gender: string
           id?: string
+          is_deceased?: boolean
           last_name: string
           phone: string
           photo_url?: string | null
+          place_of_death?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
           allergies?: string[] | null
           blood_type?: string | null
+          cause_of_death?: string | null
           code?: string
           company_id?: string | null
           convention_id?: string | null
           created_at?: string
           date_of_birth?: string
+          death_declared_by?: string | null
+          death_notes?: string | null
+          deceased_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relationship?: string | null
@@ -771,9 +787,11 @@ export type Database = {
           first_name?: string
           gender?: string
           id?: string
+          is_deceased?: boolean
           last_name?: string
           phone?: string
           photo_url?: string | null
+          place_of_death?: string | null
           updated_at?: string
         }
         Relationships: [
