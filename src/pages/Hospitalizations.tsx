@@ -589,17 +589,13 @@ export default function Hospitalizations() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Enregistrer un soin</DialogTitle>
-            <DialogDescription>Ajoutez un soin facturable pour ce patient</DialogDescription>
+            <DialogDescription>Ajoutez un soin pour ce patient</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Type de soin *</Label>
               <Select value={careType} onValueChange={(val) => {
                 setCareType(val);
-                // Auto-fill price from medical_acts if match found
-                const act = (medicalActs || []).find(a => a.name.toLowerCase().includes(val.toLowerCase()));
-                if (act) setCareUnitPrice(String(act.unit_price));
-                // Reset medication if not medication type
                 if (val !== 'Administration médicament' && val !== 'Injection' && val !== 'Perfusion') {
                   setCareMedicationId(''); setCareMedSearch('');
                 }
@@ -635,14 +631,10 @@ export default function Hospitalizations() {
                           onClick={() => {
                             setCareMedicationId(m.id);
                             setCareMedSearch(m.name);
-                            setCareUnitPrice(String(m.unit_price));
                             setCareDescription(m.name);
                           }}
                         >
-                          <div className="flex justify-between">
-                            <span className="font-medium">{m.name}</span>
-                            <span className="text-muted-foreground">{formatCurrency(Number(m.unit_price))}</span>
-                          </div>
+                          <span className="font-medium">{m.name}</span>
                           <div className="flex gap-2 text-xs text-muted-foreground">
                             <span>Stock: {m.stock_quantity}</span>
                             <span>•</span>
@@ -660,26 +652,10 @@ export default function Hospitalizations() {
               <Textarea value={careDescription} onChange={e => setCareDescription(e.target.value)} placeholder="Détails du soin..." rows={2} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" />Prix unitaire (FCFA)
-                </Label>
-                <Input type="number" value={careUnitPrice} onChange={e => setCareUnitPrice(e.target.value)} placeholder="0" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Quantité</Label>
-                <Input type="number" min="1" value={careQuantity} onChange={e => setCareQuantity(e.target.value)} placeholder="1" />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Quantité</Label>
+              <Input type="number" min="1" value={careQuantity} onChange={e => setCareQuantity(e.target.value)} placeholder="1" />
             </div>
-
-            {/* Total preview */}
-            {(parseFloat(careUnitPrice) || 0) > 0 && (
-              <div className="flex justify-between items-center p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <span className="text-sm font-medium">Total</span>
-                <span className="font-bold text-primary">{formatCurrency((parseFloat(careUnitPrice) || 0) * (parseInt(careQuantity) || 1))}</span>
-              </div>
-            )}
 
             <div className="space-y-1.5">
               <Label>Notes</Label>
@@ -691,6 +667,91 @@ export default function Hospitalizations() {
             <Button onClick={handleAddCare} disabled={addCare.isPending || !careType || !careDescription}>
               {addCare.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Exam Dialog */}
+      <Dialog open={examDialogOpen} onOpenChange={setExamDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-primary" />
+              Demander un examen
+            </DialogTitle>
+            <DialogDescription>
+              {selectedHosp?.patients && `Pour ${selectedHosp.patients.first_name} ${selectedHosp.patients.last_name}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Type d'examen *</Label>
+              <Select value={examCategory} onValueChange={(v) => { setExamCategory(v as 'laboratoire' | 'imagerie'); setExamTestType(''); setExamBodyPart(''); }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="laboratoire">
+                    <span className="flex items-center gap-2"><FlaskConical className="h-3.5 w-3.5" />Laboratoire</span>
+                  </SelectItem>
+                  <SelectItem value="imagerie">
+                    <span className="flex items-center gap-2"><ScanLine className="h-3.5 w-3.5" />Imagerie</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {examCategory === 'laboratoire' ? (
+              <div className="space-y-1.5">
+                <Label>Type d'analyse *</Label>
+                <Input value={examTestType} onChange={e => setExamTestType(e.target.value)} placeholder="Ex: NFS, Glycémie, Bilan hépatique..." />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Type d'examen *</Label>
+                  <Select value={examTestType} onValueChange={setExamTestType}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Radiographie">Radiographie</SelectItem>
+                      <SelectItem value="Échographie">Échographie</SelectItem>
+                      <SelectItem value="Scanner">Scanner</SelectItem>
+                      <SelectItem value="IRM">IRM</SelectItem>
+                      <SelectItem value="ECG">ECG</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Partie du corps *</Label>
+                  <Input value={examBodyPart} onChange={e => setExamBodyPart(e.target.value)} placeholder="Ex: Thorax, Abdomen, Genou..." />
+                </div>
+              </>
+            )}
+
+            <div className="space-y-1.5">
+              <Label>Priorité</Label>
+              <Select value={examPriority} onValueChange={(v) => setExamPriority(v as 'normale' | 'urgente')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normale">Normale</SelectItem>
+                  <SelectItem value="urgente">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Annuler</Button>
+            <Button
+              onClick={handleAddExam}
+              disabled={
+                (createLabRequest.isPending || createImagingRequest.isPending) ||
+                !examTestType ||
+                (examCategory === 'imagerie' && !examBodyPart)
+              }
+            >
+              {(createLabRequest.isPending || createImagingRequest.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Envoyer la demande
             </Button>
           </DialogFooter>
         </DialogContent>
