@@ -16,6 +16,7 @@ const CATEGORIES = [
   { value: 'consultation', label: 'Consultation' },
   { value: 'analyse', label: 'Analyse / Laboratoire' },
   { value: 'imagerie', label: 'Imagerie' },
+  { value: 'hospitalisation', label: 'Hospitalisation' },
   { value: 'soins', label: 'Soins / Actes médicaux' },
   { value: 'autre', label: 'Autre' },
 ];
