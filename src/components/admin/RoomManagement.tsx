@@ -61,11 +61,12 @@ export function RoomManagement() {
       return;
     }
     try {
+      const payload = { ...form, floor: form.floor || null, notes: form.notes || null, price_per_night: parseFloat(form.price_per_night) || 0 };
       if (editingId) {
-        await updateRoom.mutateAsync({ id: editingId, ...form, floor: form.floor || null, notes: form.notes || null });
+        await updateRoom.mutateAsync({ id: editingId, ...payload });
         toast({ title: 'Chambre modifiée' });
       } else {
-        await createRoom.mutateAsync({ ...form, floor: form.floor || undefined, notes: form.notes || undefined });
+        await createRoom.mutateAsync(payload);
         toast({ title: 'Chambre ajoutée' });
       }
       setDialogOpen(false);
