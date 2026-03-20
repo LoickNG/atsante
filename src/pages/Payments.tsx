@@ -431,15 +431,18 @@ export default function Payments() {
             </div>
           ) : null}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={recordPayment.isPending || totalEntered <= 0 || totalEntered > remaining}
-            >
-              {recordPayment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirmer le paiement
-            </Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedInvoice && <InvoicePDFExport invoice={selectedInvoice} />}
+            <div className="flex gap-2 ml-auto">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={recordPayment.isPending || totalEntered <= 0 || totalEntered > remaining}
+              >
+                {recordPayment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Confirmer le paiement
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
