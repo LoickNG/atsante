@@ -68,6 +68,7 @@ export default function Billing() {
   const [patientConvention, setPatientConvention] = useState<ConventionWithRelations | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [priceOverrides, setPriceOverrides] = useState<Record<number, number>>({});
 
   const { data: searchResults } = useSearchPatients(patientSearch);
   const { data: billableItems, isLoading: billableLoading } = usePatientBillableItems(selectedPatient?.id);
