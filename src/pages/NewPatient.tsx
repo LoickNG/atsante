@@ -42,11 +42,36 @@ import { WebcamCapture } from '@/components/patient/WebcamCapture';
 const NewPatient = () => {
   const navigate = useNavigate();
   const createPatient = useCreatePatient();
+  const updatePatient = useUpdatePatient();
   const { data: companies } = usePartnerCompanies();
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [createdPatient, setCreatedPatient] = useState<Patient | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const { data: activeConventions } = useActiveConventions(selectedCompanyId || undefined);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+
+  const handlePhotoCapture = useCallback((blob: Blob) => {
+    setPhotoBlob(blob);
+    setPhotoPreviewUrl(URL.createObjectURL(blob));
+  }, []);
+
+  const handlePhotoClear = useCallback(() => {
+    setPhotoBlob(null);
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoPreviewUrl(null);
+  }, [photoPreviewUrl]);
+
+  const uploadPhoto = async (patientId: string): Promise<string | null> => {
+    if (!photoBlob) return null;
+    const filePath = `${patientId}.jpg`;
+    const { error } = await supabase.storage
+      .from('patient-photos')
+      .upload(filePath, photoBlob, { contentType: 'image/jpeg', upsert: true });
+    if (error) { console.error('Photo upload error:', error); return null; }
+    const { data } = supabase.storage.from('patient-photos').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
 
   const [formData, setFormData] = useState({
     firstName: '',
