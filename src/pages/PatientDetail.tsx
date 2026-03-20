@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
-import { 
+import {
   ArrowLeft, Printer, Edit, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileText, Eye,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileText, Eye, FileDown,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
 import { useVisits } from '@/hooks/useVisits';
