@@ -257,6 +257,40 @@ const WaitingQueue = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Vital Signs Section */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-primary" />
+                    Signes vitaux (prise par l'infirmier(ère))
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3 p-3 border rounded-lg bg-muted/30">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Thermometer className="h-3 w-3" />Température (°C)
+                      </Label>
+                      <Input type="number" step="0.1" placeholder="37.0" value={temperature} onChange={e => setTemperature(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Tension artérielle</Label>
+                      <Input placeholder="12/8" value={bloodPressure} onChange={e => setBloodPressure(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Heart className="h-3 w-3" />Pouls (bpm)
+                      </Label>
+                      <Input type="number" placeholder="72" value={heartRate} onChange={e => setHeartRate(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Poids (kg)</Label>
+                      <Input type="number" step="0.1" placeholder="70" value={weight} onChange={e => setWeight(e.target.value)} />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <Label className="text-xs text-muted-foreground">Taille (cm)</Label>
+                      <Input type="number" placeholder="170" value={height} onChange={e => setHeight(e.target.value)} />
+                    </div>
+                  </div>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
