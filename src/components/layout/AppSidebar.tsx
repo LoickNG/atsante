@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSidebarCollapse } from './AppLayout';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,7 +18,7 @@ interface AppSidebarProps {
 export function AppSidebar({
   className
 }: AppSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed } = useSidebarCollapse();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
@@ -37,7 +37,7 @@ export function AppSidebar({
     if (href === '/') return location.pathname === '/';
     return location.pathname.startsWith(href);
   };
-  return <aside className={cn('flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300', collapsed ? 'w-[70px]' : 'w-[260px]', className)}>
+  return <aside className={cn('fixed top-0 left-0 h-screen flex flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300 z-30', collapsed ? 'w-[70px]' : 'w-[260px]', className)}>
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && <div className="flex items-center gap-2">
