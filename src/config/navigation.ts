@@ -12,6 +12,7 @@ import {
   FileText,
   Activity,
   FileDown,
+  BedDouble,
   LucideIcon,
 } from 'lucide-react';
 
