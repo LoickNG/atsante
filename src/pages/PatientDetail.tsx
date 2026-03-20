@@ -15,8 +15,9 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera,
 } from 'lucide-react';
+import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
@@ -45,6 +46,7 @@ const PatientDetail = () => {
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleReopenConsultation = async (consultationId: string, visitId: string) => {
     setIsReopening(true);
@@ -207,14 +209,24 @@ const PatientDetail = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
-                  <Avatar className="h-20 w-20 mb-4">
-                    {(patient as any).photo_url && (
-                      <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
-                    )}
-                    <AvatarFallback className={cn('text-2xl font-semibold', patient.gender === 'F' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700')}>
-                      {patient.first_name[0]}{patient.last_name[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative group mb-4">
+                    <Avatar className="h-20 w-20">
+                      {(patient as any).photo_url && (
+                        <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
+                      )}
+                      <AvatarFallback className={cn('text-2xl font-semibold', patient.gender === 'F' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700')}>
+                        {patient.first_name[0]}{patient.last_name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={() => setEditDialogOpen(true)}
+                      className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      title="Modifier la photo"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                   <h2 className="text-xl font-bold">{patient.first_name} {patient.last_name}</h2>
                   <p className="text-sm text-muted-foreground mb-3">{calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'Féminin' : 'Masculin'}</p>
                   <div className="flex gap-2 mb-4">
@@ -226,9 +238,14 @@ const PatientDetail = () => {
                     <p className="text-xs text-muted-foreground mt-2 font-mono">{patient.code}</p>
                   </div>
                   <div className="flex gap-2 w-full no-print">
+                    <Button variant="outline" className="flex-1 gap-2" onClick={() => setEditDialogOpen(true)}>
+                      <Pencil className="h-4 w-4" />Modifier
+                    </Button>
                     <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
                       <Printer className="h-4 w-4" />Imprimer
                     </Button>
+                  </div>
+                  <div className="mt-2 w-full no-print">
                     <PatientPDFExport
                       patient={patient}
                       consultations={consultations || []}
@@ -642,6 +659,11 @@ const PatientDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Patient Dialog */}
+      {patient && (
+        <EditPatientDialog patient={patient} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+      )}
     </AppLayout>
   );
 };
