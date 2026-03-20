@@ -707,7 +707,28 @@ export default function Hospitalizations() {
             {examCategory === 'laboratoire' ? (
               <div className="space-y-1.5">
                 <Label>Type d'analyse *</Label>
-                <Input value={examTestType} onChange={e => setExamTestType(e.target.value)} placeholder="Ex: NFS, Glycémie, Bilan hépatique..." />
+                <Select value={examTestType} onValueChange={setExamTestType}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner une analyse..." /></SelectTrigger>
+                  <SelectContent>
+                    {(medicalActs || [])
+                      .filter(a => a.category === 'laboratoire')
+                      .map(a => (
+                        <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                      ))}
+                    <SelectItem value="NFS">NFS</SelectItem>
+                    <SelectItem value="Glycémie">Glycémie</SelectItem>
+                    <SelectItem value="Bilan hépatique">Bilan hépatique</SelectItem>
+                    <SelectItem value="Bilan rénal">Bilan rénal</SelectItem>
+                    <SelectItem value="Ionogramme">Ionogramme</SelectItem>
+                    <SelectItem value="CRP">CRP</SelectItem>
+                    <SelectItem value="VS">VS</SelectItem>
+                    <SelectItem value="Hémoculture">Hémoculture</SelectItem>
+                    <SelectItem value="ECBU">ECBU</SelectItem>
+                    <SelectItem value="Goutte épaisse">Goutte épaisse</SelectItem>
+                    <SelectItem value="Groupe sanguin">Groupe sanguin</SelectItem>
+                    <SelectItem value="Sérologie">Sérologie</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ) : (
               <>
