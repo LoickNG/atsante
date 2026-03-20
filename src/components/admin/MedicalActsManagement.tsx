@@ -132,6 +132,21 @@ export function MedicalActsManagement() {
 
   const getCategoryLabel = (cat: string) => CATEGORIES.find(c => c.value === cat)?.label || cat;
 
+  // Group acts by category
+  const groupedActs = CATEGORIES.reduce((acc, cat) => {
+    acc[cat.value] = filtered.filter(a => a.category === cat.value);
+    return acc;
+  }, {} as Record<string, typeof filtered>);
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    consultation: 'bg-blue-100 text-blue-800 border-blue-200',
+    laboratoire: 'bg-purple-100 text-purple-800 border-purple-200',
+    imagerie: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+    acte_medical: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    hospitalisation: 'bg-orange-100 text-orange-800 border-orange-200',
+    autre: 'bg-gray-100 text-gray-800 border-gray-200',
+  };
+
   return (
     <>
       <Card>
@@ -149,15 +164,32 @@ export function MedicalActsManagement() {
                 {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button onClick={openCreate} className="gap-1"><Plus className="h-4 w-4" />Ajouter</Button>
+            <Button onClick={() => openCreate()} className="gap-1"><Plus className="h-4 w-4" />Ajouter</Button>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Quick add buttons by category */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {CATEGORIES.map(cat => (
+              <Button
+                key={cat.value}
+                variant="outline"
+                size="sm"
+                className={`gap-1.5 ${CATEGORY_COLORS[cat.value] || ''}`}
+                onClick={() => openCreate(cat.value)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {cat.label}
+              </Button>
+            ))}
+          </div>
+
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Aucun acte trouvé</p>
-          ) : (
+          ) : categoryFilter !== 'all' ? (
+            /* Flat table when filtering by specific category */
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -186,6 +218,54 @@ export function MedicalActsManagement() {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          ) : (
+            /* Grouped by category */
+            <div className="space-y-6">
+              {CATEGORIES.map(cat => {
+                const catActs = groupedActs[cat.value] || [];
+                if (catActs.length === 0) return null;
+                return (
+                  <div key={cat.value}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge className={CATEGORY_COLORS[cat.value]}>{cat.label}</Badge>
+                        <span className="text-sm text-muted-foreground">{catActs.length} acte(s)</span>
+                      </div>
+                      <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => openCreate(cat.value)}>
+                        <Plus className="h-3.5 w-3.5" />Ajouter
+                      </Button>
+                    </div>
+                    <div className="overflow-x-auto border rounded-lg">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/30">
+                            <TableHead>Code</TableHead>
+                            <TableHead>Nom</TableHead>
+                            <TableHead className="text-right">Prix unitaire</TableHead>
+                            <TableHead className="w-[80px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {catActs.map(act => (
+                            <TableRow key={act.id}>
+                              <TableCell className="font-mono text-sm">{act.code}</TableCell>
+                              <TableCell className="font-medium">{act.name}</TableCell>
+                              <TableCell className="text-right font-semibold">{formatCurrency(Number(act.unit_price))}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 justify-end">
+                                  <Button variant="ghost" size="icon" onClick={() => openEdit(act)}><Pencil className="h-4 w-4" /></Button>
+                                  <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(act.id)}><Trash2 className="h-4 w-4" /></Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
