@@ -186,6 +186,10 @@ export function RoomManagement() {
               </div>
             </div>
             <div className="space-y-1.5">
+              <Label>Prix par nuit (FCFA) *</Label>
+              <Input type="number" value={form.price_per_night} onChange={e => setForm(f => ({ ...f, price_per_night: e.target.value }))} placeholder="15000" />
+            </div>
+            <div className="space-y-1.5">
               <Label>Notes</Label>
               <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optionnel" />
             </div>
