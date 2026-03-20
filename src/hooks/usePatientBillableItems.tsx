@@ -102,18 +102,26 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .eq('patient_id', patientId)
         .in('status', ['termine', 'en_cours', 'demande']);
 
-      // Try to find lab act prices
+      // Try to find lab act prices - search in both 'laboratoire' and 'analyse' categories
       const { data: labActs } = await supabase
         .from('medical_acts')
         .select('id, name, unit_price, code, category')
-        .eq('category', 'laboratoire');
+        .in('category', ['laboratoire', 'analyse']);
 
       for (const lr of labRequests || []) {
         if (!billedReferenceIds.includes(lr.id)) {
-          const matchAct = (labActs || []).find(
-            a => a.name.toLowerCase().includes(lr.test_type.toLowerCase()) || 
-                 lr.test_type.toLowerCase().includes(a.name.toLowerCase())
-          );
+          // Improved fuzzy matching: check if either string contains words from the other
+          const testLower = lr.test_type.toLowerCase();
+          const matchAct = (labActs || []).find(a => {
+            const actLower = a.name.toLowerCase();
+            // Direct contains
+            if (actLower.includes(testLower) || testLower.includes(actLower)) return true;
+            // Word-based matching: extract significant words (3+ chars) and check overlap
+            const testWords = testLower.split(/[\s(),\-\/]+/).filter(w => w.length >= 3);
+            const actWords = actLower.split(/[\s(),\-\/]+/).filter(w => w.length >= 3);
+            const matchCount = testWords.filter(tw => actWords.some(aw => aw.includes(tw) || tw.includes(aw))).length;
+            return matchCount >= 1 && matchCount >= Math.min(testWords.length, actWords.length) * 0.5;
+          });
           items.push({
             type: 'analyse',
             description: lr.test_type,
