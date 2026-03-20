@@ -126,6 +126,7 @@ export function RoomManagement() {
                           {room.comfort === 'climatise' ? 'Climatisé' : 'Ventilé'}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right font-semibold">{formatCurrency(Number(room.price_per_night))}</TableCell>
                       <TableCell>{room.floor || '-'}</TableCell>
                       <TableCell>
                         <Badge variant={room.is_available ? 'default' : 'secondary'}>
