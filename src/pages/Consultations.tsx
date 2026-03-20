@@ -46,15 +46,18 @@ interface PrescriptionItem {
 
 const Consultations = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: queueVisits, isLoading: queueLoading } = useWaitingQueue();
   const { data: medications } = useMedications();
   const { data: labActs } = useLabActs();
   const { data: imagingActs } = useImagingActs();
+  const { data: availableRooms } = useAvailableRooms();
   const createConsultation = useCreateConsultation();
   const updateVisit = useUpdateVisit();
   const createLabRequest = useCreateLabRequest();
   const createImagingRequest = useCreateImagingRequest();
   const createPrescription = useCreatePrescription();
+  const createHosp = useCreateHospitalization();
 
   const [selectedVisit, setSelectedVisit] = useState<VisitWithPatient | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,6 +74,11 @@ const Consultations = () => {
   const [selectedImagingExams, setSelectedImagingExams] = useState<string[]>([]);
   const [imagingBodyPart, setImagingBodyPart] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Hospitalization dialog
+  const [hospDialogOpen, setHospDialogOpen] = useState(false);
+  const [hospRoomId, setHospRoomId] = useState('');
+  const [hospReason, setHospReason] = useState('');
 
   const selectedPatient = selectedVisit?.patients || null;
 
