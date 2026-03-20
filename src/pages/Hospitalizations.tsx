@@ -456,9 +456,21 @@ export default function Hospitalizations() {
                             <span className="text-xs text-muted-foreground">{formatDateTime(c.administered_at)}</span>
                           </div>
                           <p>{c.description}</p>
-                          {c.notes && <p className="text-xs text-muted-foreground mt-1">{c.notes}</p>}
+                          <div className="flex items-center justify-between mt-1">
+                            {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
+                            {c.total_price > 0 && (
+                              <span className="text-xs font-semibold text-primary ml-auto">
+                                {c.quantity > 1 ? `${c.quantity} × ${formatCurrency(c.unit_price)} = ` : ''}{formatCurrency(c.total_price)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
+                      {/* Total soins */}
+                      <div className="flex justify-between items-center p-2 rounded-lg bg-primary/5 border border-primary/20 text-sm">
+                        <span className="font-medium">Total soins</span>
+                        <span className="font-bold text-primary">{formatCurrency(careList.reduce((s, c) => s + Number(c.total_price || 0), 0))}</span>
+                      </div>
                     </div>
                   )}
                 </div>
