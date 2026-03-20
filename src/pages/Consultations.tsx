@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Search, Stethoscope, Plus, Clock, Thermometer, Heart, Activity,
-  Pill, FlaskConical, ImageIcon, Save, Check, AlertTriangle, Loader2, X, Printer,
+  Pill, FlaskConical, ImageIcon, Save, Check, AlertTriangle, Loader2, X, Printer, BedDouble,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
