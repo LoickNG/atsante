@@ -39,10 +39,25 @@ const PatientDetail = () => {
   const { data: allLabRequests } = useLabRequests();
   const { data: allImagingRequests } = useImagingRequests();
   const updateConsultation = useUpdateConsultation();
+  const updateVisit = useUpdateVisit();
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
   const [followUpNote, setFollowUpNote] = useState('');
+  const [isReopening, setIsReopening] = useState(false);
+
+  const handleReopenConsultation = async (consultationId: string, visitId: string) => {
+    setIsReopening(true);
+    try {
+      await updateConsultation.mutateAsync({ id: consultationId, status: 'en_cours' });
+      await updateVisit.mutateAsync({ id: visitId, status: 'en_cours' });
+      toast.success('Consultation rouverte — le patient est de retour dans la file d\'attente');
+    } catch (e: any) {
+      toast.error('Erreur: ' + e.message);
+    } finally {
+      setIsReopening(false);
+    }
+  };
 
   const patientVisits = (allVisits || []).filter(v => v.patient_id === id);
   const patientLabs = (allLabRequests || []).filter(r => r.patient_id === id);
