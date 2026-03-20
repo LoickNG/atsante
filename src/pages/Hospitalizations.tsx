@@ -48,7 +48,7 @@ export default function Hospitalizations() {
   const { data: activeHosps, isLoading: activeLoading } = useHospitalizations('en_cours');
   const { data: allHosps, isLoading: allLoading } = useHospitalizations();
   const { data: availableRooms } = useAvailableRooms();
-  const { data: hospActs } = useMedicalActs('hospitalisation');
+  
   const createHosp = useCreateHospitalization();
   const dischargePatient = useDischargePatient();
   const assignRoom = useAssignRoom();
