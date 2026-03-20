@@ -1,0 +1,2 @@
+ALTER TABLE public.payments DROP CONSTRAINT payments_method_check;
+ALTER TABLE public.payments ADD CONSTRAINT payments_method_check CHECK (method = ANY (ARRAY['especes'::text, 'cheque'::text, 'airtel_money'::text, 'moov_money'::text, 'konoom'::text, 'carte_bancaire'::text, 'autre'::text]));
