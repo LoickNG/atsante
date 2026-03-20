@@ -294,13 +294,15 @@ export default function Billing() {
                     </div>
 
                     <div className="space-y-2">
-                      {billableItems.map((item, idx) => (
+                      {billableItems.map((item, idx) => {
+                        const currentPrice = getItemPrice(item, idx);
+                        const isOverridden = priceOverrides[idx] !== undefined;
+                        return (
                         <div
                           key={idx}
-                          className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
+                          className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
                             selectedItems.has(idx) ? 'bg-primary/5 border-primary/30' : 'bg-muted/20 opacity-60'
                           }`}
-                          onClick={() => toggleItem(idx)}
                         >
                           <Checkbox
                             checked={selectedItems.has(idx)}
@@ -310,17 +312,49 @@ export default function Billing() {
                             {typeIcons[item.type]}
                             <span className="text-xs font-medium text-muted-foreground">{typeLabels[item.type]}</span>
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 cursor-pointer" onClick={() => toggleItem(idx)}>
                             <p className="text-sm font-medium">{item.description}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm">×{item.quantity}</p>
                           </div>
-                          <div className="text-right min-w-[120px]">
-                            <p className="font-semibold">{formatCurrency(item.quantity * item.unit_price)}</p>
+                          <div className="flex items-center gap-1.5 min-w-[150px] justify-end">
+                            <Input
+                              type="number"
+                              className={`w-[100px] h-8 text-right text-sm ${isOverridden ? 'border-primary ring-1 ring-primary/30' : ''}`}
+                              value={currentPrice}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => {
+                                e.stopPropagation();
+                                const val = parseFloat(e.target.value);
+                                setPriceOverrides(prev => ({ ...prev, [idx]: isNaN(val) ? 0 : val }));
+                              }}
+                            />
+                            {isOverridden && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setPriceOverrides(prev => {
+                                    const next = { ...prev };
+                                    delete next[idx];
+                                    return next;
+                                  });
+                                }}
+                                title="Rétablir le prix original"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="text-right min-w-[100px]">
+                            <p className="font-semibold">{formatCurrency(item.quantity * currentPrice)}</p>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Total & convention breakdown */}
