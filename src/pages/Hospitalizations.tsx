@@ -61,7 +61,7 @@ export default function Hospitalizations() {
   const [careDialogOpen, setCareDialogOpen] = useState(false);
 
   // Admit form
-  const [admitPatientId, setAdmitPatientId] = useState('');
+  const [admitPatient, setAdmitPatient] = useState<Patient | null>(null);
   const [admitRoomId, setAdmitRoomId] = useState('');
   const [admitReason, setAdmitReason] = useState('');
 
