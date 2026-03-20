@@ -18,6 +18,7 @@ import Billing from "./pages/Billing";
 import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
 import Extracts from "./pages/Extracts";
+import Hospitalizations from "./pages/Hospitalizations";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
