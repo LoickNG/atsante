@@ -222,15 +222,15 @@ const PatientsList = () => {
                               Voir le dossier
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setEditOpen(true); }}>
                             <Edit className="mr-2 h-4 w-4" />
                             Modifier
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <QrCode className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setCardOpen(true); }}>
+                            <Printer className="mr-2 h-4 w-4" />
                             Imprimer carte
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setHistoryOpen(true); }}>
                             <FileText className="mr-2 h-4 w-4" />
                             Historique
                           </DropdownMenuItem>
@@ -243,6 +243,15 @@ const PatientsList = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Dialogs */}
+        {selectedPatient && (
+          <>
+            <EditPatientDialog patient={selectedPatient} open={editOpen} onOpenChange={setEditOpen} />
+            <PatientCardPreview patient={selectedPatient} open={cardOpen} onOpenChange={setCardOpen} />
+            <PatientHistoryDialog patient={selectedPatient} open={historyOpen} onOpenChange={setHistoryOpen} />
+          </>
+        )}
       </div>
     </AppLayout>
   );
