@@ -109,6 +109,7 @@ export function RoomManagement() {
                     <TableHead>N° Chambre</TableHead>
                     <TableHead>Catégorie</TableHead>
                     <TableHead>Confort</TableHead>
+                    <TableHead className="text-right">Prix/Nuit</TableHead>
                     <TableHead>Étage</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead></TableHead>
