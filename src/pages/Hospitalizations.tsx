@@ -13,8 +13,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BedDouble, Plus, Search, Clock, LogOut, Stethoscope, Loader2,
-  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList,
+  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList, DollarSign,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  useHospitalizations, useAvailableRooms, useCreateHospitalization,
+  useDischargePatient, useAssignRoom, useHospitalizationCare,
+  useAddCare, calculateStayDays, Hospitalization,
+} from '@/hooks/useHospitalizations';
+import { useMedications } from '@/hooks/useMedications';
+import { useMedicalActs } from '@/hooks/useBilling';
+
+import { PatientSearchSelect } from '@/components/PatientSearchSelect';
+import { useSearchPatients, Patient } from '@/hooks/usePatients';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
