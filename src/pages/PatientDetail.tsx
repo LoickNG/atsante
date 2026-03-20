@@ -119,7 +119,14 @@ const PatientDetail = () => {
                     <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
                       <Printer className="h-4 w-4" />Imprimer
                     </Button>
-                    <Button variant="outline" className="flex-1 gap-2"><Edit className="h-4 w-4" />Modifier</Button>
+                    <PatientPDFExport
+                      patient={patient}
+                      consultations={consultations || []}
+                      prescriptions={patientPrescriptions}
+                      labRequests={patientLabs}
+                      imagingRequests={patientImaging}
+                      visits={patientVisits}
+                    />
                   </div>
                 </div>
 

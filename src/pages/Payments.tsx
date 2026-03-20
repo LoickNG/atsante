@@ -67,8 +67,14 @@ export default function Payments() {
     }
   }, [invoiceIdParam]);
 
+  // For convention patients, only patient_amount is due; otherwise total_amount
+  const invoiceOwed = selectedInvoice
+    ? (Number(selectedInvoice.patient_amount) > 0 && Number(selectedInvoice.patient_amount) < Number(selectedInvoice.total_amount))
+      ? Number(selectedInvoice.patient_amount)
+      : Number(selectedInvoice.total_amount)
+    : 0;
   const remaining = selectedInvoice
-    ? Number(selectedInvoice.total_amount) - Number(selectedInvoice.paid_amount)
+    ? invoiceOwed - Number(selectedInvoice.paid_amount)
     : 0;
 
   const totalEntered = useMemo(

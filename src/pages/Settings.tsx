@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { AdminOverview } from '@/components/admin/AdminOverview';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ConventionManagement } from '@/components/admin/ConventionManagement';
-import { BarChart3, Users, Handshake } from 'lucide-react';
+import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement';
+import { BarChart3, Users, Handshake, Receipt } from 'lucide-react';
 
 export default function Settings() {
   const { role } = useAuth();
@@ -37,6 +38,10 @@ export default function Settings() {
             <Handshake className="h-4 w-4" />
             Conventions
           </TabsTrigger>
+          <TabsTrigger value="tarifs" className="flex items-center gap-2">
+            <Receipt className="h-4 w-4" />
+            Tarifs & Actes
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -49,6 +54,10 @@ export default function Settings() {
 
         <TabsContent value="conventions">
           <ConventionManagement />
+        </TabsContent>
+
+        <TabsContent value="tarifs">
+          <MedicalActsManagement />
         </TabsContent>
       </Tabs>
     </AppLayout>
