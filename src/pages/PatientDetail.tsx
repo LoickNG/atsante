@@ -46,6 +46,7 @@ const PatientDetail = () => {
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleReopenConsultation = async (consultationId: string, visitId: string) => {
     setIsReopening(true);
