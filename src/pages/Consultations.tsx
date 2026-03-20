@@ -98,7 +98,15 @@ const Consultations = () => {
   const handleSelectVisit = (visit: VisitWithPatient) => {
     setSelectedVisit(visit);
     setSymptoms(''); setDiagnosis(''); setNotes('');
-    setVitalSigns({ temperature: '', bloodPressure: '', heartRate: '', weight: '', height: '' });
+    // Pre-fill vital signs from nurse intake if available
+    const v = visit as any;
+    setVitalSigns({
+      temperature: v.temperature ? String(v.temperature) : '',
+      bloodPressure: v.blood_pressure || '',
+      heartRate: v.heart_rate ? String(v.heart_rate) : '',
+      weight: v.weight ? String(v.weight) : '',
+      height: v.height ? String(v.height) : '',
+    });
     setPrescriptions([]); setSelectedLabTests([]); setSelectedImagingExams([]); setImagingBodyPart('');
   };
 
