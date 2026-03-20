@@ -31,18 +31,66 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/patients" element={<ProtectedRoute><PatientsList /></ProtectedRoute>} />
-            <Route path="/patients/nouveau" element={<ProtectedRoute><NewPatient /></ProtectedRoute>} />
-            <Route path="/patients/:id" element={<ProtectedRoute><PatientDetail /></ProtectedRoute>} />
-            <Route path="/file-attente" element={<ProtectedRoute><WaitingQueue /></ProtectedRoute>} />
-            <Route path="/consultations" element={<ProtectedRoute><Consultations /></ProtectedRoute>} />
-            <Route path="/pharmacie" element={<ProtectedRoute><Pharmacy /></ProtectedRoute>} />
-            <Route path="/laboratoire" element={<ProtectedRoute><Laboratory /></ProtectedRoute>} />
-            <Route path="/imagerie" element={<ProtectedRoute><Imaging /></ProtectedRoute>} />
-            <Route path="/facturation" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
-            <Route path="/paiements" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-            <Route path="/parametres" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/" element={
+              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/patients" element={
+              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier']}>
+                <PatientsList />
+              </ProtectedRoute>
+            } />
+            <Route path="/patients/nouveau" element={
+              <ProtectedRoute allowedRoles={['admin', 'accueil']}>
+                <NewPatient />
+              </ProtectedRoute>
+            } />
+            <Route path="/patients/:id" element={
+              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
+                <PatientDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/file-attente" element={
+              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier']}>
+                <WaitingQueue />
+              </ProtectedRoute>
+            } />
+            <Route path="/consultations" element={
+              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+                <Consultations />
+              </ProtectedRoute>
+            } />
+            <Route path="/pharmacie" element={
+              <ProtectedRoute allowedRoles={['admin', 'pharmacien', 'medecin']}>
+                <Pharmacy />
+              </ProtectedRoute>
+            } />
+            <Route path="/laboratoire" element={
+              <ProtectedRoute allowedRoles={['admin', 'laborantin', 'medecin']}>
+                <Laboratory />
+              </ProtectedRoute>
+            } />
+            <Route path="/imagerie" element={
+              <ProtectedRoute allowedRoles={['admin', 'imagerie', 'medecin']}>
+                <Imaging />
+              </ProtectedRoute>
+            } />
+            <Route path="/facturation" element={
+              <ProtectedRoute allowedRoles={['admin', 'caissier']}>
+                <Billing />
+              </ProtectedRoute>
+            } />
+            <Route path="/paiements" element={
+              <ProtectedRoute allowedRoles={['admin', 'caissier']}>
+                <Payments />
+              </ProtectedRoute>
+            } />
+            <Route path="/parametres" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Settings />
+              </ProtectedRoute>
+            } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
