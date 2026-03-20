@@ -57,10 +57,13 @@ export function useCreatePrescription() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (prescription: PrescriptionInsert) => {
+    mutationFn: async (prescription: Omit<PrescriptionInsert, 'medication_id'> & { medication_id?: string | null; medication_name?: string | null }) => {
       const { data, error } = await supabase
         .from('prescriptions')
-        .insert(prescription)
+        .insert({
+          ...prescription,
+          medication_id: prescription.medication_id || null,
+        } as any)
         .select('*, medications(*)')
         .single();
       
