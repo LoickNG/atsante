@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout, PageHeader } from '@/components/layout';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,17 +35,43 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
-import { useCreatePatient, Patient } from '@/hooks/usePatients';
+import { useCreatePatient, useUpdatePatient, Patient } from '@/hooks/usePatients';
 import { usePartnerCompanies, useActiveConventions } from '@/hooks/useConventions';
+import { WebcamCapture } from '@/components/patient/WebcamCapture';
 
 const NewPatient = () => {
   const navigate = useNavigate();
   const createPatient = useCreatePatient();
+  const updatePatient = useUpdatePatient();
   const { data: companies } = usePartnerCompanies();
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [createdPatient, setCreatedPatient] = useState<Patient | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const { data: activeConventions } = useActiveConventions(selectedCompanyId || undefined);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+
+  const handlePhotoCapture = useCallback((blob: Blob) => {
+    setPhotoBlob(blob);
+    setPhotoPreviewUrl(URL.createObjectURL(blob));
+  }, []);
+
+  const handlePhotoClear = useCallback(() => {
+    setPhotoBlob(null);
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoPreviewUrl(null);
+  }, [photoPreviewUrl]);
+
+  const uploadPhoto = async (patientId: string): Promise<string | null> => {
+    if (!photoBlob) return null;
+    const filePath = `${patientId}.jpg`;
+    const { error } = await supabase.storage
+      .from('patient-photos')
+      .upload(filePath, photoBlob, { contentType: 'image/jpeg', upsert: true });
+    if (error) { console.error('Photo upload error:', error); return null; }
+    const { data } = supabase.storage.from('patient-photos').getPublicUrl(filePath);
+    return data.publicUrl;
+  };
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -101,7 +128,17 @@ const NewPatient = () => {
         employee_id: formData.employeeId || null,
       } as any);
 
-      setCreatedPatient(patient);
+      // Upload photo if captured
+      let finalPatient = patient;
+      if (photoBlob) {
+        const photoUrl = await uploadPhoto(patient.id);
+        if (photoUrl) {
+          await updatePatient.mutateAsync({ id: patient.id, photo_url: photoUrl } as any);
+          finalPatient = { ...patient, photo_url: photoUrl } as any;
+        }
+      }
+
+      setCreatedPatient(finalPatient);
       setShowQRDialog(true);
       
       toast.success(
@@ -142,6 +179,9 @@ const NewPatient = () => {
               <CardDescription>Données d'identification du patient</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2 flex justify-center pb-2">
+                <WebcamCapture onCapture={handlePhotoCapture} capturedUrl={photoPreviewUrl} onClear={handlePhotoClear} />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Nom *</Label>
                 <Input id="lastName" placeholder="Ex: Mahamat" value={formData.lastName} onChange={(e) => handleChange('lastName', e.target.value)} required />
@@ -339,12 +379,19 @@ const NewPatient = () => {
               <div className="flex flex-col items-center gap-4 py-4">
                 <div className="w-full max-w-[300px] p-4 border-2 border-dashed rounded-xl bg-card">
                   <div className="text-center mb-4">
-                    <h4 className="font-bold text-lg">Clinique Médicale</h4>
+                    <h4 className="font-bold text-lg">ATSanté</h4>
                     <p className="text-xs text-muted-foreground">Carte Patient</p>
                   </div>
-                  <div className="flex justify-center mb-4">
-                    <div className="p-2 bg-white rounded-lg">
-                      <QRCodeSVG value={createdPatient.code} size={120} level="H" />
+                  <div className="flex items-center gap-4 mb-4">
+                    {(createdPatient as any).photo_url ? (
+                      <img src={(createdPatient as any).photo_url} alt="Photo patient" className="h-20 w-20 rounded-full object-cover border-2 border-primary flex-shrink-0" />
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/30 flex-shrink-0">
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="p-1 bg-white rounded-lg">
+                      <QRCodeSVG value={createdPatient.code} size={80} level="H" />
                     </div>
                   </div>
                   <div className="text-center">
