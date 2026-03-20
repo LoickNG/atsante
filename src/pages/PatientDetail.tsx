@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 
 const PatientDetail = () => {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { data: patient, isLoading: patientLoading } = usePatient(id);
   const { data: allVisits, isLoading: visitsLoading } = useVisits();
   const { data: consultations } = useConsultations(id);
