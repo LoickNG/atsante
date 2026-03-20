@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText, BedDouble,
 } from 'lucide-react';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
 import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
@@ -30,6 +30,7 @@ import { usePrescriptions } from '@/hooks/usePrescriptions';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
+import { useHospitalizations } from '@/hooks/useHospitalizations';
 import { toast } from 'sonner';
 
 const PatientDetail = () => {
@@ -41,6 +42,7 @@ const PatientDetail = () => {
   const { data: allPrescriptions } = usePrescriptions();
   const { data: allLabRequests } = useLabRequests();
   const { data: allImagingRequests } = useImagingRequests();
+  const { data: allHospitalizations } = useHospitalizations();
   const updateConsultation = useUpdateConsultation();
   const updateVisit = useUpdateVisit();
 
@@ -68,6 +70,7 @@ const PatientDetail = () => {
   const patientVisits = (allVisits || []).filter(v => v.patient_id === id);
   const patientLabs = (allLabRequests || []).filter(r => r.patient_id === id);
   const patientImaging = (allImagingRequests || []).filter(r => r.patient_id === id);
+  const patientHospitalizations = (allHospitalizations || []).filter(h => h.patient_id === id);
 
   const patientConsultationIds = (consultations || []).map(c => c.id);
   const patientPrescriptions = (allPrescriptions || []).filter(
@@ -326,7 +329,7 @@ const PatientDetail = () => {
                 )}
 
                 <Separator className="my-4" />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
                     <p className="text-lg font-bold">{patientVisits.length}</p>
                     <p className="text-xs text-muted-foreground">Visites</p>
@@ -336,12 +339,20 @@ const PatientDetail = () => {
                     <p className="text-xs text-muted-foreground">Consultations</p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <p className="text-lg font-bold">{patientHospitalizations.length}</p>
+                    <p className="text-xs text-muted-foreground">Hospit.</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
                     <p className="text-lg font-bold">{patientLabs.length}</p>
                     <p className="text-xs text-muted-foreground">Analyses</p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
                     <p className="text-lg font-bold">{patientImaging.length}</p>
                     <p className="text-xs text-muted-foreground">Imageries</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <p className="text-lg font-bold">{patientPrescriptions.length}</p>
+                    <p className="text-xs text-muted-foreground">Prescriptions</p>
                   </div>
                 </div>
               </CardContent>
@@ -351,11 +362,12 @@ const PatientDetail = () => {
           {/* Right Column - Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="consultations" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 no-print">
+              <TabsList className="grid w-full grid-cols-6 no-print">
                 <TabsTrigger value="consultations" className="gap-1.5 text-xs"><Stethoscope className="h-3.5 w-3.5" />Consultations</TabsTrigger>
                 <TabsTrigger value="prescriptions" className="gap-1.5 text-xs"><Pill className="h-3.5 w-3.5" />Ordonnances</TabsTrigger>
                 <TabsTrigger value="analyses" className="gap-1.5 text-xs"><FlaskConical className="h-3.5 w-3.5" />Analyses</TabsTrigger>
                 <TabsTrigger value="imagerie" className="gap-1.5 text-xs"><ImageIcon className="h-3.5 w-3.5" />Imagerie</TabsTrigger>
+                <TabsTrigger value="hospitalisation" className="gap-1.5 text-xs"><BedDouble className="h-3.5 w-3.5" />Hospit.</TabsTrigger>
                 <TabsTrigger value="historique" className="gap-1.5 text-xs"><Clock className="h-3.5 w-3.5" />Visites</TabsTrigger>
               </TabsList>
 
@@ -604,7 +616,52 @@ const PatientDetail = () => {
                 </Card>
               </TabsContent>
 
-              {/* Visits History Tab */}
+              {/* Hospitalizations Tab */}
+              <TabsContent value="hospitalisation" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hospitalisations</CardTitle>
+                    <CardDescription>{patientHospitalizations.length} hospitalisation(s)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {patientHospitalizations.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">Aucune hospitalisation enregistrée</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {patientHospitalizations.map((h) => (
+                          <div key={h.id} className={cn('p-4 border rounded-lg', h.status === 'en_cours' ? 'bg-warning/5 border-warning/30' : h.status === 'termine' ? 'bg-success/5 border-success/20' : 'bg-muted/30')}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <BedDouble className="h-4 w-4 text-primary" />
+                                <p className="font-semibold">{h.reason}</p>
+                              </div>
+                              <Badge variant={h.status === 'en_cours' ? 'secondary' : h.status === 'termine' ? 'default' : 'outline'}>
+                                {h.status === 'en_cours' ? 'En cours' : h.status === 'termine' ? 'Terminée' : 'Annulée'}
+                              </Badge>
+                            </div>
+                            {h.rooms && (
+                              <p className="text-sm text-muted-foreground">
+                                Chambre {h.rooms.room_number} — {h.rooms.category.replace('_', ' ')} — {h.rooms.comfort === 'climatise' ? 'Climatisé' : 'Ventilé'}
+                              </p>
+                            )}
+                            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                              <span>Admis le {new Date(h.admission_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                              {h.discharge_date && <span>• Sorti le {new Date(h.discharge_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>}
+                            </div>
+                            {h.discharge_notes && (
+                              <div className="mt-2 p-2 bg-background rounded border text-sm">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Notes de sortie</p>
+                                <p>{h.discharge_notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="historique" className="mt-6">
                 <Card>
                   <CardHeader>
