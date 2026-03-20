@@ -35,8 +35,9 @@ import {
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
-import { useCreatePatient, Patient } from '@/hooks/usePatients';
+import { useCreatePatient, useUpdatePatient, Patient } from '@/hooks/usePatients';
 import { usePartnerCompanies, useActiveConventions } from '@/hooks/useConventions';
+import { WebcamCapture } from '@/components/patient/WebcamCapture';
 
 const NewPatient = () => {
   const navigate = useNavigate();
