@@ -47,6 +47,10 @@ export interface HospitalizationCare {
   administered_at: string;
   notes: string | null;
   created_at: string;
+  unit_price: number;
+  quantity: number;
+  total_price: number;
+  medication_id: string | null;
 }
 
 export function useRooms() {
@@ -142,7 +146,6 @@ export function useCreateHospitalization() {
     }) => {
       const { data, error } = await supabase.from('hospitalizations').insert(hosp).select().single();
       if (error) throw error;
-      // Mark room as unavailable
       if (hosp.room_id) {
         await supabase.from('rooms').update({ is_available: false }).eq('id', hosp.room_id);
       }
@@ -165,7 +168,6 @@ export function useDischargePatient() {
         discharge_notes: discharge_notes || null,
       }).eq('id', id);
       if (error) throw error;
-      // Free up room
       if (room_id) {
         await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
       }
@@ -220,12 +222,46 @@ export function useAddCare() {
       description: string;
       administered_by: string;
       notes?: string;
+      unit_price: number;
+      quantity: number;
+      total_price: number;
+      medication_id?: string;
     }) => {
-      const { data, error } = await supabase.from('hospitalization_care').insert(care).select().single();
+      const { data, error } = await supabase.from('hospitalization_care').insert(care as any).select().single();
       if (error) throw error;
+
+      // If medication is used, decrement stock and create stock movement
+      if (care.medication_id && care.quantity > 0) {
+        // Get current stock
+        const { data: med } = await supabase
+          .from('medications')
+          .select('stock_quantity')
+          .eq('id', care.medication_id)
+          .single();
+
+        if (med) {
+          await supabase
+            .from('medications')
+            .update({ stock_quantity: Math.max(0, med.stock_quantity - care.quantity) })
+            .eq('id', care.medication_id);
+
+          await supabase.from('stock_movements').insert({
+            medication_id: care.medication_id,
+            quantity: -care.quantity,
+            type: 'sortie',
+            reason: `Soin hospitalisation: ${care.care_type}`,
+            reference_id: data.id,
+            performed_by: care.administered_by,
+          });
+        }
+      }
+
       return data;
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ['hospitalization_care', vars.hospitalization_id] }),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['hospitalization_care', vars.hospitalization_id] });
+      qc.invalidateQueries({ queryKey: ['medications'] });
+    },
   });
 }
 

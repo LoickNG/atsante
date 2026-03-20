@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BillableItem {
-  type: 'consultation' | 'medicament' | 'analyse' | 'imagerie';
+  type: 'consultation' | 'medicament' | 'analyse' | 'imagerie' | 'soin_hospitalisation' | 'hebergement';
   description: string;
   quantity: number;
   unit_price: number;
