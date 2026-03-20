@@ -379,10 +379,15 @@ const Consultations = () => {
                     )}
                   </div>
                 </div>
-                <Button onClick={handleSaveConsultation} className="gap-2" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => { setHospDialogOpen(true); setHospReason(diagnosis || ''); }}>
+                    <BedDouble className="h-4 w-4" />Hospitaliser
+                  </Button>
+                  <Button onClick={handleSaveConsultation} className="gap-2" disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                  </Button>
+                </div>
               </div>
 
               <Tabs defaultValue="consultation" className="space-y-4">
