@@ -254,18 +254,42 @@ const PatientsList = () => {
                               Voir le dossier
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setEditOpen(true); }}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Modifier
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setCardOpen(true); }}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Imprimer carte
-                          </DropdownMenuItem>
+                          {!showArchived && (
+                            <>
+                              <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setEditOpen(true); }}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setCardOpen(true); }}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Imprimer carte
+                              </DropdownMenuItem>
+                            </>
+                          )}
                           <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setHistoryOpen(true); }}>
                             <FileText className="mr-2 h-4 w-4" />
                             Historique
                           </DropdownMenuItem>
+                          {showArchived ? (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setDeceasedActionsOpen(true); }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Certificats de décès
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => { setSelectedPatient(patient); setDeceasedOpen(true); }}
+                              >
+                                <Skull className="mr-2 h-4 w-4" />
+                                Déclarer décédé
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -282,6 +306,8 @@ const PatientsList = () => {
             <EditPatientDialog patient={selectedPatient} open={editOpen} onOpenChange={setEditOpen} />
             <PatientCardPreview patient={selectedPatient} open={cardOpen} onOpenChange={setCardOpen} />
             <PatientHistoryDialog patient={selectedPatient} open={historyOpen} onOpenChange={setHistoryOpen} />
+            <DeclareDeceasedDialog patient={selectedPatient} open={deceasedOpen} onOpenChange={setDeceasedOpen} />
+            <DeceasedPatientActions patient={selectedPatient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
           </>
         )}
       </div>
