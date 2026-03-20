@@ -128,7 +128,17 @@ const NewPatient = () => {
         employee_id: formData.employeeId || null,
       } as any);
 
-      setCreatedPatient(patient);
+      // Upload photo if captured
+      let finalPatient = patient;
+      if (photoBlob) {
+        const photoUrl = await uploadPhoto(patient.id);
+        if (photoUrl) {
+          await updatePatient.mutateAsync({ id: patient.id, photo_url: photoUrl } as any);
+          finalPatient = { ...patient, photo_url: photoUrl } as any;
+        }
+      }
+
+      setCreatedPatient(finalPatient);
       setShowQRDialog(true);
       
       toast.success(
