@@ -12,6 +12,9 @@ import {
   AlertTriangle,
   Loader2,
   UserPlus,
+  Thermometer,
+  Heart,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
