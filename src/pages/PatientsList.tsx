@@ -3,41 +3,31 @@ import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
-  Search, 
-  UserPlus, 
-  QrCode, 
-  MoreHorizontal,
-  Eye,
-  Edit,
-  FileText,
-  Phone,
-  Calendar,
-  Loader2,
+  Search, UserPlus, QrCode, MoreHorizontal, Eye, Edit, FileText, Phone, Calendar, Printer,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { usePatients, Patient } from '@/hooks/usePatients';
+import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
+import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
+import { PatientHistoryDialog } from '@/components/patient/PatientHistoryDialog';
 
 const PatientsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { data: patients, isLoading, error } = usePatients();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const filteredPatients = (patients || []).filter(patient => {
     const searchLower = searchQuery.toLowerCase();
@@ -156,6 +146,9 @@ const PatientsList = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
+                          {(patient as any).photo_url && (
+                            <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
+                          )}
                           <AvatarFallback className={cn(
                             'text-sm font-medium',
                             patient.gender === 'F' 
@@ -229,15 +222,15 @@ const PatientsList = () => {
                               Voir le dossier
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setEditOpen(true); }}>
                             <Edit className="mr-2 h-4 w-4" />
                             Modifier
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <QrCode className="mr-2 h-4 w-4" />
+                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setCardOpen(true); }}>
+                            <Printer className="mr-2 h-4 w-4" />
                             Imprimer carte
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setSelectedPatient(patient); setHistoryOpen(true); }}>
                             <FileText className="mr-2 h-4 w-4" />
                             Historique
                           </DropdownMenuItem>
@@ -250,6 +243,15 @@ const PatientsList = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Dialogs */}
+        {selectedPatient && (
+          <>
+            <EditPatientDialog patient={selectedPatient} open={editOpen} onOpenChange={setEditOpen} />
+            <PatientCardPreview patient={selectedPatient} open={cardOpen} onOpenChange={setCardOpen} />
+            <PatientHistoryDialog patient={selectedPatient} open={historyOpen} onOpenChange={setHistoryOpen} />
+          </>
+        )}
       </div>
     </AppLayout>
   );
