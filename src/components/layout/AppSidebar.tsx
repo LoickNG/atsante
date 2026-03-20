@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, LogOut, Bell, Activity, Type } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut, Activity, Type } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 import { getFilteredNavigation, getRoleLabel, getRoleColor } from '@/config/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
@@ -111,14 +112,7 @@ export function AppSidebar({
               </p>
             </div>}
           {!collapsed && <div className="flex gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Notifications</TooltipContent>
-              </Tooltip>
+              <NotificationBell />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
