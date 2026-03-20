@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Search, FileText, CreditCard, Eye, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Search, FileText, CreditCard, Eye, Plus, Trash2, Building2 } from 'lucide-react';
 import { useInvoices, useCreateInvoice, useMedicalActs, type NewInvoiceItem } from '@/hooks/useBilling';
 import { useSearchPatients, type Patient } from '@/hooks/usePatients';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useConventions, type ConventionWithRelations } from '@/hooks/useConventions';
+import { supabase } from '@/integrations/supabase/client';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
