@@ -98,6 +98,8 @@ export default function Hospitalizations() {
 
   const { data: careList } = useHospitalizationCare(selectedHosp?.id);
   const addCare = useAddCare();
+  const createLabRequest = useCreateLabRequest();
+  const createImagingRequest = useCreateImagingRequest();
 
   const handleAdmit = async () => {
     if (!admitPatient || !admitReason || !user) {
