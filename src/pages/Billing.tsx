@@ -50,7 +50,9 @@ export default function Billing() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientConvention, setPatientConvention] = useState<ConventionWithRelations | null>(null);
   const { data: searchResults } = useSearchPatients(patientSearch);
+  const { data: allConventions } = useConventions();
   const [items, setItems] = useState<NewInvoiceItem[]>([
     { type: 'consultation', description: '', quantity: 1, unit_price: 0 },
   ]);
