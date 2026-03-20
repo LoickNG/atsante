@@ -702,7 +702,11 @@ const PatientDetail = () => {
 
       {/* Edit Patient Dialog */}
       {patient && (
-        <EditPatientDialog patient={patient} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+        <>
+          <EditPatientDialog patient={patient} open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+          <DeclareDeceasedDialog patient={patient} open={deceasedDialogOpen} onOpenChange={setDeceasedDialogOpen} />
+          <DeceasedPatientActions patient={patient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
+        </>
       )}
     </AppLayout>
   );
