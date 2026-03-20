@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BedDouble, Plus, Search, Clock, LogOut, Stethoscope, Loader2,
-  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList, DollarSign,
+  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList, FlaskConical, ScanLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
