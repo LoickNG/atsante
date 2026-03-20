@@ -180,6 +180,7 @@ export default function Billing() {
     setPatientSearch('');
     setPatientConvention(null);
     setSelectedItems(new Set());
+    setPriceOverrides({});
   };
 
   // Filter invoice list
