@@ -51,7 +51,7 @@ export function RoomManagement() {
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (room: any) => {
     setEditingId(room.id);
-    setForm({ room_number: room.room_number, category: room.category, comfort: room.comfort, floor: room.floor || '', notes: room.notes || '' });
+    setForm({ room_number: room.room_number, category: room.category, comfort: room.comfort, floor: room.floor || '', notes: room.notes || '', price_per_night: String(room.price_per_night || 0) });
     setDialogOpen(true);
   };
 
