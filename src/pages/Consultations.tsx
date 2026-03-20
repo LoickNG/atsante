@@ -342,6 +342,12 @@ const Consultations = () => {
                               {visit.type}
                             </Badge>
                           </div>
+                          {((visit as any).temperature || (visit as any).blood_pressure) && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {(visit as any).temperature && <Badge variant="outline" className="text-[9px] py-0">🌡️ {(visit as any).temperature}°C</Badge>}
+                              {(visit as any).blood_pressure && <Badge variant="outline" className="text-[9px] py-0">🩸 {(visit as any).blood_pressure}</Badge>}
+                            </div>
+                          )}
                         </div>
                         {visit.status === 'en_cours' && (
                           <Badge className="bg-info text-info-foreground text-[10px]">En cours</Badge>
