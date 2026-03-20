@@ -29,6 +29,10 @@ import { useCreateImagingRequest } from '@/hooks/useImagingRequests';
 import { useCreatePrescription } from '@/hooks/usePrescriptions';
 import { useAuth } from '@/hooks/useAuth';
 import { useLabActs, useImagingActs } from '@/hooks/useMedicalActs';
+import { useCreateHospitalization } from '@/hooks/useHospitalizations';
+import { useAvailableRooms } from '@/hooks/useHospitalizations';
+import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 
 interface PrescriptionItem {
   medicationId: string;
