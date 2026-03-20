@@ -50,7 +50,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
 
 export default function Hospitalizations() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { data: activeHosps, isLoading: activeLoading } = useHospitalizations('en_cours');
   const { data: allHosps, isLoading: allLoading } = useHospitalizations();
   const { data: availableRooms } = useAvailableRooms();
@@ -273,7 +273,8 @@ export default function Hospitalizations() {
               {filteredActive.map(hosp => {
                 const p = hosp.patients;
                 const days = calculateStayDays(hosp.admission_date, hosp.discharge_date);
-                const rate = getRoomRate(hosp.rooms);
+                const canSeeCosts = role === 'admin' || role === 'caissier';
+                const rate = canSeeCosts ? getRoomRate(hosp.rooms) : 0;
                 if (!p) return null;
                 return (
                   <Card key={hosp.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedHosp(hosp)}>
@@ -452,18 +453,20 @@ export default function Hospitalizations() {
                       ) : <span className="text-destructive text-sm">Non attribuée</span>}
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="p-3">
-                      <p className="text-xs text-muted-foreground mb-1">Coût estimé</p>
-                      <p className="font-semibold">
-                        {(() => {
-                          const rate = getRoomRate(selectedHosp.rooms);
-                          const days = calculateStayDays(selectedHosp.admission_date, selectedHosp.discharge_date);
-                          return rate > 0 ? formatCurrency(rate * days) : 'Tarif non configuré';
-                        })()}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  {(role === 'admin' || role === 'caissier') && (
+                    <Card>
+                      <CardContent className="p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Coût estimé</p>
+                        <p className="font-semibold">
+                          {(() => {
+                            const rate = getRoomRate(selectedHosp.rooms);
+                            const days = calculateStayDays(selectedHosp.admission_date, selectedHosp.discharge_date);
+                            return rate > 0 ? formatCurrency(rate * days) : 'Tarif non configuré';
+                          })()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
                 <Card>
@@ -704,7 +707,28 @@ export default function Hospitalizations() {
             {examCategory === 'laboratoire' ? (
               <div className="space-y-1.5">
                 <Label>Type d'analyse *</Label>
-                <Input value={examTestType} onChange={e => setExamTestType(e.target.value)} placeholder="Ex: NFS, Glycémie, Bilan hépatique..." />
+                <Select value={examTestType} onValueChange={setExamTestType}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner une analyse..." /></SelectTrigger>
+                  <SelectContent>
+                    {(medicalActs || [])
+                      .filter(a => a.category === 'laboratoire')
+                      .map(a => (
+                        <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                      ))}
+                    <SelectItem value="NFS">NFS</SelectItem>
+                    <SelectItem value="Glycémie">Glycémie</SelectItem>
+                    <SelectItem value="Bilan hépatique">Bilan hépatique</SelectItem>
+                    <SelectItem value="Bilan rénal">Bilan rénal</SelectItem>
+                    <SelectItem value="Ionogramme">Ionogramme</SelectItem>
+                    <SelectItem value="CRP">CRP</SelectItem>
+                    <SelectItem value="VS">VS</SelectItem>
+                    <SelectItem value="Hémoculture">Hémoculture</SelectItem>
+                    <SelectItem value="ECBU">ECBU</SelectItem>
+                    <SelectItem value="Goutte épaisse">Goutte épaisse</SelectItem>
+                    <SelectItem value="Groupe sanguin">Groupe sanguin</SelectItem>
+                    <SelectItem value="Sérologie">Sérologie</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             ) : (
               <>
