@@ -50,7 +50,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
 
 export default function Hospitalizations() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { data: activeHosps, isLoading: activeLoading } = useHospitalizations('en_cours');
   const { data: allHosps, isLoading: allLoading } = useHospitalizations();
   const { data: availableRooms } = useAvailableRooms();
