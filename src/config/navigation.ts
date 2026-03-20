@@ -11,6 +11,7 @@ import {
   Settings,
   FileText,
   Activity,
+  FileDown,
   LucideIcon,
 } from 'lucide-react';
 
@@ -109,6 +110,12 @@ export const navigationConfig: NavSection[] = [
         title: 'Paiements',
         href: '/paiements',
         icon: CreditCard,
+        roles: ['admin', 'caissier'],
+      },
+      {
+        title: 'Extraits & Relevés',
+        href: '/extraits',
+        icon: FileDown,
         roles: ['admin', 'caissier'],
       },
     ],
