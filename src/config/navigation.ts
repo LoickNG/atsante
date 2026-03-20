@@ -11,6 +11,7 @@ import {
   Settings,
   FileText,
   Activity,
+  FileDown,
   LucideIcon,
 } from 'lucide-react';
 
