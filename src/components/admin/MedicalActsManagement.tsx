@@ -14,10 +14,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const CATEGORIES = [
   { value: 'consultation', label: 'Consultation' },
-  { value: 'laboratoire', label: 'Laboratoire' },
+  { value: 'analyse', label: 'Analyse / Laboratoire' },
   { value: 'imagerie', label: 'Imagerie' },
-  { value: 'acte_medical', label: 'Acte médical' },
-  { value: 'hospitalisation', label: 'Hospitalisation' },
+  { value: 'soins', label: 'Soins / Actes médicaux' },
   { value: 'autre', label: 'Autre' },
 ];
 
