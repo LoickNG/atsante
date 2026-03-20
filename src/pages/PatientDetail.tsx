@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
