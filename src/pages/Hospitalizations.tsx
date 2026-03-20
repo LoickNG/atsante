@@ -145,6 +145,8 @@ export default function Hospitalizations() {
 
   const handleAddCare = async () => {
     if (!selectedHosp || !careType || !careDescription || !user) return;
+    const qty = parseInt(careQuantity) || 1;
+    const price = parseFloat(careUnitPrice) || 0;
     try {
       await addCare.mutateAsync({
         hospitalization_id: selectedHosp.id,
@@ -152,10 +154,15 @@ export default function Hospitalizations() {
         description: careDescription,
         administered_by: user.id,
         notes: careNotes || undefined,
+        unit_price: price,
+        quantity: qty,
+        total_price: price * qty,
+        medication_id: careMedicationId || undefined,
       });
       toast.success('Soin enregistré');
       setCareDialogOpen(false);
       setCareType(''); setCareDescription(''); setCareNotes('');
+      setCareUnitPrice(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch('');
     } catch (e: any) {
       toast.error(e.message);
     }
