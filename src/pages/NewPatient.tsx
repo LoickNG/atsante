@@ -379,12 +379,19 @@ const NewPatient = () => {
               <div className="flex flex-col items-center gap-4 py-4">
                 <div className="w-full max-w-[300px] p-4 border-2 border-dashed rounded-xl bg-card">
                   <div className="text-center mb-4">
-                    <h4 className="font-bold text-lg">Clinique Médicale</h4>
+                    <h4 className="font-bold text-lg">ATSanté</h4>
                     <p className="text-xs text-muted-foreground">Carte Patient</p>
                   </div>
-                  <div className="flex justify-center mb-4">
-                    <div className="p-2 bg-white rounded-lg">
-                      <QRCodeSVG value={createdPatient.code} size={120} level="H" />
+                  <div className="flex items-center gap-4 mb-4">
+                    {(createdPatient as any).photo_url ? (
+                      <img src={(createdPatient as any).photo_url} alt="Photo patient" className="h-20 w-20 rounded-full object-cover border-2 border-primary flex-shrink-0" />
+                    ) : (
+                      <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/30 flex-shrink-0">
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="p-1 bg-white rounded-lg">
+                      <QRCodeSVG value={createdPatient.code} size={80} level="H" />
                     </div>
                   </div>
                   <div className="text-center">

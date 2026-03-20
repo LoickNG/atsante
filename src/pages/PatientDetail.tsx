@@ -208,6 +208,9 @@ const PatientDetail = () => {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <Avatar className="h-20 w-20 mb-4">
+                    {(patient as any).photo_url && (
+                      <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
+                    )}
                     <AvatarFallback className={cn('text-2xl font-semibold', patient.gender === 'F' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700')}>
                       {patient.first_name[0]}{patient.last_name[0]}
                     </AvatarFallback>
