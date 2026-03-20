@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useConventions, type ConventionWithRelations } from '@/hooks/useConventions';
 import { supabase } from '@/integrations/supabase/client';
+import { InvoicePDFExport } from '@/components/invoice/InvoicePDFExport';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
