@@ -174,13 +174,17 @@ export function useRecordPayment() {
 
       const { data: inv, error: invErr } = await supabase
         .from('invoices')
-        .select('total_amount, paid_amount')
+        .select('total_amount, paid_amount, patient_amount, company_amount, insurance_amount')
         .eq('id', invoiceId)
         .single();
       if (invErr) throw invErr;
 
+      // For convention invoices, the amount owed by the patient is patient_amount
+      const amountOwed = (Number(inv.patient_amount) > 0 && Number(inv.patient_amount) < Number(inv.total_amount))
+        ? Number(inv.patient_amount)
+        : Number(inv.total_amount);
       const newPaidAmount = Number(inv.paid_amount) + totalPaid;
-      const newStatus = newPaidAmount >= Number(inv.total_amount) ? 'paye' : 'partiel';
+      const newStatus = newPaidAmount >= amountOwed ? 'paye' : 'partiel';
 
       const { error: updErr } = await supabase
         .from('invoices')

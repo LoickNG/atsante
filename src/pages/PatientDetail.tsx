@@ -8,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
-import { 
+import {
   ArrowLeft, Printer, Edit, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileText, Eye,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileText, Eye, FileDown,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
 import { useVisits } from '@/hooks/useVisits';
@@ -118,7 +119,14 @@ const PatientDetail = () => {
                     <Button variant="outline" className="flex-1 gap-2" onClick={() => window.print()}>
                       <Printer className="h-4 w-4" />Imprimer
                     </Button>
-                    <Button variant="outline" className="flex-1 gap-2"><Edit className="h-4 w-4" />Modifier</Button>
+                    <PatientPDFExport
+                      patient={patient}
+                      consultations={consultations || []}
+                      prescriptions={patientPrescriptions}
+                      labRequests={patientLabs}
+                      imagingRequests={patientImaging}
+                      visits={patientVisits}
+                    />
                   </div>
                 </div>
 

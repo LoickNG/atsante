@@ -67,8 +67,14 @@ export default function Payments() {
     }
   }, [invoiceIdParam]);
 
+  // For convention patients, only patient_amount is due; otherwise total_amount
+  const invoiceOwed = selectedInvoice
+    ? (Number(selectedInvoice.patient_amount) > 0 && Number(selectedInvoice.patient_amount) < Number(selectedInvoice.total_amount))
+      ? Number(selectedInvoice.patient_amount)
+      : Number(selectedInvoice.total_amount)
+    : 0;
   const remaining = selectedInvoice
-    ? Number(selectedInvoice.total_amount) - Number(selectedInvoice.paid_amount)
+    ? invoiceOwed - Number(selectedInvoice.paid_amount)
     : 0;
 
   const totalEntered = useMemo(
@@ -301,7 +307,7 @@ export default function Payments() {
               {/* Invoice summary */}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="p-2 rounded-lg bg-muted">
-                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-xs text-muted-foreground">Total facture</p>
                   <p className="font-bold">{formatCurrency(Number(selectedInvoice.total_amount))}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-success/10">
@@ -309,10 +315,33 @@ export default function Payments() {
                   <p className="font-bold text-success">{formatCurrency(Number(selectedInvoice.paid_amount))}</p>
                 </div>
                 <div className="p-2 rounded-lg bg-warning/10">
-                  <p className="text-xs text-muted-foreground">Reste</p>
+                  <p className="text-xs text-muted-foreground">Reste patient</p>
                   <p className="font-bold text-warning">{formatCurrency(remaining)}</p>
                 </div>
               </div>
+
+              {/* Convention breakdown if applicable */}
+              {(Number(selectedInvoice.company_amount) > 0 || Number(selectedInvoice.insurance_amount) > 0) && (
+                <div className="p-3 rounded-lg bg-muted/50 border text-sm space-y-1">
+                  <p className="font-semibold text-xs text-muted-foreground mb-1">Répartition convention</p>
+                  {Number(selectedInvoice.company_amount) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Part société</span>
+                      <span className="font-medium">{formatCurrency(Number(selectedInvoice.company_amount))}</span>
+                    </div>
+                  )}
+                  {Number(selectedInvoice.insurance_amount) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Part assurance</span>
+                      <span className="font-medium">{formatCurrency(Number(selectedInvoice.insurance_amount))}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold border-t pt-1">
+                    <span>Part patient</span>
+                    <span className="text-primary">{formatCurrency(invoiceOwed)}</span>
+                  </div>
+                </div>
+              )}
 
               {/* Items */}
               {selectedInvoice.items && selectedInvoice.items.length > 0 && (
