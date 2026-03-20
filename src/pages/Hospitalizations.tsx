@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BedDouble, Plus, Search, Clock, LogOut, Stethoscope, Loader2,
-  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList, DollarSign,
+  Snowflake, Wind, CalendarDays, AlertTriangle, Pill, ClipboardList, FlaskConical, ScanLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -25,6 +25,8 @@ import {
 } from '@/hooks/useHospitalizations';
 import { useMedications } from '@/hooks/useMedications';
 import { useMedicalActs } from '@/hooks/useBilling';
+import { useCreateLabRequest } from '@/hooks/useLabRequests';
+import { useCreateImagingRequest } from '@/hooks/useImagingRequests';
 
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { useSearchPatients, Patient } from '@/hooks/usePatients';
@@ -63,6 +65,13 @@ export default function Hospitalizations() {
   const [dischargeDialogOpen, setDischargeDialogOpen] = useState(false);
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [careDialogOpen, setCareDialogOpen] = useState(false);
+  const [examDialogOpen, setExamDialogOpen] = useState(false);
+
+  // Exam form
+  const [examCategory, setExamCategory] = useState<'laboratoire' | 'imagerie'>('laboratoire');
+  const [examTestType, setExamTestType] = useState('');
+  const [examBodyPart, setExamBodyPart] = useState('');
+  const [examPriority, setExamPriority] = useState<'normale' | 'urgente'>('normale');
 
   // Admit form
   const [admitPatient, setAdmitPatient] = useState<Patient | null>(null);
@@ -79,7 +88,6 @@ export default function Hospitalizations() {
   const [careType, setCareType] = useState('');
   const [careDescription, setCareDescription] = useState('');
   const [careNotes, setCareNotes] = useState('');
-  const [careUnitPrice, setCareUnitPrice] = useState('');
   const [careQuantity, setCareQuantity] = useState('1');
   const [careMedicationId, setCareMedicationId] = useState('');
   const [careMedSearch, setCareMedSearch] = useState('');
@@ -89,6 +97,8 @@ export default function Hospitalizations() {
 
   const { data: careList } = useHospitalizationCare(selectedHosp?.id);
   const addCare = useAddCare();
+  const createLabRequest = useCreateLabRequest();
+  const createImagingRequest = useCreateImagingRequest();
 
   const handleAdmit = async () => {
     if (!admitPatient || !admitReason || !user) {
@@ -146,7 +156,15 @@ export default function Hospitalizations() {
   const handleAddCare = async () => {
     if (!selectedHosp || !careType || !careDescription || !user) return;
     const qty = parseInt(careQuantity) || 1;
-    const price = parseFloat(careUnitPrice) || 0;
+    // Auto-resolve price silently from medication or medical_acts
+    let price = 0;
+    if (careMedicationId) {
+      const med = (medications || []).find(m => m.id === careMedicationId);
+      if (med) price = Number(med.unit_price) || 0;
+    } else {
+      const act = (medicalActs || []).find(a => a.name.toLowerCase().includes(careType.toLowerCase()));
+      if (act) price = Number(act.unit_price) || 0;
+    }
     try {
       await addCare.mutateAsync({
         hospitalization_id: selectedHosp.id,
@@ -162,7 +180,37 @@ export default function Hospitalizations() {
       toast.success('Soin enregistré');
       setCareDialogOpen(false);
       setCareType(''); setCareDescription(''); setCareNotes('');
-      setCareUnitPrice(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch('');
+      setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch('');
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleAddExam = async () => {
+    if (!selectedHosp || !user || !examTestType) return;
+    try {
+      if (examCategory === 'laboratoire') {
+        // Lab request needs a consultation_id - use the hospitalization's consultation if available
+        await createLabRequest.mutateAsync({
+          patient_id: selectedHosp.patient_id,
+          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          test_type: examTestType,
+          priority: examPriority,
+          status: 'demande',
+        });
+      } else {
+        await createImagingRequest.mutateAsync({
+          patient_id: selectedHosp.patient_id,
+          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          exam_type: examTestType,
+          body_part: examBodyPart,
+          priority: examPriority,
+          status: 'demande',
+        });
+      }
+      toast.success(`Demande d'examen envoyée`);
+      setExamDialogOpen(false);
+      setExamTestType(''); setExamBodyPart(''); setExamPriority('normale');
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -431,8 +479,11 @@ export default function Hospitalizations() {
                     <Button variant="outline" className="gap-2" onClick={() => { setRoomDialogOpen(true); setNewRoomId(''); }}>
                       <BedDouble className="h-4 w-4" />{selectedHosp.room_id ? 'Changer chambre' : 'Attribuer chambre'}
                     </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => { setCareDialogOpen(true); setCareType(''); setCareDescription(''); setCareNotes(''); }}>
+                     <Button variant="outline" className="gap-2" onClick={() => { setCareDialogOpen(true); setCareType(''); setCareDescription(''); setCareNotes(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch(''); }}>
                       <Stethoscope className="h-4 w-4" />Ajouter un soin
+                    </Button>
+                    <Button variant="outline" className="gap-2" onClick={() => { setExamDialogOpen(true); setExamCategory('laboratoire'); setExamTestType(''); setExamBodyPart(''); setExamPriority('normale'); }}>
+                      <FlaskConical className="h-4 w-4" />Demander un examen
                     </Button>
                     <Button variant="destructive" className="gap-2 ml-auto" onClick={() => { setDischargeDialogOpen(true); setDischargeNotes(''); }}>
                       <LogOut className="h-4 w-4" />Sortie du patient
@@ -456,21 +507,9 @@ export default function Hospitalizations() {
                             <span className="text-xs text-muted-foreground">{formatDateTime(c.administered_at)}</span>
                           </div>
                           <p>{c.description}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            {c.notes && <p className="text-xs text-muted-foreground">{c.notes}</p>}
-                            {c.total_price > 0 && (
-                              <span className="text-xs font-semibold text-primary ml-auto">
-                                {c.quantity > 1 ? `${c.quantity} × ${formatCurrency(c.unit_price)} = ` : ''}{formatCurrency(c.total_price)}
-                              </span>
-                            )}
-                          </div>
+                          {c.notes && <p className="text-xs text-muted-foreground mt-1">{c.notes}</p>}
                         </div>
                       ))}
-                      {/* Total soins */}
-                      <div className="flex justify-between items-center p-2 rounded-lg bg-primary/5 border border-primary/20 text-sm">
-                        <span className="font-medium">Total soins</span>
-                        <span className="font-bold text-primary">{formatCurrency(careList.reduce((s, c) => s + Number(c.total_price || 0), 0))}</span>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -549,17 +588,13 @@ export default function Hospitalizations() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Enregistrer un soin</DialogTitle>
-            <DialogDescription>Ajoutez un soin facturable pour ce patient</DialogDescription>
+            <DialogDescription>Ajoutez un soin pour ce patient</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Type de soin *</Label>
               <Select value={careType} onValueChange={(val) => {
                 setCareType(val);
-                // Auto-fill price from medical_acts if match found
-                const act = (medicalActs || []).find(a => a.name.toLowerCase().includes(val.toLowerCase()));
-                if (act) setCareUnitPrice(String(act.unit_price));
-                // Reset medication if not medication type
                 if (val !== 'Administration médicament' && val !== 'Injection' && val !== 'Perfusion') {
                   setCareMedicationId(''); setCareMedSearch('');
                 }
@@ -595,14 +630,10 @@ export default function Hospitalizations() {
                           onClick={() => {
                             setCareMedicationId(m.id);
                             setCareMedSearch(m.name);
-                            setCareUnitPrice(String(m.unit_price));
                             setCareDescription(m.name);
                           }}
                         >
-                          <div className="flex justify-between">
-                            <span className="font-medium">{m.name}</span>
-                            <span className="text-muted-foreground">{formatCurrency(Number(m.unit_price))}</span>
-                          </div>
+                          <span className="font-medium">{m.name}</span>
                           <div className="flex gap-2 text-xs text-muted-foreground">
                             <span>Stock: {m.stock_quantity}</span>
                             <span>•</span>
@@ -620,26 +651,10 @@ export default function Hospitalizations() {
               <Textarea value={careDescription} onChange={e => setCareDescription(e.target.value)} placeholder="Détails du soin..." rows={2} />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="flex items-center gap-1.5">
-                  <DollarSign className="h-3.5 w-3.5" />Prix unitaire (FCFA)
-                </Label>
-                <Input type="number" value={careUnitPrice} onChange={e => setCareUnitPrice(e.target.value)} placeholder="0" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Quantité</Label>
-                <Input type="number" min="1" value={careQuantity} onChange={e => setCareQuantity(e.target.value)} placeholder="1" />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Quantité</Label>
+              <Input type="number" min="1" value={careQuantity} onChange={e => setCareQuantity(e.target.value)} placeholder="1" />
             </div>
-
-            {/* Total preview */}
-            {(parseFloat(careUnitPrice) || 0) > 0 && (
-              <div className="flex justify-between items-center p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <span className="text-sm font-medium">Total</span>
-                <span className="font-bold text-primary">{formatCurrency((parseFloat(careUnitPrice) || 0) * (parseInt(careQuantity) || 1))}</span>
-              </div>
-            )}
 
             <div className="space-y-1.5">
               <Label>Notes</Label>
@@ -651,6 +666,91 @@ export default function Hospitalizations() {
             <Button onClick={handleAddCare} disabled={addCare.isPending || !careType || !careDescription}>
               {addCare.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Exam Dialog */}
+      <Dialog open={examDialogOpen} onOpenChange={setExamDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-primary" />
+              Demander un examen
+            </DialogTitle>
+            <DialogDescription>
+              {selectedHosp?.patients && `Pour ${selectedHosp.patients.first_name} ${selectedHosp.patients.last_name}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Type d'examen *</Label>
+              <Select value={examCategory} onValueChange={(v) => { setExamCategory(v as 'laboratoire' | 'imagerie'); setExamTestType(''); setExamBodyPart(''); }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="laboratoire">
+                    <span className="flex items-center gap-2"><FlaskConical className="h-3.5 w-3.5" />Laboratoire</span>
+                  </SelectItem>
+                  <SelectItem value="imagerie">
+                    <span className="flex items-center gap-2"><ScanLine className="h-3.5 w-3.5" />Imagerie</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {examCategory === 'laboratoire' ? (
+              <div className="space-y-1.5">
+                <Label>Type d'analyse *</Label>
+                <Input value={examTestType} onChange={e => setExamTestType(e.target.value)} placeholder="Ex: NFS, Glycémie, Bilan hépatique..." />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Type d'examen *</Label>
+                  <Select value={examTestType} onValueChange={setExamTestType}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Radiographie">Radiographie</SelectItem>
+                      <SelectItem value="Échographie">Échographie</SelectItem>
+                      <SelectItem value="Scanner">Scanner</SelectItem>
+                      <SelectItem value="IRM">IRM</SelectItem>
+                      <SelectItem value="ECG">ECG</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Partie du corps *</Label>
+                  <Input value={examBodyPart} onChange={e => setExamBodyPart(e.target.value)} placeholder="Ex: Thorax, Abdomen, Genou..." />
+                </div>
+              </>
+            )}
+
+            <div className="space-y-1.5">
+              <Label>Priorité</Label>
+              <Select value={examPriority} onValueChange={(v) => setExamPriority(v as 'normale' | 'urgente')}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normale">Normale</SelectItem>
+                  <SelectItem value="urgente">Urgente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Annuler</Button>
+            <Button
+              onClick={handleAddExam}
+              disabled={
+                (createLabRequest.isPending || createImagingRequest.isPending) ||
+                !examTestType ||
+                (examCategory === 'imagerie' && !examBodyPart)
+              }
+            >
+              {(createLabRequest.isPending || createImagingRequest.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Envoyer la demande
             </Button>
           </DialogFooter>
         </DialogContent>
