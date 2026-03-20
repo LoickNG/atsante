@@ -21,6 +21,7 @@ export type Database = {
           date: string
           diagnosis: string | null
           doctor_id: string
+          follow_up_notes: Json | null
           heart_rate: number | null
           height: number | null
           id: string
@@ -38,6 +39,7 @@ export type Database = {
           date?: string
           diagnosis?: string | null
           doctor_id: string
+          follow_up_notes?: Json | null
           heart_rate?: number | null
           height?: number | null
           id?: string
@@ -55,6 +57,7 @@ export type Database = {
           date?: string
           diagnosis?: string | null
           doctor_id?: string
+          follow_up_notes?: Json | null
           heart_rate?: number | null
           height?: number | null
           id?: string
@@ -664,7 +667,8 @@ export type Database = {
           frequency: string
           id: string
           instructions: string | null
-          medication_id: string
+          medication_id: string | null
+          medication_name: string | null
           quantity: number
         }
         Insert: {
@@ -678,7 +682,8 @@ export type Database = {
           frequency: string
           id?: string
           instructions?: string | null
-          medication_id: string
+          medication_id?: string | null
+          medication_name?: string | null
           quantity?: number
         }
         Update: {
@@ -692,7 +697,8 @@ export type Database = {
           frequency?: string
           id?: string
           instructions?: string | null
-          medication_id?: string
+          medication_id?: string | null
+          medication_name?: string | null
           quantity?: number
         }
         Relationships: [
