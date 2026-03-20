@@ -23,7 +23,7 @@ import {
   useDischargePatient, useAssignRoom, useHospitalizationCare,
   useAddCare, calculateStayDays, Hospitalization,
 } from '@/hooks/useHospitalizations';
-import { useMedicalActs } from '@/hooks/useMedicalActs';
+
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { useSearchPatients, Patient } from '@/hooks/usePatients';
 
