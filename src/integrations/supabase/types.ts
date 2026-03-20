@@ -83,6 +83,69 @@ export type Database = {
           },
         ]
       }
+      conventions: {
+        Row: {
+          company_coverage_percent: number
+          company_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          insurance_coverage_percent: number
+          insurance_id: string | null
+          is_active: boolean
+          name: string
+          notes: string | null
+          patient_coverage_percent: number
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          company_coverage_percent?: number
+          company_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          insurance_coverage_percent?: number
+          insurance_id?: string | null
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          patient_coverage_percent?: number
+          start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          company_coverage_percent?: number
+          company_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          insurance_coverage_percent?: number
+          insurance_id?: string | null
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          patient_coverage_percent?: number
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conventions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conventions_insurance_id_fkey"
+            columns: ["insurance_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       imaging_requests: {
         Row: {
           body_part: string
@@ -143,6 +206,45 @@ export type Database = {
           },
         ]
       }
+      insurance_companies: {
+        Row: {
+          address: string | null
+          code: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           created_at: string
@@ -189,42 +291,61 @@ export type Database = {
       }
       invoices: {
         Row: {
+          company_amount: number
+          convention_id: string | null
           created_at: string
           created_by: string
           id: string
+          insurance_amount: number
           invoice_number: string
           paid_amount: number
           paid_at: string | null
+          patient_amount: number
           patient_id: string
           status: string
           total_amount: number
           visit_id: string | null
         }
         Insert: {
+          company_amount?: number
+          convention_id?: string | null
           created_at?: string
           created_by: string
           id?: string
+          insurance_amount?: number
           invoice_number: string
           paid_amount?: number
           paid_at?: string | null
+          patient_amount?: number
           patient_id: string
           status?: string
           total_amount?: number
           visit_id?: string | null
         }
         Update: {
+          company_amount?: number
+          convention_id?: string | null
           created_at?: string
           created_by?: string
           id?: string
+          insurance_amount?: number
           invoice_number?: string
           paid_amount?: number
           paid_at?: string | null
+          patient_amount?: number
           patient_id?: string
           status?: string
           total_amount?: number
           visit_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "invoices_convention_id_fkey"
+            columns: ["convention_id"]
+            isOneToOne: false
+            referencedRelation: "conventions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "invoices_patient_id_fkey"
             columns: ["patient_id"]
@@ -376,17 +497,59 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_companies: {
+        Row: {
+          address: string | null
+          code: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           address: string | null
           allergies: string[] | null
           blood_type: string | null
           code: string
+          company_id: string | null
+          convention_id: string | null
           created_at: string
           date_of_birth: string
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
           emergency_contact_relationship: string | null
+          employee_id: string | null
           first_name: string
           gender: string
           id: string
@@ -399,11 +562,14 @@ export type Database = {
           allergies?: string[] | null
           blood_type?: string | null
           code: string
+          company_id?: string | null
+          convention_id?: string | null
           created_at?: string
           date_of_birth: string
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relationship?: string | null
+          employee_id?: string | null
           first_name: string
           gender: string
           id?: string
@@ -416,11 +582,14 @@ export type Database = {
           allergies?: string[] | null
           blood_type?: string | null
           code?: string
+          company_id?: string | null
+          convention_id?: string | null
           created_at?: string
           date_of_birth?: string
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
           emergency_contact_relationship?: string | null
+          employee_id?: string | null
           first_name?: string
           gender?: string
           id?: string
@@ -428,7 +597,22 @@ export type Database = {
           phone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patients_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "partner_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patients_convention_id_fkey"
+            columns: ["convention_id"]
+            isOneToOne: false
+            referencedRelation: "conventions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
