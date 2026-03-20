@@ -112,14 +112,7 @@ export function AppSidebar({
               </p>
             </div>}
           {!collapsed && <div className="flex gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Notifications</TooltipContent>
-              </Tooltip>
+              <NotificationBell />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
