@@ -157,7 +157,15 @@ export default function Hospitalizations() {
   const handleAddCare = async () => {
     if (!selectedHosp || !careType || !careDescription || !user) return;
     const qty = parseInt(careQuantity) || 1;
-    const price = parseFloat(careUnitPrice) || 0;
+    // Auto-resolve price silently from medication or medical_acts
+    let price = 0;
+    if (careMedicationId) {
+      const med = (medications || []).find(m => m.id === careMedicationId);
+      if (med) price = Number(med.unit_price) || 0;
+    } else {
+      const act = (medicalActs || []).find(a => a.name.toLowerCase().includes(careType.toLowerCase()));
+      if (act) price = Number(act.unit_price) || 0;
+    }
     try {
       await addCare.mutateAsync({
         hospitalization_id: selectedHosp.id,
@@ -173,7 +181,37 @@ export default function Hospitalizations() {
       toast.success('Soin enregistré');
       setCareDialogOpen(false);
       setCareType(''); setCareDescription(''); setCareNotes('');
-      setCareUnitPrice(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch('');
+      setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch('');
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleAddExam = async () => {
+    if (!selectedHosp || !user || !examTestType) return;
+    try {
+      if (examCategory === 'laboratoire') {
+        // Lab request needs a consultation_id - use the hospitalization's consultation if available
+        await createLabRequest.mutateAsync({
+          patient_id: selectedHosp.patient_id,
+          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          test_type: examTestType,
+          priority: examPriority,
+          status: 'demande',
+        });
+      } else {
+        await createImagingRequest.mutateAsync({
+          patient_id: selectedHosp.patient_id,
+          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          exam_type: examTestType,
+          body_part: examBodyPart,
+          priority: examPriority,
+          status: 'demande',
+        });
+      }
+      toast.success(`Demande d'examen envoyée`);
+      setExamDialogOpen(false);
+      setExamTestType(''); setExamBodyPart(''); setExamPriority('normale');
     } catch (e: any) {
       toast.error(e.message);
     }
