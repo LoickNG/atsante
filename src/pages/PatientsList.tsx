@@ -12,7 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { 
-  Search, UserPlus, QrCode, MoreHorizontal, Eye, Edit, FileText, Phone, Calendar, Printer,
+  Search, UserPlus, QrCode, MoreHorizontal, Eye, Edit, FileText, Phone, Calendar, Printer, Archive, Skull,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,9 @@ import { usePatients, Patient } from '@/hooks/usePatients';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
 import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
 import { PatientHistoryDialog } from '@/components/patient/PatientHistoryDialog';
+import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
+import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
+import { DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const PatientsList = () => {
   const [searchQuery, setSearchQuery] = useState('');
