@@ -54,6 +54,13 @@ const WaitingQueue = () => {
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [visitType, setVisitType] = useState<'consultation' | 'urgence' | 'suivi'>('consultation');
   const [searchPatient, setSearchPatient] = useState('');
+  
+  // Vital signs
+  const [temperature, setTemperature] = useState('');
+  const [bloodPressure, setBloodPressure] = useState('');
+  const [heartRate, setHeartRate] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
 
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString('fr-FR', {
