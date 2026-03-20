@@ -42,6 +42,7 @@ const PatientDetail = () => {
   const { data: allPrescriptions } = usePrescriptions();
   const { data: allLabRequests } = useLabRequests();
   const { data: allImagingRequests } = useImagingRequests();
+  const { data: allHospitalizations } = useHospitalizations();
   const updateConsultation = useUpdateConsultation();
   const updateVisit = useUpdateVisit();
 
