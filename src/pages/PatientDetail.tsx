@@ -164,7 +164,7 @@ const PatientDetail = () => {
         @media print { body { padding: 20px; } }
       </style></head><body>
       <div class="header">
-        <h2>TétimianPro</h2>
+        <h2>ATSanté</h2>
         <p>Centre Médical</p>
         <p>Ordonnance Médicale</p>
       </div>
