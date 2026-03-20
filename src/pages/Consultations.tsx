@@ -82,7 +82,10 @@ const Consultations = () => {
 
   const selectedPatient = selectedVisit?.patients || null;
 
-  const filteredVisits = (queueVisits || []).filter(({ patients }) => {
+  // Only show visits that have been called (en_cours) - not waiting ones
+  const calledVisits = (queueVisits || []).filter(v => v.status === 'en_cours');
+
+  const filteredVisits = calledVisits.filter(({ patients }) => {
     if (!patients) return false;
     const searchLower = searchQuery.toLowerCase();
     return (
