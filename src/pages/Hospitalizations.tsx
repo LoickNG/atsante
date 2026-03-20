@@ -273,7 +273,8 @@ export default function Hospitalizations() {
               {filteredActive.map(hosp => {
                 const p = hosp.patients;
                 const days = calculateStayDays(hosp.admission_date, hosp.discharge_date);
-                const rate = getRoomRate(hosp.rooms);
+                const canSeeCosts = role === 'admin' || role === 'caissier';
+                const rate = canSeeCosts ? getRoomRate(hosp.rooms) : 0;
                 if (!p) return null;
                 return (
                   <Card key={hosp.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedHosp(hosp)}>
