@@ -87,6 +87,11 @@ const App = () => (
                 <Payments />
               </ProtectedRoute>
             } />
+            <Route path="/extraits" element={
+              <ProtectedRoute allowedRoles={['admin', 'caissier']}>
+                <Extracts />
+              </ProtectedRoute>
+            } />
             <Route path="/parametres" element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <Settings />

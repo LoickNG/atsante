@@ -112,6 +112,12 @@ export const navigationConfig: NavSection[] = [
         icon: CreditCard,
         roles: ['admin', 'caissier'],
       },
+      {
+        title: 'Extraits & Relevés',
+        href: '/extraits',
+        icon: FileDown,
+        roles: ['admin', 'caissier'],
+      },
     ],
   },
   {
