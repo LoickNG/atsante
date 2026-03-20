@@ -5,7 +5,8 @@ import { AdminOverview } from '@/components/admin/AdminOverview';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ConventionManagement } from '@/components/admin/ConventionManagement';
 import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement';
-import { BarChart3, Users, Handshake, Receipt } from 'lucide-react';
+import { RoomManagement } from '@/components/admin/RoomManagement';
+import { BarChart3, Users, Handshake, Receipt, BedDouble } from 'lucide-react';
 
 export default function Settings() {
   const { role } = useAuth();
@@ -42,6 +43,10 @@ export default function Settings() {
             <Receipt className="h-4 w-4" />
             Tarifs & Actes
           </TabsTrigger>
+          <TabsTrigger value="chambres" className="flex items-center gap-2">
+            <BedDouble className="h-4 w-4" />
+            Chambres
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -58,6 +63,10 @@ export default function Settings() {
 
         <TabsContent value="tarifs">
           <MedicalActsManagement />
+        </TabsContent>
+
+        <TabsContent value="chambres">
+          <RoomManagement />
         </TabsContent>
       </Tabs>
     </AppLayout>

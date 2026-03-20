@@ -12,6 +12,7 @@ import {
   FileText,
   Activity,
   FileDown,
+  BedDouble,
   LucideIcon,
 } from 'lucide-react';
 
@@ -64,6 +65,12 @@ export const navigationConfig: NavSection[] = [
         title: 'Consultations',
         href: '/consultations',
         icon: Stethoscope,
+        roles: ['admin', 'medecin', 'infirmier'],
+      },
+      {
+        title: 'Hospitalisations',
+        href: '/hospitalisations',
+        icon: BedDouble,
         roles: ['admin', 'medecin', 'infirmier'],
       },
       {

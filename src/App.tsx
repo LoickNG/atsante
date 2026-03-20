@@ -18,6 +18,7 @@ import Billing from "./pages/Billing";
 import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
 import Extracts from "./pages/Extracts";
+import Hospitalizations from "./pages/Hospitalizations";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -60,6 +61,11 @@ const App = () => (
             <Route path="/consultations" element={
               <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
                 <Consultations />
+              </ProtectedRoute>
+            } />
+            <Route path="/hospitalisations" element={
+              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+                <Hospitalizations />
               </ProtectedRoute>
             } />
             <Route path="/pharmacie" element={

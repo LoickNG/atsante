@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Search, Stethoscope, Plus, Clock, Thermometer, Heart, Activity,
-  Pill, FlaskConical, ImageIcon, Save, Check, AlertTriangle, Loader2, X, Printer,
+  Pill, FlaskConical, ImageIcon, Save, Check, AlertTriangle, Loader2, X, Printer, BedDouble,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -29,6 +29,10 @@ import { useCreateImagingRequest } from '@/hooks/useImagingRequests';
 import { useCreatePrescription } from '@/hooks/usePrescriptions';
 import { useAuth } from '@/hooks/useAuth';
 import { useLabActs, useImagingActs } from '@/hooks/useMedicalActs';
+import { useCreateHospitalization } from '@/hooks/useHospitalizations';
+import { useAvailableRooms } from '@/hooks/useHospitalizations';
+import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 
 interface PrescriptionItem {
   medicationId: string;
@@ -42,15 +46,18 @@ interface PrescriptionItem {
 
 const Consultations = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: queueVisits, isLoading: queueLoading } = useWaitingQueue();
   const { data: medications } = useMedications();
   const { data: labActs } = useLabActs();
   const { data: imagingActs } = useImagingActs();
+  const { data: availableRooms } = useAvailableRooms();
   const createConsultation = useCreateConsultation();
   const updateVisit = useUpdateVisit();
   const createLabRequest = useCreateLabRequest();
   const createImagingRequest = useCreateImagingRequest();
   const createPrescription = useCreatePrescription();
+  const createHosp = useCreateHospitalization();
 
   const [selectedVisit, setSelectedVisit] = useState<VisitWithPatient | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -67,6 +74,11 @@ const Consultations = () => {
   const [selectedImagingExams, setSelectedImagingExams] = useState<string[]>([]);
   const [imagingBodyPart, setImagingBodyPart] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Hospitalization dialog
+  const [hospDialogOpen, setHospDialogOpen] = useState(false);
+  const [hospRoomId, setHospRoomId] = useState('');
+  const [hospReason, setHospReason] = useState('');
 
   const selectedPatient = selectedVisit?.patients || null;
 
@@ -367,10 +379,15 @@ const Consultations = () => {
                     )}
                   </div>
                 </div>
-                <Button onClick={handleSaveConsultation} className="gap-2" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" className="gap-2" onClick={() => { setHospDialogOpen(true); setHospReason(diagnosis || ''); }}>
+                    <BedDouble className="h-4 w-4" />Hospitaliser
+                  </Button>
+                  <Button onClick={handleSaveConsultation} className="gap-2" disabled={isSaving}>
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                  </Button>
+                </div>
               </div>
 
               <Tabs defaultValue="consultation" className="space-y-4">
@@ -639,6 +656,59 @@ const Consultations = () => {
           )}
         </div>
       </div>
+      {/* Hospitalization Dialog */}
+      <Dialog open={hospDialogOpen} onOpenChange={setHospDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hospitaliser le patient</DialogTitle>
+            <DialogDescription>
+              {selectedPatient && `${selectedPatient.first_name} ${selectedPatient.last_name}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Chambre</Label>
+              <Select value={hospRoomId} onValueChange={setHospRoomId}>
+                <SelectTrigger><SelectValue placeholder="Sélectionner une chambre" /></SelectTrigger>
+                <SelectContent>
+                  {(availableRooms || []).map(r => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.room_number} — {r.category === '1_lit' ? '1 Lit' : r.category === '2_lits' ? '2 Lits' : '4 Lits'} ({r.comfort === 'climatise' ? 'Clim.' : 'Vent.'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Motif *</Label>
+              <Textarea value={hospReason} onChange={e => setHospReason(e.target.value)} placeholder="Raison de l'hospitalisation..." rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHospDialogOpen(false)}>Annuler</Button>
+            <Button onClick={async () => {
+              if (!selectedPatient || !hospReason || !user || !selectedVisit) return;
+              try {
+                await createHosp.mutateAsync({
+                  patient_id: selectedPatient.id,
+                  visit_id: selectedVisit.id,
+                  room_id: hospRoomId || undefined,
+                  reason: hospReason,
+                  doctor_id: user.id,
+                });
+                toast.success('Patient hospitalisé avec succès');
+                setHospDialogOpen(false);
+                setHospRoomId(''); setHospReason('');
+              } catch (e: any) {
+                toast.error(e.message);
+              }
+            }} disabled={createHosp.isPending || !hospReason}>
+              {createHosp.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirmer l'hospitalisation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
