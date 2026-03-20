@@ -78,6 +78,36 @@ export default function Billing() {
   };
 
   const invoiceTotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const companyAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.company_coverage_percent / 100) : 0;
+  const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
+  const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
+
+  // Load convention when patient is selected
+  const handleSelectPatient = async (p: Patient) => {
+    setSelectedPatient(p);
+    setPatientSearch('');
+    // Check if patient has a convention
+    const patientData = p as any;
+    if (patientData.convention_id && allConventions) {
+      const conv = allConventions.find(c => c.id === patientData.convention_id);
+      if (conv && conv.is_active) {
+        setPatientConvention(conv);
+        return;
+      }
+    }
+    // Try to load from DB
+    if (patientData.convention_id) {
+      const { data } = await supabase
+        .from('conventions')
+        .select('*, company:partner_companies(*), insurance:insurance_companies(*)')
+        .eq('id', patientData.convention_id)
+        .eq('is_active', true)
+        .single();
+      if (data) setPatientConvention(data as unknown as ConventionWithRelations);
+    } else {
+      setPatientConvention(null);
+    }
+  };
 
   const handleCreate = async () => {
     if (!selectedPatient) {
@@ -95,7 +125,11 @@ export default function Billing() {
         patient_id: selectedPatient.id,
         created_by: user!.id,
         items: validItems,
-      });
+        convention_id: patientConvention?.id,
+        company_amount: companyAmount,
+        insurance_amount: insuranceAmount,
+        patient_amount: patientAmount,
+      } as any);
       toast({ title: 'Facture créée', description: `Montant: ${formatCurrency(invoiceTotal)}` });
       setDialogOpen(false);
       resetForm();
@@ -107,6 +141,7 @@ export default function Billing() {
   const resetForm = () => {
     setSelectedPatient(null);
     setPatientSearch('');
+    setPatientConvention(null);
     setItems([{ type: 'consultation', description: '', quantity: 1, unit_price: 0 }]);
   };
 
