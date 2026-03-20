@@ -611,25 +611,36 @@ const PatientDetail = () => {
           </div>
         </div>
 
-        {/* Print-only Patient Card */}
+        {/* Print-only Patient Card (PVC format) */}
         <div className="print-only mt-8">
-          <div className="patient-card-print mx-auto">
-            <div className="flex items-start justify-between h-full">
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-primary mb-1">ATSanté</h3>
-                <p className="text-xs text-muted-foreground mb-3">Centre Médical</p>
-                <div className="space-y-1">
-                  <p className="font-semibold">{patient.first_name} {patient.last_name}</p>
-                  <p className="text-sm text-muted-foreground">
+          <div className="patient-card-print mx-auto" style={{ width: '85.6mm', height: '54mm', padding: '5mm', border: '1px solid #ccc', borderRadius: '3mm', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3mm' }}>
+                {(patient as any).photo_url ? (
+                  <img src={(patient as any).photo_url} alt="" style={{ width: '18mm', height: '18mm', borderRadius: '50%', objectFit: 'cover', border: '1px solid #ccc' }} />
+                ) : (
+                  <div style={{ width: '18mm', height: '18mm', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold', color: '#6b7280' }}>
+                    {patient.first_name[0]}{patient.last_name[0]}
+                  </div>
+                )}
+                <div>
+                  <p style={{ fontWeight: 'bold', fontSize: '11px', margin: 0 }}>{patient.first_name} {patient.last_name}</p>
+                  <p style={{ fontSize: '9px', color: '#6b7280', margin: '1mm 0 0 0' }}>
                     {calculateAge(patient.date_of_birth)} ans • {patient.gender === 'F' ? 'F' : 'M'}
                     {patient.blood_type && ` • ${patient.blood_type}`}
                   </p>
-                  <p className="text-xs font-mono mt-2">{patient.code}</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center">
-                <QRCodeSVG value={patient.code} size={80} level="H" />
+              <div style={{ textAlign: 'center' }}>
+                <QRCodeSVG value={patient.code} size={60} level="H" />
               </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <h3 style={{ fontWeight: 'bold', fontSize: '12px', margin: 0, color: 'hsl(var(--primary))' }}>ATSanté</h3>
+                <p style={{ fontSize: '8px', color: '#6b7280', margin: 0 }}>Centre Médical</p>
+              </div>
+              <p style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: 'bold', margin: 0 }}>{patient.code}</p>
             </div>
           </div>
         </div>
