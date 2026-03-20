@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Search, FileText, CreditCard, Eye, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Search, FileText, CreditCard, Eye, Plus, Trash2, Building2 } from 'lucide-react';
 import { useInvoices, useCreateInvoice, useMedicalActs, type NewInvoiceItem } from '@/hooks/useBilling';
 import { useSearchPatients, type Patient } from '@/hooks/usePatients';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useConventions, type ConventionWithRelations } from '@/hooks/useConventions';
+import { supabase } from '@/integrations/supabase/client';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
@@ -48,7 +50,9 @@ export default function Billing() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientConvention, setPatientConvention] = useState<ConventionWithRelations | null>(null);
   const { data: searchResults } = useSearchPatients(patientSearch);
+  const { data: allConventions } = useConventions();
   const [items, setItems] = useState<NewInvoiceItem[]>([
     { type: 'consultation', description: '', quantity: 1, unit_price: 0 },
   ]);
@@ -74,6 +78,36 @@ export default function Billing() {
   };
 
   const invoiceTotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const companyAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.company_coverage_percent / 100) : 0;
+  const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
+  const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
+
+  // Load convention when patient is selected
+  const handleSelectPatient = async (p: Patient) => {
+    setSelectedPatient(p);
+    setPatientSearch('');
+    // Check if patient has a convention
+    const patientData = p as any;
+    if (patientData.convention_id && allConventions) {
+      const conv = allConventions.find(c => c.id === patientData.convention_id);
+      if (conv && conv.is_active) {
+        setPatientConvention(conv);
+        return;
+      }
+    }
+    // Try to load from DB
+    if (patientData.convention_id) {
+      const { data } = await supabase
+        .from('conventions')
+        .select('*, company:partner_companies(*), insurance:insurance_companies(*)')
+        .eq('id', patientData.convention_id)
+        .eq('is_active', true)
+        .single();
+      if (data) setPatientConvention(data as unknown as ConventionWithRelations);
+    } else {
+      setPatientConvention(null);
+    }
+  };
 
   const handleCreate = async () => {
     if (!selectedPatient) {
@@ -91,7 +125,11 @@ export default function Billing() {
         patient_id: selectedPatient.id,
         created_by: user!.id,
         items: validItems,
-      });
+        convention_id: patientConvention?.id,
+        company_amount: companyAmount,
+        insurance_amount: insuranceAmount,
+        patient_amount: patientAmount,
+      } as any);
       toast({ title: 'Facture créée', description: `Montant: ${formatCurrency(invoiceTotal)}` });
       setDialogOpen(false);
       resetForm();
@@ -103,6 +141,7 @@ export default function Billing() {
   const resetForm = () => {
     setSelectedPatient(null);
     setPatientSearch('');
+    setPatientConvention(null);
     setItems([{ type: 'consultation', description: '', quantity: 1, unit_price: 0 }]);
   };
 
@@ -265,13 +304,13 @@ export default function Billing() {
                       className="pl-9"
                     />
                   </div>
-                  {searchResults && searchResults.length > 0 && (
+                    {searchResults && searchResults.length > 0 && (
                     <div className="border rounded-lg max-h-40 overflow-y-auto">
                       {searchResults.map(p => (
                         <button
                           key={p.id}
                           className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors border-b last:border-b-0"
-                          onClick={() => { setSelectedPatient(p); setPatientSearch(''); }}
+                          onClick={() => handleSelectPatient(p)}
                         >
                           <p className="font-medium text-sm">{p.first_name} {p.last_name}</p>
                           <p className="text-xs text-muted-foreground">{p.code}</p>
@@ -364,6 +403,30 @@ export default function Billing() {
                 <span className="font-semibold">Total facture</span>
                 <span className="text-xl font-bold text-primary">{formatCurrency(invoiceTotal)}</span>
               </div>
+
+              {/* Convention breakdown */}
+              {patientConvention && invoiceTotal > 0 && (
+                <div className="p-3 rounded-lg bg-muted/50 border space-y-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4" />
+                    <span className="text-sm font-semibold">Répartition convention : {patientConvention.name}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Part société ({patientConvention.company_coverage_percent}%)</span>
+                    <span className="font-medium">{formatCurrency(companyAmount)}</span>
+                  </div>
+                  {patientConvention.insurance_coverage_percent > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Part assurance ({patientConvention.insurance_coverage_percent}%)</span>
+                      <span className="font-medium">{formatCurrency(insuranceAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-semibold border-t pt-1 mt-1">
+                    <span>Part patient ({patientConvention.patient_coverage_percent}%)</span>
+                    <span className="text-primary">{formatCurrency(patientAmount)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
