@@ -18,7 +18,16 @@ interface DeceasedPatientActionsProps {
 }
 
 export function DeceasedPatientActions({ patient, open, onOpenChange }: DeceasedPatientActionsProps) {
-  const { profile } = useAuth();
+  const { user } = useAuth();
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from('profiles').select('full_name').eq('user_id', user.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
   if (!patient) return null;
 
   const p = patient as any;
