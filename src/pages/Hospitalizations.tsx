@@ -86,7 +86,7 @@ export default function Hospitalizations() {
     }
     try {
       await createHosp.mutateAsync({
-        patient_id: admitPatientId,
+        patient_id: admitPatient.id,
         room_id: admitRoomId || undefined,
         reason: admitReason,
         doctor_id: user.id,
