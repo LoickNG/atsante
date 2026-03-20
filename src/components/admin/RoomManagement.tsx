@@ -28,9 +28,13 @@ interface RoomForm {
   comfort: string;
   floor: string;
   notes: string;
+  price_per_night: string;
 }
 
-const emptyForm: RoomForm = { room_number: '', category: '1_lit', comfort: 'climatise', floor: '', notes: '' };
+const emptyForm: RoomForm = { room_number: '', category: '1_lit', comfort: 'climatise', floor: '', notes: '', price_per_night: '' };
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
 
 export function RoomManagement() {
   const { toast } = useToast();
@@ -47,7 +51,7 @@ export function RoomManagement() {
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setDialogOpen(true); };
   const openEdit = (room: any) => {
     setEditingId(room.id);
-    setForm({ room_number: room.room_number, category: room.category, comfort: room.comfort, floor: room.floor || '', notes: room.notes || '' });
+    setForm({ room_number: room.room_number, category: room.category, comfort: room.comfort, floor: room.floor || '', notes: room.notes || '', price_per_night: String(room.price_per_night || 0) });
     setDialogOpen(true);
   };
 
@@ -57,11 +61,12 @@ export function RoomManagement() {
       return;
     }
     try {
+      const payload = { ...form, floor: form.floor || null, notes: form.notes || null, price_per_night: parseFloat(form.price_per_night) || 0 };
       if (editingId) {
-        await updateRoom.mutateAsync({ id: editingId, ...form, floor: form.floor || null, notes: form.notes || null });
+        await updateRoom.mutateAsync({ id: editingId, ...payload });
         toast({ title: 'Chambre modifiée' });
       } else {
-        await createRoom.mutateAsync({ ...form, floor: form.floor || undefined, notes: form.notes || undefined });
+        await createRoom.mutateAsync(payload);
         toast({ title: 'Chambre ajoutée' });
       }
       setDialogOpen(false);
@@ -104,6 +109,7 @@ export function RoomManagement() {
                     <TableHead>N° Chambre</TableHead>
                     <TableHead>Catégorie</TableHead>
                     <TableHead>Confort</TableHead>
+                    <TableHead className="text-right">Prix/Nuit</TableHead>
                     <TableHead>Étage</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead></TableHead>
@@ -120,6 +126,7 @@ export function RoomManagement() {
                           {room.comfort === 'climatise' ? 'Climatisé' : 'Ventilé'}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right font-semibold">{formatCurrency(Number(room.price_per_night))}</TableCell>
                       <TableCell>{room.floor || '-'}</TableCell>
                       <TableCell>
                         <Badge variant={room.is_available ? 'default' : 'secondary'}>
@@ -177,6 +184,10 @@ export function RoomManagement() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Prix par nuit (FCFA) *</Label>
+              <Input type="number" value={form.price_per_night} onChange={e => setForm(f => ({ ...f, price_per_night: e.target.value }))} placeholder="15000" />
             </div>
             <div className="space-y-1.5">
               <Label>Notes</Label>

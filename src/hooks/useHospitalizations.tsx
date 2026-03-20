@@ -6,6 +6,7 @@ export interface Room {
   room_number: string;
   category: '1_lit' | '2_lits' | '4_lits';
   comfort: 'climatise' | 'ventile';
+  price_per_night: number;
   is_available: boolean;
   floor: string | null;
   notes: string | null;
