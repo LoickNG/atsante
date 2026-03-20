@@ -608,7 +608,52 @@ const PatientDetail = () => {
                 </Card>
               </TabsContent>
 
-              {/* Visits History Tab */}
+              {/* Hospitalizations Tab */}
+              <TabsContent value="hospitalisation" className="mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Hospitalisations</CardTitle>
+                    <CardDescription>{patientHospitalizations.length} hospitalisation(s)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {patientHospitalizations.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">Aucune hospitalisation enregistrée</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {patientHospitalizations.map((h) => (
+                          <div key={h.id} className={cn('p-4 border rounded-lg', h.status === 'en_cours' ? 'bg-warning/5 border-warning/30' : h.status === 'termine' ? 'bg-success/5 border-success/20' : 'bg-muted/30')}>
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <BedDouble className="h-4 w-4 text-primary" />
+                                <p className="font-semibold">{h.reason}</p>
+                              </div>
+                              <Badge variant={h.status === 'en_cours' ? 'secondary' : h.status === 'termine' ? 'default' : 'outline'}>
+                                {h.status === 'en_cours' ? 'En cours' : h.status === 'termine' ? 'Terminée' : 'Annulée'}
+                              </Badge>
+                            </div>
+                            {h.rooms && (
+                              <p className="text-sm text-muted-foreground">
+                                Chambre {h.rooms.room_number} — {h.rooms.category.replace('_', ' ')} — {h.rooms.comfort === 'climatise' ? 'Climatisé' : 'Ventilé'}
+                              </p>
+                            )}
+                            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                              <span>Admis le {new Date(h.admission_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                              {h.discharge_date && <span>• Sorti le {new Date(h.discharge_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>}
+                            </div>
+                            {h.discharge_notes && (
+                              <div className="mt-2 p-2 bg-background rounded border text-sm">
+                                <p className="text-xs font-medium text-muted-foreground mb-1">Notes de sortie</p>
+                                <p>{h.discharge_notes}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="historique" className="mt-6">
                 <Card>
                   <CardHeader>
