@@ -31,8 +31,18 @@ const PatientsList = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [deceasedOpen, setDeceasedOpen] = useState(false);
+  const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const filteredPatients = (patients || []).filter(patient => {
+    const p = patient as any;
+    // Filter by alive/deceased
+    if (showArchived) {
+      if (!p.is_deceased) return false;
+    } else {
+      if (p.is_deceased) return false;
+    }
     const searchLower = searchQuery.toLowerCase();
     return (
       patient.first_name.toLowerCase().includes(searchLower) ||
@@ -41,6 +51,8 @@ const PatientsList = () => {
       patient.phone.includes(searchQuery)
     );
   });
+
+  const deceasedCount = (patients || []).filter((p: any) => p.is_deceased).length;
 
   const calculateAge = (dateOfBirth: string) => {
     const today = new Date();
