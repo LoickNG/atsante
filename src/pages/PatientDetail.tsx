@@ -329,7 +329,7 @@ const PatientDetail = () => {
                 )}
 
                 <Separator className="my-4" />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
                     <p className="text-lg font-bold">{patientVisits.length}</p>
                     <p className="text-xs text-muted-foreground">Visites</p>
@@ -339,12 +339,20 @@ const PatientDetail = () => {
                     <p className="text-xs text-muted-foreground">Consultations</p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <p className="text-lg font-bold">{patientHospitalizations.length}</p>
+                    <p className="text-xs text-muted-foreground">Hospit.</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
                     <p className="text-lg font-bold">{patientLabs.length}</p>
                     <p className="text-xs text-muted-foreground">Analyses</p>
                   </div>
                   <div className="text-center p-2 bg-muted/30 rounded-lg">
                     <p className="text-lg font-bold">{patientImaging.length}</p>
                     <p className="text-xs text-muted-foreground">Imageries</p>
+                  </div>
+                  <div className="text-center p-2 bg-muted/30 rounded-lg">
+                    <p className="text-lg font-bold">{patientPrescriptions.length}</p>
+                    <p className="text-xs text-muted-foreground">Prescriptions</p>
                   </div>
                 </div>
               </CardContent>
