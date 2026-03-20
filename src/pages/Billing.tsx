@@ -304,13 +304,13 @@ export default function Billing() {
                       className="pl-9"
                     />
                   </div>
-                  {searchResults && searchResults.length > 0 && (
+                    {searchResults && searchResults.length > 0 && (
                     <div className="border rounded-lg max-h-40 overflow-y-auto">
                       {searchResults.map(p => (
                         <button
                           key={p.id}
                           className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors border-b last:border-b-0"
-                          onClick={() => { setSelectedPatient(p); setPatientSearch(''); }}
+                          onClick={() => handleSelectPatient(p)}
                         >
                           <p className="font-medium text-sm">{p.first_name} {p.last_name}</p>
                           <p className="text-xs text-muted-foreground">{p.code}</p>
