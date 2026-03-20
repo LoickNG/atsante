@@ -144,11 +144,32 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 </body>
 </html>`;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    printWindow.document.write(html);
-    printWindow.document.close();
-    setTimeout(() => printWindow.print(), 300);
+    // Create a hidden iframe for printing without opening a new tab
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-10000px';
+    iframe.style.left = '-10000px';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    document.body.appendChild(iframe);
+    
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) return;
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+    
+    iframe.onload = () => {
+      iframe.contentWindow?.print();
+      setTimeout(() => document.body.removeChild(iframe), 1000);
+    };
+    // Fallback
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) document.body.removeChild(iframe);
+      }, 1000);
+    }, 500);
   };
 
   return (
