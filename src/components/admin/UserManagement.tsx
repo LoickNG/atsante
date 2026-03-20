@@ -83,7 +83,7 @@ export function UserManagement() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Succès', description: `Compte créé pour ${newFullName}` });
+      toast({ title: 'Succès', description: data?.message || `Compte créé pour ${newFullName}. Un email de réinitialisation du mot de passe a été envoyé.` });
       setDialogOpen(false);
       setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil');
       fetchUsers();

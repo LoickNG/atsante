@@ -9,7 +9,6 @@ const ALLOWED_ORIGINS = [
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("Origin") || "";
-  // Also allow *.lovableproject.com and *.lovable.app preview URLs
   const isAllowed = ALLOWED_ORIGINS.includes(origin) ||
     origin.endsWith(".lovableproject.com") ||
     origin.endsWith(".lovable.app");
@@ -23,6 +22,17 @@ function getCorsHeaders(req: Request) {
 }
 
 const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie"];
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Administrateur",
+  accueil: "Accueil",
+  medecin: "Médecin",
+  infirmier: "Infirmier(e)",
+  caissier: "Caissier(e)",
+  pharmacien: "Pharmacien(ne)",
+  laborantin: "Laborantin(e)",
+  imagerie: "Imagerie",
+};
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -82,12 +92,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: `Rôle invalide. Valeurs acceptées: ${VALID_ROLES.join(", ")}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create user with admin API
+    // Create user with must_change_password flag
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email: email.trim(),
       password,
       email_confirm: true,
-      user_metadata: { full_name: full_name.trim() },
+      user_metadata: { 
+        full_name: full_name.trim(),
+        must_change_password: true,
+      },
     });
 
     if (createError) {
@@ -107,7 +120,18 @@ serve(async (req) => {
       role,
     });
 
-    return new Response(JSON.stringify({ success: true, user_id: newUser.user!.id }), {
+    // Send password reset email so user can set their own password
+    // This serves as the "welcome email" with a link to change password
+    const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
+    await adminClient.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${origin}/auth?change_password=true`,
+    });
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      user_id: newUser.user!.id,
+      message: `Un email a été envoyé à ${email} pour définir son mot de passe.`
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
