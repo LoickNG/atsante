@@ -28,9 +28,13 @@ interface RoomForm {
   comfort: string;
   floor: string;
   notes: string;
+  price_per_night: string;
 }
 
-const emptyForm: RoomForm = { room_number: '', category: '1_lit', comfort: 'climatise', floor: '', notes: '' };
+const emptyForm: RoomForm = { room_number: '', category: '1_lit', comfort: 'climatise', floor: '', notes: '', price_per_night: '' };
+
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
 
 export function RoomManagement() {
   const { toast } = useToast();
