@@ -157,14 +157,10 @@ export default function Hospitalizations() {
     return p && (p.first_name.toLowerCase().includes(q) || p.last_name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q));
   });
 
-  // Calculate room rate from medical_acts using code pattern HOSP-{beds}{comfort_letter}
-  const getRoomRate = (room?: { category: string; comfort: string } | null) => {
-    if (!room || !hospActs) return 0;
-    const bedsMap: Record<string, string> = { '1_lit': '1', '2_lits': '2', '4_lits': '4' };
-    const comfortLetter = room.comfort === 'climatise' ? 'C' : 'V';
-    const code = `HOSP-${bedsMap[room.category]}${comfortLetter}`;
-    const act = hospActs.find(a => a.code === code);
-    return act ? Number(act.unit_price) : 0;
+  // Calculate room rate directly from room's price_per_night
+  const getRoomRate = (room?: { price_per_night?: number } | null) => {
+    if (!room) return 0;
+    return Number(room.price_per_night) || 0;
   };
 
   if (activeLoading) {
