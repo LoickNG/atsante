@@ -18,7 +18,7 @@ interface AppSidebarProps {
 export function AppSidebar({
   className
 }: AppSidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, setCollapsed } = useSidebarCollapse();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, role, signOut } = useAuth();
