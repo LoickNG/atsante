@@ -403,6 +403,30 @@ export default function Billing() {
                 <span className="font-semibold">Total facture</span>
                 <span className="text-xl font-bold text-primary">{formatCurrency(invoiceTotal)}</span>
               </div>
+
+              {/* Convention breakdown */}
+              {patientConvention && invoiceTotal > 0 && (
+                <div className="p-3 rounded-lg bg-muted/50 border space-y-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="h-4 w-4" />
+                    <span className="text-sm font-semibold">Répartition convention : {patientConvention.name}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Part société ({patientConvention.company_coverage_percent}%)</span>
+                    <span className="font-medium">{formatCurrency(companyAmount)}</span>
+                  </div>
+                  {patientConvention.insurance_coverage_percent > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>Part assurance ({patientConvention.insurance_coverage_percent}%)</span>
+                      <span className="font-medium">{formatCurrency(insuranceAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-semibold border-t pt-1 mt-1">
+                    <span>Part patient ({patientConvention.patient_coverage_percent}%)</span>
+                    <span className="text-primary">{formatCurrency(patientAmount)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
