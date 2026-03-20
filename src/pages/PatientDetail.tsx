@@ -21,7 +21,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
-import { useVisits } from '@/hooks/useVisits';
+import { useVisits, useUpdateVisit } from '@/hooks/useVisits';
 import { useConsultations, useUpdateConsultation } from '@/hooks/useConsultations';
 import { usePrescriptions } from '@/hooks/usePrescriptions';
 import { useLabRequests } from '@/hooks/useLabRequests';
