@@ -444,7 +444,8 @@ const WaitingQueue = () => {
                           size="sm" 
                           className="gap-1.5"
                           onClick={() => handleCallPatient(visit.id)}
-                          disabled={updateVisit.isPending}
+                          disabled={updateVisit.isPending || !hasVitals}
+                          title={!hasVitals ? 'Les signes vitaux doivent être pris avant l\'appel' : ''}
                         >
                           <Stethoscope className="h-4 w-4" />
                           Appeler
