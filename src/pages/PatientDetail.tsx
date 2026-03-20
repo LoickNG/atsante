@@ -15,13 +15,13 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw,
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
-import { useVisits } from '@/hooks/useVisits';
+import { useVisits, useUpdateVisit } from '@/hooks/useVisits';
 import { useConsultations, useUpdateConsultation } from '@/hooks/useConsultations';
 import { usePrescriptions } from '@/hooks/usePrescriptions';
 import { useLabRequests } from '@/hooks/useLabRequests';
@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 
 const PatientDetail = () => {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { data: patient, isLoading: patientLoading } = usePatient(id);
   const { data: allVisits, isLoading: visitsLoading } = useVisits();
   const { data: consultations } = useConsultations(id);
@@ -39,10 +39,25 @@ const PatientDetail = () => {
   const { data: allLabRequests } = useLabRequests();
   const { data: allImagingRequests } = useImagingRequests();
   const updateConsultation = useUpdateConsultation();
+  const updateVisit = useUpdateVisit();
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
   const [followUpNote, setFollowUpNote] = useState('');
+  const [isReopening, setIsReopening] = useState(false);
+
+  const handleReopenConsultation = async (consultationId: string, visitId: string) => {
+    setIsReopening(true);
+    try {
+      await updateConsultation.mutateAsync({ id: consultationId, status: 'en_cours' });
+      await updateVisit.mutateAsync({ id: visitId, status: 'en_cours' });
+      toast.success('Consultation rouverte — le patient est de retour dans la file d\'attente');
+    } catch (e: any) {
+      toast.error('Erreur: ' + e.message);
+    } finally {
+      setIsReopening(false);
+    }
+  };
 
   const patientVisits = (allVisits || []).filter(v => v.patient_id === id);
   const patientLabs = (allLabRequests || []).filter(r => r.patient_id === id);
@@ -320,6 +335,12 @@ const PatientDetail = () => {
                                   <p className="text-xs text-muted-foreground">{formatDateTime(c.date)}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                  {c.status === 'termine' && (role === 'medecin' || role === 'admin') && (
+                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleReopenConsultation(c.id, c.visit_id)} disabled={isReopening}>
+                                      {isReopening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                                      Rouvrir
+                                    </Button>
+                                  )}
                                   <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleOpenFollowUp(c.id)}>
                                     <MessageSquarePlus className="h-3.5 w-3.5" />Suivi
                                   </Button>
