@@ -1,0 +1,1 @@
+ALTER TABLE public.rooms ADD COLUMN price_per_night numeric NOT NULL DEFAULT 0;
