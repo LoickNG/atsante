@@ -319,7 +319,7 @@ export default function Hospitalizations() {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Patient *</Label>
-              <PatientSearchSelect value={admitPatientId} onValueChange={setAdmitPatientId} />
+              <PatientSearchSelect selectedPatient={admitPatient} onSelect={setAdmitPatient} />
             </div>
             <div className="space-y-1.5">
               <Label>Chambre</Label>
