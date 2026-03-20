@@ -453,18 +453,20 @@ export default function Hospitalizations() {
                       ) : <span className="text-destructive text-sm">Non attribuée</span>}
                     </CardContent>
                   </Card>
-                  <Card>
-                    <CardContent className="p-3">
-                      <p className="text-xs text-muted-foreground mb-1">Coût estimé</p>
-                      <p className="font-semibold">
-                        {(() => {
-                          const rate = getRoomRate(selectedHosp.rooms);
-                          const days = calculateStayDays(selectedHosp.admission_date, selectedHosp.discharge_date);
-                          return rate > 0 ? formatCurrency(rate * days) : 'Tarif non configuré';
-                        })()}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  {(role === 'admin' || role === 'caissier') && (
+                    <Card>
+                      <CardContent className="p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Coût estimé</p>
+                        <p className="font-semibold">
+                          {(() => {
+                            const rate = getRoomRate(selectedHosp.rooms);
+                            const days = calculateStayDays(selectedHosp.admission_date, selectedHosp.discharge_date);
+                            return rate > 0 ? formatCurrency(rate * days) : 'Tarif non configuré';
+                          })()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
                 <Card>
