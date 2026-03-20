@@ -12,9 +12,9 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Loader2, Search, FileText, CreditCard, Eye, Trash2, Building2,
-  Stethoscope, Pill, FlaskConical, ScanLine, Receipt,
+  Stethoscope, Pill, FlaskConical, ScanLine, Receipt, Pencil, Printer,
 } from 'lucide-react';
-import { useInvoices, useCreateInvoice, type NewInvoiceItem } from '@/hooks/useBilling';
+import { useInvoices, useCreateInvoice, type NewInvoiceItem, type InvoiceWithDetails } from '@/hooks/useBilling';
 import { useSearchPatients, type Patient } from '@/hooks/usePatients';
 import { usePatientBillableItems, type BillableItem } from '@/hooks/usePatientBillableItems';
 import { useAuth } from '@/hooks/useAuth';
