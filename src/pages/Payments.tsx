@@ -30,6 +30,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { InvoicePDFExport } from '@/components/invoice/InvoicePDFExport';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
@@ -430,15 +431,18 @@ export default function Payments() {
             </div>
           ) : null}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={recordPayment.isPending || totalEntered <= 0 || totalEntered > remaining}
-            >
-              {recordPayment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Confirmer le paiement
-            </Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            {selectedInvoice && <InvoicePDFExport invoice={selectedInvoice} />}
+            <div className="flex gap-2 ml-auto">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={recordPayment.isPending || totalEntered <= 0 || totalEntered > remaining}
+              >
+                {recordPayment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Confirmer le paiement
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

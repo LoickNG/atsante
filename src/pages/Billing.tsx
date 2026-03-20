@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,9 +12,9 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Loader2, Search, FileText, CreditCard, Eye, Trash2, Building2,
-  Stethoscope, Pill, FlaskConical, ScanLine, Receipt,
+  Stethoscope, Pill, FlaskConical, ScanLine, Receipt, Pencil, Printer,
 } from 'lucide-react';
-import { useInvoices, useCreateInvoice, type NewInvoiceItem } from '@/hooks/useBilling';
+import { useInvoices, useCreateInvoice, type NewInvoiceItem, type InvoiceWithDetails } from '@/hooks/useBilling';
 import { useSearchPatients, type Patient } from '@/hooks/usePatients';
 import { usePatientBillableItems, type BillableItem } from '@/hooks/usePatientBillableItems';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useConventions, type ConventionWithRelations } from '@/hooks/useConventions';
 import { supabase } from '@/integrations/supabase/client';
+import { InvoicePDFExport } from '@/components/invoice/InvoicePDFExport';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
@@ -67,6 +68,7 @@ export default function Billing() {
   const [patientConvention, setPatientConvention] = useState<ConventionWithRelations | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [priceOverrides, setPriceOverrides] = useState<Record<number, number>>({});
 
   const { data: searchResults } = useSearchPatients(patientSearch);
   const { data: billableItems, isLoading: billableLoading } = usePatientBillableItems(selectedPatient?.id);
@@ -125,8 +127,15 @@ export default function Billing() {
     }
   };
 
+  const getItemPrice = useCallback((item: BillableItem, idx: number) => {
+    return priceOverrides[idx] !== undefined ? priceOverrides[idx] : item.unit_price;
+  }, [priceOverrides]);
+
   const selectedBillable = (billableItems || []).filter((_, i) => selectedItems.has(i));
-  const invoiceTotal = selectedBillable.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const invoiceTotal = selectedBillable.reduce((s, item) => {
+    const idx = (billableItems || []).indexOf(item);
+    return s + item.quantity * getItemPrice(item, idx);
+  }, 0);
   const companyAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.company_coverage_percent / 100) : 0;
   const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
   const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
@@ -137,13 +146,17 @@ export default function Billing() {
       return;
     }
 
-    const items: NewInvoiceItem[] = selectedBillable.map(b => ({
-      type: b.type,
-      description: b.description,
-      quantity: b.quantity,
-      unit_price: b.unit_price,
-      reference_id: b.reference_id,
-    }));
+    const items: NewInvoiceItem[] = selectedBillable.map(b => {
+      const idx = (billableItems || []).indexOf(b);
+      const price = getItemPrice(b, idx);
+      return {
+        type: b.type,
+        description: b.description,
+        quantity: b.quantity,
+        unit_price: price,
+        reference_id: b.reference_id,
+      };
+    });
 
     try {
       await createInvoice.mutateAsync({
@@ -167,6 +180,7 @@ export default function Billing() {
     setPatientSearch('');
     setPatientConvention(null);
     setSelectedItems(new Set());
+    setPriceOverrides({});
   };
 
   // Filter invoice list
@@ -280,13 +294,15 @@ export default function Billing() {
                     </div>
 
                     <div className="space-y-2">
-                      {billableItems.map((item, idx) => (
+                      {billableItems.map((item, idx) => {
+                        const currentPrice = getItemPrice(item, idx);
+                        const isOverridden = priceOverrides[idx] !== undefined;
+                        return (
                         <div
                           key={idx}
-                          className={`flex items-center gap-3 p-3 border rounded-lg transition-colors cursor-pointer ${
+                          className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
                             selectedItems.has(idx) ? 'bg-primary/5 border-primary/30' : 'bg-muted/20 opacity-60'
                           }`}
-                          onClick={() => toggleItem(idx)}
                         >
                           <Checkbox
                             checked={selectedItems.has(idx)}
@@ -296,17 +312,49 @@ export default function Billing() {
                             {typeIcons[item.type]}
                             <span className="text-xs font-medium text-muted-foreground">{typeLabels[item.type]}</span>
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 cursor-pointer" onClick={() => toggleItem(idx)}>
                             <p className="text-sm font-medium">{item.description}</p>
                           </div>
                           <div className="text-right">
                             <p className="text-sm">×{item.quantity}</p>
                           </div>
-                          <div className="text-right min-w-[120px]">
-                            <p className="font-semibold">{formatCurrency(item.quantity * item.unit_price)}</p>
+                          <div className="flex items-center gap-1.5 min-w-[150px] justify-end">
+                            <Input
+                              type="number"
+                              className={`w-[100px] h-8 text-right text-sm ${isOverridden ? 'border-primary ring-1 ring-primary/30' : ''}`}
+                              value={currentPrice}
+                              onClick={e => e.stopPropagation()}
+                              onChange={e => {
+                                e.stopPropagation();
+                                const val = parseFloat(e.target.value);
+                                setPriceOverrides(prev => ({ ...prev, [idx]: isNaN(val) ? 0 : val }));
+                              }}
+                            />
+                            {isOverridden && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setPriceOverrides(prev => {
+                                    const next = { ...prev };
+                                    delete next[idx];
+                                    return next;
+                                  });
+                                }}
+                                title="Rétablir le prix original"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="text-right min-w-[100px]">
+                            <p className="font-semibold">{formatCurrency(item.quantity * currentPrice)}</p>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Total & convention breakdown */}
@@ -437,6 +485,7 @@ export default function Billing() {
                           <TableCell className="text-muted-foreground text-sm">{new Date(inv.created_at).toLocaleDateString('fr-FR')}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
+                              <InvoicePDFExport invoice={inv} />
                               {inv.status !== 'paye' && inv.status !== 'annule' && (
                                 <Button size="sm" className="gap-1" onClick={() => navigate(`/paiements?invoice=${inv.id}`)}>
                                   <CreditCard className="h-3.5 w-3.5" />Payer
