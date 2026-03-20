@@ -485,6 +485,7 @@ export default function Billing() {
                           <TableCell className="text-muted-foreground text-sm">{new Date(inv.created_at).toLocaleDateString('fr-FR')}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
+                              <InvoicePDFExport invoice={inv} />
                               {inv.status !== 'paye' && inv.status !== 'annule' && (
                                 <Button size="sm" className="gap-1" onClick={() => navigate(`/paiements?invoice=${inv.id}`)}>
                                   <CreditCard className="h-3.5 w-3.5" />Payer
