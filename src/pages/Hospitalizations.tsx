@@ -80,7 +80,7 @@ export default function Hospitalizations() {
   const addCare = useAddCare();
 
   const handleAdmit = async () => {
-    if (!admitPatientId || !admitReason || !user) {
+    if (!admitPatient || !admitReason || !user) {
       toast.error('Veuillez remplir tous les champs obligatoires');
       return;
     }
