@@ -70,6 +70,7 @@ const PatientDetail = () => {
   const patientVisits = (allVisits || []).filter(v => v.patient_id === id);
   const patientLabs = (allLabRequests || []).filter(r => r.patient_id === id);
   const patientImaging = (allImagingRequests || []).filter(r => r.patient_id === id);
+  const patientHospitalizations = (allHospitalizations || []).filter(h => h.patient_id === id);
 
   const patientConsultationIds = (consultations || []).map(c => c.id);
   const patientPrescriptions = (allPrescriptions || []).filter(
