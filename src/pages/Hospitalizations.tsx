@@ -88,7 +88,7 @@ export default function Hospitalizations() {
   const [careType, setCareType] = useState('');
   const [careDescription, setCareDescription] = useState('');
   const [careNotes, setCareNotes] = useState('');
-  const [careUnitPrice, setCareUnitPrice] = useState('');
+  const [careQuantity, setCareQuantity] = useState('1');
   const [careQuantity, setCareQuantity] = useState('1');
   const [careMedicationId, setCareMedicationId] = useState('');
   const [careMedSearch, setCareMedSearch] = useState('');
