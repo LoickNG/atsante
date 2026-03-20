@@ -25,6 +25,8 @@ import {
 } from '@/hooks/useHospitalizations';
 import { useMedications } from '@/hooks/useMedications';
 import { useMedicalActs } from '@/hooks/useBilling';
+import { useCreateLabRequest } from '@/hooks/useLabRequests';
+import { useCreateImagingRequest } from '@/hooks/useImagingRequests';
 
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { useSearchPatients, Patient } from '@/hooks/usePatients';
