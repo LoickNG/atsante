@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   ArrowLeft, Printer, Phone, MapPin, Calendar, AlertTriangle,
-  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText,
+  Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText, BedDouble,
 } from 'lucide-react';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
 import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
