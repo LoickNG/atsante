@@ -3,7 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminOverview } from '@/components/admin/AdminOverview';
 import { UserManagement } from '@/components/admin/UserManagement';
-import { BarChart3, Users } from 'lucide-react';
+import { ConventionManagement } from '@/components/admin/ConventionManagement';
+import { BarChart3, Users, Handshake } from 'lucide-react';
 
 export default function Settings() {
   const { role } = useAuth();
@@ -32,6 +33,10 @@ export default function Settings() {
             <Users className="h-4 w-4" />
             Utilisateurs
           </TabsTrigger>
+          <TabsTrigger value="conventions" className="flex items-center gap-2">
+            <Handshake className="h-4 w-4" />
+            Conventions
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -40,6 +45,10 @@ export default function Settings() {
 
         <TabsContent value="users">
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="conventions">
+          <ConventionManagement />
         </TabsContent>
       </Tabs>
     </AppLayout>
