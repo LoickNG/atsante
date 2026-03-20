@@ -145,12 +145,27 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .select('id, name, unit_price, code, category')
         .eq('category', 'imagerie');
 
+      // Map common exam_type abbreviations to full names for matching
+      const examTypeAliases: Record<string, string[]> = {
+        'radio': ['radiographie', 'radio'],
+        'radiographie': ['radiographie', 'radio'],
+        'echo': ['échographie', 'echo', 'ecographie'],
+        'échographie': ['échographie', 'echo', 'ecographie'],
+        'scanner': ['scanner'],
+        'irm': ['irm', 'imagerie par résonance'],
+        'tdm': ['scanner', 'tdm', 'tomodensitométrie'],
+      };
+
       for (const ir of imagingRequests || []) {
         if (!billedReferenceIds.includes(ir.id)) {
           const examLabel = `${ir.exam_type} - ${ir.body_part}`;
-          const matchAct = (imagingActs || []).find(
-            a => a.name.toLowerCase().includes(ir.exam_type.toLowerCase())
-          );
+          const examLower = ir.exam_type.toLowerCase();
+          const aliases = examTypeAliases[examLower] || [examLower];
+          
+          const matchAct = (imagingActs || []).find(a => {
+            const actLower = a.name.toLowerCase();
+            return aliases.some(alias => actLower.includes(alias) || alias.includes(actLower.split(' ')[0]));
+          });
           items.push({
             type: 'imagerie',
             description: examLabel,
