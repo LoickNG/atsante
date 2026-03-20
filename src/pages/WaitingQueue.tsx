@@ -155,11 +155,18 @@ const WaitingQueue = () => {
         patient_id: selectedPatientId,
         type: visitType,
         status: 'en_attente',
-      });
+        temperature: temperature ? parseFloat(temperature) : null,
+        blood_pressure: bloodPressure || null,
+        heart_rate: heartRate ? parseInt(heartRate) : null,
+        weight: weight ? parseFloat(weight) : null,
+        height: height ? parseFloat(height) : null,
+      } as any);
       toast.success('Patient ajouté à la file d\'attente');
       setIsAddDialogOpen(false);
       setSelectedPatientId('');
       setVisitType('consultation');
+      setSearchPatient('');
+      setTemperature(''); setBloodPressure(''); setHeartRate(''); setWeight(''); setHeight('');
     } catch (error) {
       toast.error('Erreur lors de l\'ajout');
     }
