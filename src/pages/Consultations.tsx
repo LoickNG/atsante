@@ -98,7 +98,15 @@ const Consultations = () => {
   const handleSelectVisit = (visit: VisitWithPatient) => {
     setSelectedVisit(visit);
     setSymptoms(''); setDiagnosis(''); setNotes('');
-    setVitalSigns({ temperature: '', bloodPressure: '', heartRate: '', weight: '', height: '' });
+    // Pre-fill vital signs from nurse intake if available
+    const v = visit as any;
+    setVitalSigns({
+      temperature: v.temperature ? String(v.temperature) : '',
+      bloodPressure: v.blood_pressure || '',
+      heartRate: v.heart_rate ? String(v.heart_rate) : '',
+      weight: v.weight ? String(v.weight) : '',
+      height: v.height ? String(v.height) : '',
+    });
     setPrescriptions([]); setSelectedLabTests([]); setSelectedImagingExams([]); setImagingBodyPart('');
   };
 
@@ -334,6 +342,12 @@ const Consultations = () => {
                               {visit.type}
                             </Badge>
                           </div>
+                          {((visit as any).temperature || (visit as any).blood_pressure) && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              {(visit as any).temperature && <Badge variant="outline" className="text-[9px] py-0">🌡️ {(visit as any).temperature}°C</Badge>}
+                              {(visit as any).blood_pressure && <Badge variant="outline" className="text-[9px] py-0">🩸 {(visit as any).blood_pressure}</Badge>}
+                            </div>
+                          )}
                         </div>
                         {visit.status === 'en_cours' && (
                           <Badge className="bg-info text-info-foreground text-[10px]">En cours</Badge>

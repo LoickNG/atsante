@@ -970,36 +970,51 @@ export type Database = {
       visits: {
         Row: {
           assigned_doctor_id: string | null
+          blood_pressure: string | null
           created_at: string
           date: string
           diagnosis: string | null
+          heart_rate: number | null
+          height: number | null
           id: string
           notes: string | null
           patient_id: string
           status: string
+          temperature: number | null
           type: string
+          weight: number | null
         }
         Insert: {
           assigned_doctor_id?: string | null
+          blood_pressure?: string | null
           created_at?: string
           date?: string
           diagnosis?: string | null
+          heart_rate?: number | null
+          height?: number | null
           id?: string
           notes?: string | null
           patient_id: string
           status?: string
+          temperature?: number | null
           type: string
+          weight?: number | null
         }
         Update: {
           assigned_doctor_id?: string | null
+          blood_pressure?: string | null
           created_at?: string
           date?: string
           diagnosis?: string | null
+          heart_rate?: number | null
+          height?: number | null
           id?: string
           notes?: string | null
           patient_id?: string
           status?: string
+          temperature?: number | null
           type?: string
+          weight?: number | null
         }
         Relationships: [
           {
