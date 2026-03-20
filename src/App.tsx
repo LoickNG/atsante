@@ -17,6 +17,7 @@ import Imaging from "./pages/Imaging";
 import Billing from "./pages/Billing";
 import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
+import Extracts from "./pages/Extracts";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
