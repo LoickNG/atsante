@@ -146,6 +146,9 @@ const PatientsList = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
+                          {(patient as any).photo_url && (
+                            <AvatarImage src={(patient as any).photo_url} alt={`${patient.first_name} ${patient.last_name}`} />
+                          )}
                           <AvatarFallback className={cn(
                             'text-sm font-medium',
                             patient.gender === 'F' 
