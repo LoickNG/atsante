@@ -30,6 +30,7 @@ import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
 import { useClinicSettings } from '@/hooks/useClinicSettings';
 import { printMultiResultDocument } from '@/utils/printResult';
+import { PrenatalCharts } from '@/components/maternity/PrenatalCharts';
 
 const pregnancyTypes = [
   { value: 'simple', label: 'Grossesse simple' },
