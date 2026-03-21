@@ -236,12 +236,23 @@ export default function Payments() {
                             Payer
                           </Button>
                         ) : (
-                          <Badge variant="outline" className="bg-success/10 text-success border-success/30">Couvert</Badge>
+                          <Button size="sm" variant="outline" className="gap-1 border-success/30 text-success hover:bg-success/10" onClick={async () => {
+                            try {
+                              const { error } = await supabase
+                                .from('invoices')
+                                .update({ status: 'paye', paid_at: new Date().toISOString() })
+                                .eq('id', inv.id);
+                              if (error) throw error;
+                              queryClient.invalidateQueries({ queryKey: ['invoices'] });
+                              toast({ title: 'Facture validée', description: 'La facture couverte à 100% a été marquée comme payée' });
+                            } catch (error: any) {
+                              toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+                            }
+                          }}>
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Valider
+                          </Button>
                         )}
-                        <Button size="sm" onClick={() => openPayDialog(inv.id)} className="gap-1">
-                          <CreditCard className="h-3.5 w-3.5" />
-                          Payer
-                        </Button>
                       </div>
                     );
                   })}
