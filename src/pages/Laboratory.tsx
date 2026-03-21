@@ -320,7 +320,7 @@ const Laboratory = () => {
                 <CardDescription>
                   {selectedPatient
                     ? `Résultats pour ${selectedPatient.first_name} ${selectedPatient.last_name}`
-                    : 'Analyses terminées, regroupées par patient'}
+                    : 'Analyses terminées, regroupées par patient et consultation'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -332,16 +332,28 @@ const Laboratory = () => {
                 ) : (
                   <div className="space-y-6">
                     {(() => {
-                      const grouped = patientCompletedRequests.reduce<Record<string, LabRequestWithPatient[]>>((acc, r) => {
-                        const key = r.patient_id;
-                        if (!acc[key]) acc[key] = [];
-                        acc[key].push(r);
+                      // Group by patient
+                      const byPatient = patientCompletedRequests.reduce<Record<string, LabRequestWithPatient[]>>((acc, r) => {
+                        if (!acc[r.patient_id]) acc[r.patient_id] = [];
+                        acc[r.patient_id].push(r);
                         return acc;
                       }, {});
-                      return Object.entries(grouped).map(([patientId, requests]) => {
-                        const patient = requests[0].patients;
+
+                      return Object.entries(byPatient).map(([patientId, patientRequests]) => {
+                        const patient = patientRequests[0].patients;
                         const patientName = patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu';
                         const patientCode = patient?.code || '';
+
+                        // Sub-group by consultation_id (null = sans consultation)
+                        const byConsultation = patientRequests.reduce<Record<string, LabRequestWithPatient[]>>((acc, r) => {
+                          const key = r.consultation_id || 'sans_consultation';
+                          if (!acc[key]) acc[key] = [];
+                          acc[key].push(r);
+                          return acc;
+                        }, {});
+
+                        const consultationGroups = Object.entries(byConsultation);
+
                         return (
                           <Card key={patientId} className="border-success/20">
                             <CardHeader className="pb-3">
@@ -352,7 +364,9 @@ const Laboratory = () => {
                                   </div>
                                   <div>
                                     <CardTitle className="text-base">{patientName}</CardTitle>
-                                    <CardDescription className="font-mono text-xs">{patientCode} • {requests.length} analyse(s)</CardDescription>
+                                    <CardDescription className="font-mono text-xs">
+                                      {patientCode} • {patientRequests.length} analyse(s) • {consultationGroups.length} consultation(s)
+                                    </CardDescription>
                                   </div>
                                 </div>
                                 <Button size="sm" className="gap-1.5" onClick={() => {
@@ -361,7 +375,7 @@ const Laboratory = () => {
                                     patientName,
                                     patientCode,
                                     documentTitle: 'Résultats d\'Analyses de Laboratoire',
-                                    items: requests.map(r => ({
+                                    items: patientRequests.map(r => ({
                                       title: r.test_type,
                                       date: r.completed_at ? new Date(r.completed_at).toLocaleDateString('fr-FR') : '',
                                       content: r.results || 'Aucun résultat',
@@ -369,29 +383,63 @@ const Laboratory = () => {
                                   });
                                 }}>
                                   <Printer className="h-4 w-4" />
-                                  Imprimer tout ({requests.length})
+                                  Imprimer tout ({patientRequests.length})
                                 </Button>
                               </div>
                             </CardHeader>
                             <CardContent>
-                              <div className="space-y-3">
-                                {requests.map(request => (
-                                  <div key={request.id} className="p-3 border rounded-lg bg-success/5 border-success/20">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <div className="flex items-center gap-2">
-                                        <FlaskConical className="h-4 w-4 text-success" />
-                                        <p className="font-medium text-sm">{request.test_type}</p>
-                                        <Badge className="bg-success text-success-foreground text-[10px]">Validé</Badge>
+                              <div className="space-y-4">
+                                {consultationGroups.map(([consultationId, requests], idx) => (
+                                  <div key={consultationId} className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                        <FileText className="h-3.5 w-3.5" />
+                                        {consultationId === 'sans_consultation'
+                                          ? 'Demandes directes'
+                                          : `Consultation du ${requests[0].requested_at ? formatDateTime(requests[0].requested_at) : ''}`}
+                                        <Badge variant="outline" className="text-[10px]">{requests.length} examen(s)</Badge>
                                       </div>
-                                      <span className="text-xs text-muted-foreground">
-                                        {request.completed_at && formatDateTime(request.completed_at)}
-                                      </span>
+                                      {requests.length > 1 && (
+                                        <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={() => {
+                                          printMultiResultDocument({
+                                            clinic: clinicData,
+                                            patientName,
+                                            patientCode,
+                                            documentTitle: 'Résultats d\'Analyses de Laboratoire',
+                                            items: requests.map(r => ({
+                                              title: r.test_type,
+                                              date: r.completed_at ? new Date(r.completed_at).toLocaleDateString('fr-FR') : '',
+                                              content: r.results || 'Aucun résultat',
+                                            })),
+                                          });
+                                        }}>
+                                          <Printer className="h-3 w-3" />
+                                          Imprimer cette consultation
+                                        </Button>
+                                      )}
                                     </div>
-                                    {request.results && (
-                                      <div className="p-2 bg-background rounded border text-sm">
-                                        <p className="whitespace-pre-wrap">{request.results}</p>
-                                      </div>
-                                    )}
+                                    <div className="space-y-2 pl-5 border-l-2 border-muted">
+                                      {requests.map(request => (
+                                        <div key={request.id} className="p-3 border rounded-lg bg-success/5 border-success/20">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                              <FlaskConical className="h-4 w-4 text-success" />
+                                              <p className="font-medium text-sm">{request.test_type}</p>
+                                              <Badge className="bg-success text-success-foreground text-[10px]">Validé</Badge>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground">
+                                              {request.completed_at && formatDateTime(request.completed_at)}
+                                            </span>
+                                          </div>
+                                          {request.results && (
+                                            <div className="p-2 bg-background rounded border text-sm">
+                                              <p className="whitespace-pre-wrap">{request.results}</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                    {idx < consultationGroups.length - 1 && <hr className="border-muted" />}
                                   </div>
                                 ))}
                               </div>
