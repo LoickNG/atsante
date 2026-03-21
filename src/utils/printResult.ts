@@ -11,18 +11,23 @@ interface PrintResultOptions {
   validatedBy?: string;
 }
 
-export function printResultDocument(opts: PrintResultOptions) {
-  const {
-    clinic,
-    patientName,
-    patientCode,
-    title,
-    subtitle,
-    date,
-    content,
-    validatedBy,
-  } = opts;
+interface PrintResultItem {
+  title: string;
+  subtitle?: string;
+  date: string;
+  content: string;
+  validatedBy?: string;
+}
 
+interface PrintMultiResultOptions {
+  clinic: ClinicSettings | undefined;
+  patientName: string;
+  patientCode: string;
+  documentTitle: string;
+  items: PrintResultItem[];
+}
+
+function buildClinicHeader(clinic: ClinicSettings | undefined) {
   const clinicName = clinic?.name || 'Ma Clinique';
   const clinicSlogan = clinic?.slogan || '';
   const clinicAddress = [clinic?.address, clinic?.city, clinic?.country].filter(Boolean).join(', ');
@@ -32,16 +37,11 @@ export function printResultDocument(opts: PrintResultOptions) {
   const logoHtml = clinic?.logo_url
     ? `<img src="${clinic.logo_url}" style="height:40px;object-fit:contain;" />`
     : '';
+  return { clinicName, clinicSlogan, clinicAddress, clinicPhone, clinicEmail, clinicColor, logoHtml };
+}
 
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
-
-  printWindow.document.write(`<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>${title}</title>
-<style>
+function buildStyles(clinicColor: string) {
+  return `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #1a1a1a; padding: 15mm; }
   .header {
@@ -68,53 +68,121 @@ export function printResultDocument(opts: PrintResultOptions) {
     padding: 16px; border: 1px solid #e2e8f0; border-radius: 6px;
     margin-bottom: 20px; white-space: pre-wrap; line-height: 1.7; font-size: 12px;
   }
+  .result-item {
+    margin-bottom: 24px; page-break-inside: avoid;
+  }
+  .result-item-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: ${clinicColor}11; border-radius: 6px 6px 0 0;
+    border: 1px solid #e2e8f0; border-bottom: none;
+  }
+  .result-item-header h3 { font-size: 13px; font-weight: 600; color: ${clinicColor}; }
+  .result-item-header .date { font-size: 10px; color: #888; }
+  .result-item-body {
+    padding: 16px; border: 1px solid #e2e8f0; border-radius: 0 0 6px 6px;
+    white-space: pre-wrap; line-height: 1.7; font-size: 12px;
+  }
   .validation { font-size: 10px; color: #666; text-align: right; margin-top: 10px; }
   .footer {
     margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px;
     text-align: center; font-size: 8px; color: #aaa;
   }
+  .separator { border: none; border-top: 1px dashed #d1d5db; margin: 16px 0; }
   @media print { body { padding: 10mm; } }
-</style>
-</head>
-<body>
+`;
+}
+
+function buildHeaderHtml(h: ReturnType<typeof buildClinicHeader>) {
+  return `
   <div class="header">
-    ${logoHtml}
+    ${h.logoHtml}
     <div class="header-info">
-      <h1>${clinicName}</h1>
-      ${clinicSlogan ? `<div class="slogan">${clinicSlogan}</div>` : ''}
+      <h1>${h.clinicName}</h1>
+      ${h.clinicSlogan ? `<div class="slogan">${h.clinicSlogan}</div>` : ''}
       <div class="contact">
-        ${clinicAddress ? clinicAddress + '<br/>' : ''}
-        ${clinicPhone ? 'Tél: ' + clinicPhone : ''}
-        ${clinicEmail ? ' | ' + clinicEmail : ''}
+        ${h.clinicAddress ? h.clinicAddress + '<br/>' : ''}
+        ${h.clinicPhone ? 'Tél: ' + h.clinicPhone : ''}
+        ${h.clinicEmail ? ' | ' + h.clinicEmail : ''}
       </div>
     </div>
-  </div>
+  </div>`;
+}
 
-  <div class="doc-title">
-    <h2>${title}</h2>
-    ${subtitle ? `<div class="sub">${subtitle}</div>` : ''}
-  </div>
-
-  <div class="patient-box">
-    <div>
-      <div class="name">${patientName}</div>
-      <div class="detail">Code: ${patientCode}</div>
-    </div>
-    <div style="text-align:right">
-      <div class="detail">Date: ${date}</div>
-    </div>
-  </div>
-
-  <div class="results">${content}</div>
-
-  ${validatedBy ? `<div class="validation">Validé par: ${validatedBy}</div>` : ''}
-
+function buildFooterHtml(h: ReturnType<typeof buildClinicHeader>) {
+  return `
   <div class="footer">
-    ${clinicName} — ${clinicAddress || ''} ${clinicPhone ? '— Tél: ' + clinicPhone : ''}
-  </div>
+    ${h.clinicName} — ${h.clinicAddress || ''} ${h.clinicPhone ? '— Tél: ' + h.clinicPhone : ''}
+  </div>`;
+}
 
-  <script>setTimeout(function() { window.print(); window.close(); }, 300);<\/script>
-</body>
-</html>`);
+function openPrintWindow(html: string) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) return;
+  printWindow.document.write(html);
   printWindow.document.close();
+}
+
+export function printResultDocument(opts: PrintResultOptions) {
+  const h = buildClinicHeader(opts.clinic);
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>${opts.title}</title>
+<style>${buildStyles(h.clinicColor)}</style>
+</head>
+<body>
+  ${buildHeaderHtml(h)}
+  <div class="doc-title">
+    <h2>${opts.title}</h2>
+    ${opts.subtitle ? `<div class="sub">${opts.subtitle}</div>` : ''}
+  </div>
+  <div class="patient-box">
+    <div><div class="name">${opts.patientName}</div><div class="detail">Code: ${opts.patientCode}</div></div>
+    <div style="text-align:right"><div class="detail">Date: ${opts.date}</div></div>
+  </div>
+  <div class="results">${opts.content}</div>
+  ${opts.validatedBy ? `<div class="validation">Validé par: ${opts.validatedBy}</div>` : ''}
+  ${buildFooterHtml(h)}
+  <script>setTimeout(function() { window.print(); window.close(); }, 300);<\/script>
+</body></html>`;
+
+  openPrintWindow(html);
+}
+
+export function printMultiResultDocument(opts: PrintMultiResultOptions) {
+  const h = buildClinicHeader(opts.clinic);
+
+  const itemsHtml = opts.items.map((item, i) => `
+    ${i > 0 ? '<hr class="separator" />' : ''}
+    <div class="result-item">
+      <div class="result-item-header">
+        <h3>${item.title}${item.subtitle ? ` — ${item.subtitle}` : ''}</h3>
+        <span class="date">${item.date}</span>
+      </div>
+      <div class="result-item-body">${item.content || 'Aucun résultat'}</div>
+      ${item.validatedBy ? `<div class="validation">Validé par: ${item.validatedBy}</div>` : ''}
+    </div>
+  `).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>${opts.documentTitle}</title>
+<style>${buildStyles(h.clinicColor)}</style>
+</head>
+<body>
+  ${buildHeaderHtml(h)}
+  <div class="doc-title">
+    <h2>${opts.documentTitle}</h2>
+    <div class="sub">${opts.items.length} examen(s)</div>
+  </div>
+  <div class="patient-box">
+    <div><div class="name">${opts.patientName}</div><div class="detail">Code: ${opts.patientCode}</div></div>
+    <div style="text-align:right"><div class="detail">${opts.items.length} résultat(s)</div></div>
+  </div>
+  ${itemsHtml}
+  ${buildFooterHtml(h)}
+  <script>setTimeout(function() { window.print(); window.close(); }, 300);<\/script>
+</body></html>`;
+
+  openPrintWindow(html);
 }
