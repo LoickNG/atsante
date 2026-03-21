@@ -135,8 +135,11 @@ export function useCreateInvoice() {
         company_amount: company_amount || 0,
         insurance_amount: insurance_amount || 0,
         patient_amount: effectivePatientAmount,
-        status: isFullyCovered ? 'paye' : 'en_attente',
-        ...(isFullyCovered ? { paid_at: new Date().toISOString() } : {}),
+        is_proforma: is_proforma || false,
+        discount_percent: discount_percent || 0,
+        discount_amount: discount_amount || 0,
+        status: is_proforma ? 'proforma' : (isFullyCovered ? 'paye' : 'en_attente'),
+        ...(isFullyCovered && !is_proforma ? { paid_at: new Date().toISOString() } : {}),
       };
 
       // Only include visit_id if provided
