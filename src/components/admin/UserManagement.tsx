@@ -20,6 +20,7 @@ interface UserWithRole {
   email: string;
   full_name: string;
   role: UserRole | null;
+  specialty: string | null;
   created_at: string;
 }
 
