@@ -112,6 +112,7 @@ serve(async (req) => {
       user_id: newUser.user!.id,
       email: email.trim(),
       full_name: full_name.trim(),
+      specialty: role === "medecin" && specialty ? specialty : null,
     });
 
     // Assign role
