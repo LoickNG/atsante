@@ -432,6 +432,11 @@ const WaitingQueue = () => {
                           Signes vitaux manquants
                         </Badge>
                       )}
+                      {(visit as any).specialty && (
+                        <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+                          {getSpecialtyLabel((visit as any).specialty)}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                       <span className="font-mono">{patient.code}</span>
