@@ -22,6 +22,7 @@ import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
 import { PatientHistoryDialog } from '@/components/patient/PatientHistoryDialog';
 import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
 import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
+import { QRScannerDialog } from '@/components/patient/QRScannerDialog';
 import { DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const PatientsList = () => {
@@ -34,6 +35,7 @@ const PatientsList = () => {
   const [deceasedOpen, setDeceasedOpen] = useState(false);
   const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
 
   const filteredPatients = (patients || []).filter(patient => {
     const p = patient as any;
@@ -92,7 +94,7 @@ const PatientsList = () => {
           title="Patients"
           description={`${patients?.length || 0} patient(s) enregistré(s)`}
         >
-          <Button variant="outline" size="default" className="gap-2">
+          <Button variant="outline" size="default" className="gap-2" onClick={() => setQrScannerOpen(true)}>
             <QrCode className="h-4 w-4" />
             Scanner QR
           </Button>
@@ -310,6 +312,7 @@ const PatientsList = () => {
             <DeceasedPatientActions patient={selectedPatient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
           </>
         )}
+        <QRScannerDialog open={qrScannerOpen} onOpenChange={setQrScannerOpen} />
       </div>
     </AppLayout>
   );
