@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Loader2, FileDown, Building2, ShieldCheck, Calendar, Filter,
 } from 'lucide-react';
@@ -142,60 +143,55 @@ export default function Extracts() {
       <div className="p-6 lg:p-8 space-y-6">
         <PageHeader title="Extraits & Relevés" description="Générez des relevés pour les sociétés partenaires et les assurances" />
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filtres
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Type d'extrait</Label>
-                <Select value={extractType} onValueChange={v => { setExtractType(v as ExtractType); setSelectedEntityId('all'); }}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="company">
-                      <span className="flex items-center gap-2"><Building2 className="h-4 w-4" />Sociétés (Employeurs)</span>
-                    </SelectItem>
-                    <SelectItem value="insurance">
-                      <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Assurances</span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        <Tabs value={extractType} onValueChange={v => { setExtractType(v as ExtractType); setSelectedEntityId('all'); }}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="company" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              Relevés Sociétés
+            </TabsTrigger>
+            <TabsTrigger value="insurance" className="gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Relevés Assurances
+            </TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">{extractType === 'company' ? 'Société' : 'Assurance'}</Label>
-                <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes</SelectItem>
-                    {(entities || []).map(e => (
-                      <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Shared filters */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtres
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{extractType === 'company' ? 'Société' : 'Assurance'}</Label>
+                  <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Toutes</SelectItem>
+                      {(entities || []).map(e => (
+                        <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">Date début</Label>
-                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
-              </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Date début</Label>
+                  <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs">Date fin</Label>
-                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Date fin</Label>
+                  <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
         {/* Summary Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
@@ -317,6 +313,7 @@ export default function Extracts() {
             ))}
           </div>
         )}
+        </Tabs>
       </div>
     </AppLayout>
   );
