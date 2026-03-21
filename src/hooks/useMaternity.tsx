@@ -140,3 +140,35 @@ export function useCreateBirth() {
     onError: (e: any) => toast.error('Erreur: ' + e.message),
   });
 }
+
+export function usePrenatalVisits(admissionId?: string) {
+  return useQuery({
+    queryKey: ['prenatal_visits', admissionId],
+    queryFn: async () => {
+      let query = supabase
+        .from('prenatal_visits')
+        .select('*')
+        .order('visit_date', { ascending: false });
+      if (admissionId) query = query.eq('maternity_admission_id', admissionId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as PrenatalVisit[];
+    },
+  });
+}
+
+export function useCreatePrenatalVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (visit: Partial<PrenatalVisit>) => {
+      const { data, error } = await supabase.from('prenatal_visits').insert(visit as any).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['prenatal_visits'] });
+      toast.success('Consultation prénatale enregistrée');
+    },
+    onError: (e: any) => toast.error('Erreur: ' + e.message),
+  });
+}
