@@ -9,8 +9,25 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useClinicSettings } from '@/hooks/useClinicSettings';
 
+interface PatientCardPreviewProps {
+  patient: Patient | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
 export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardPreviewProps) {
+  const { data: clinicSettings } = useClinicSettings();
+  
   if (!patient) return null;
+
+  const HOSPITAL = {
+    name: clinicSettings?.name || 'Ma Clinique',
+    subtitle: clinicSettings?.slogan || '',
+    address: [clinicSettings?.city, clinicSettings?.country].filter(Boolean).join(', ') || '',
+    phone: clinicSettings?.phone || '',
+    logo_url: clinicSettings?.logo_url || '',
+    color: clinicSettings?.primary_color || '#7fb3c8',
+  };
 
   const { data: company } = useQuery({
     queryKey: ['partner_company', patient.company_id],
