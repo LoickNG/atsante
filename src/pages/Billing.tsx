@@ -213,6 +213,8 @@ export default function Billing() {
     setPatientConvention(null);
     setSelectedItems(new Set());
     setPriceOverrides({});
+    setIsProforma(false);
+    setDiscountPercent(0);
   };
 
   // Filter invoice list
