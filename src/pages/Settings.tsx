@@ -6,7 +6,8 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { ConventionManagement } from '@/components/admin/ConventionManagement';
 import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement';
 import { RoomManagement } from '@/components/admin/RoomManagement';
-import { BarChart3, Users, Handshake, Receipt, BedDouble } from 'lucide-react';
+import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope } from 'lucide-react';
+import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 
 export default function Settings() {
   const { role } = useAuth();
