@@ -169,8 +169,8 @@ export function usePatientBillableItems(patientId: string | undefined) {
       };
 
       for (const ir of imagingRequests || []) {
-        if (!billedReferenceIds.includes(ir.id)) {
-          const examLabel = `${ir.exam_type} - ${ir.body_part}`;
+        const examLabel = `${ir.exam_type} - ${ir.body_part}`;
+        if (!isAlreadyBilled(ir.id, 'imagerie', examLabel)) {
           const examLower = ir.exam_type.toLowerCase();
           const aliases = examTypeAliases[examLower] || [examLower];
           
