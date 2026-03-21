@@ -154,7 +154,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 
   <div class="footer">
     <p>Document confidentiel — Facture ${invoice.invoice_number}</p>
-    <p>SantéPro — Clinique Médicale — Imprimé le ${formatDate(new Date().toISOString())}</p>
+    <p>${clinicName} — ${clinicSubtitle} — Imprimé le ${formatDate(new Date().toISOString())}</p>
   </div>
 </body>
 </html>`;
