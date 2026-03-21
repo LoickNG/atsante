@@ -19,6 +19,7 @@ export interface Hospitalization {
   consultation_id: string | null;
   visit_id: string | null;
   room_id: string | null;
+  bed_number: number | null;
   admission_date: string;
   discharge_date: string | null;
   reason: string;
