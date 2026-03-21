@@ -128,7 +128,7 @@ export default function Surgery() {
     try {
       const scheduledDate = new Date(`${formDate}T${formTime}`).toISOString();
       const { error } = await supabase.from('surgeries').insert({
-        patient_id: formPatientId,
+        patient_id: selectedPatient.id,
         operating_room_id: formRoomId,
         doctor_id: formDoctorId,
         scheduled_date: scheduledDate,
