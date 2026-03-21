@@ -35,6 +35,7 @@ const PatientsList = () => {
   const [deceasedOpen, setDeceasedOpen] = useState(false);
   const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
 
   const filteredPatients = (patients || []).filter(patient => {
     const p = patient as any;
