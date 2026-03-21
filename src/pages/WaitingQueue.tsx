@@ -250,8 +250,18 @@ const WaitingQueue = () => {
           description={`${waitingCount} en attente • ${inProgressCount} en consultation`}
         >
           {canAddToQueue && (
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <div className="flex gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => setIsQRScannerOpen(true)}>
+                <QrCode className="h-4 w-4" />
+                Scanner QR
+              </Button>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Ajouter un patient
+                </Button>
+              </DialogTrigger>
                 <Button className="gap-2">
                   <UserPlus className="h-4 w-4" />
                   Ajouter un patient
