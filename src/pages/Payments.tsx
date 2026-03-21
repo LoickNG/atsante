@@ -68,9 +68,10 @@ export default function Payments() {
     }
   }, [invoiceIdParam]);
 
-  // For convention patients, only patient_amount is due; otherwise total_amount
+  // For convention patients, patient_amount is what the patient owes (can be 0 if fully covered)
+  const hasConvention = selectedInvoice && (Number(selectedInvoice.company_amount) > 0 || Number(selectedInvoice.insurance_amount) > 0);
   const invoiceOwed = selectedInvoice
-    ? (Number(selectedInvoice.patient_amount) > 0 && Number(selectedInvoice.patient_amount) < Number(selectedInvoice.total_amount))
+    ? hasConvention
       ? Number(selectedInvoice.patient_amount)
       : Number(selectedInvoice.total_amount)
     : 0;
@@ -209,7 +210,9 @@ export default function Payments() {
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
                   {filteredUnpaid.map(inv => {
-                    const reste = Number(inv.total_amount) - Number(inv.paid_amount);
+                    const invHasConvention = Number(inv.company_amount) > 0 || Number(inv.insurance_amount) > 0;
+                    const patientOwes = invHasConvention ? Number(inv.patient_amount) : Number(inv.total_amount);
+                    const reste = patientOwes - Number(inv.paid_amount);
                     return (
                       <div
                         key={inv.id}
@@ -222,9 +225,19 @@ export default function Payments() {
                           <p className="text-xs text-muted-foreground">{inv.invoice_number}</p>
                         </div>
                         <div className="text-right mr-3">
-                          <p className="font-semibold text-warning">{formatCurrency(reste)}</p>
+                          <p className={`font-semibold ${reste > 0 ? 'text-warning' : 'text-success'}`}>
+                            {reste <= 0 ? 'Couvert' : formatCurrency(reste)}
+                          </p>
                           <p className="text-xs text-muted-foreground">sur {formatCurrency(Number(inv.total_amount))}</p>
                         </div>
+                        {reste > 0 ? (
+                          <Button size="sm" onClick={() => openPayDialog(inv.id)} className="gap-1">
+                            <CreditCard className="h-3.5 w-3.5" />
+                            Payer
+                          </Button>
+                        ) : (
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/30">Couvert</Badge>
+                        )}
                         <Button size="sm" onClick={() => openPayDialog(inv.id)} className="gap-1">
                           <CreditCard className="h-3.5 w-3.5" />
                           Payer

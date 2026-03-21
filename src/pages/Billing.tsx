@@ -198,8 +198,16 @@ export default function Billing() {
     );
   });
 
-  const totalEnAttente = filtered.filter(i => i.status === 'en_attente').reduce((s, i) => s + Number(i.total_amount), 0);
-  const totalPartiel = filtered.filter(i => i.status === 'partiel').reduce((s, i) => s + Number(i.total_amount) - Number(i.paid_amount), 0);
+  const totalEnAttente = filtered.filter(i => i.status === 'en_attente').reduce((s, i) => {
+    const hasConv = Number(i.company_amount) > 0 || Number(i.insurance_amount) > 0;
+    const owes = hasConv ? Number(i.patient_amount) : Number(i.total_amount);
+    return s + Math.max(0, owes - Number(i.paid_amount));
+  }, 0);
+  const totalPartiel = filtered.filter(i => i.status === 'partiel').reduce((s, i) => {
+    const hasConv = Number(i.company_amount) > 0 || Number(i.insurance_amount) > 0;
+    const owes = hasConv ? Number(i.patient_amount) : Number(i.total_amount);
+    return s + Math.max(0, owes - Number(i.paid_amount));
+  }, 0);
 
   return (
     <AppLayout>

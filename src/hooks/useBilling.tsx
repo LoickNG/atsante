@@ -123,6 +123,10 @@ export function useCreateInvoice() {
       const total_amount = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
 
       // Build invoice data - let the DB trigger generate invoice_number
+      // If patient owes nothing (100% convention coverage), mark as paid immediately
+      const effectivePatientAmount = patient_amount ?? total_amount;
+      const isFullyCovered = convention_id && effectivePatientAmount === 0;
+
       const invoiceData: any = {
         patient_id,
         created_by,
@@ -130,8 +134,9 @@ export function useCreateInvoice() {
         convention_id: convention_id || null,
         company_amount: company_amount || 0,
         insurance_amount: insurance_amount || 0,
-        patient_amount: patient_amount ?? total_amount,
-        status: 'en_attente',
+        patient_amount: effectivePatientAmount,
+        status: isFullyCovered ? 'paye' : 'en_attente',
+        ...(isFullyCovered ? { paid_at: new Date().toISOString() } : {}),
       };
 
       // Only include visit_id if provided
@@ -192,8 +197,9 @@ export function useRecordPayment() {
         .single();
       if (invErr) throw invErr;
 
-      // For convention invoices, the amount owed by the patient is patient_amount
-      const amountOwed = (Number(inv.patient_amount) > 0 && Number(inv.patient_amount) < Number(inv.total_amount))
+      // For convention invoices, the patient only owes patient_amount (can be 0 if fully covered)
+      const hasConvention = Number(inv.company_amount) > 0 || Number(inv.insurance_amount) > 0;
+      const amountOwed = hasConvention
         ? Number(inv.patient_amount)
         : Number(inv.total_amount);
       const newPaidAmount = Number(inv.paid_amount) + totalPaid;
