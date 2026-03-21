@@ -37,6 +37,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/installer" element={<Install />} />
             <Route path="/" element={
               <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
                 <Dashboard />
