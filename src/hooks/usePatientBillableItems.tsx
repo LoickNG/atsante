@@ -203,10 +203,11 @@ export function usePatientBillableItems(patientId: string | undefined) {
           .in('hospitalization_id', hospIds);
 
         for (const ci of (careItems || []) as any[]) {
-          if (!billedReferenceIds.includes(ci.id) && Number(ci.total_price) > 0) {
+          const careDesc = `${ci.care_type}: ${ci.description}`;
+          if (!isAlreadyBilled(ci.id, 'soin_hospitalisation', careDesc) && Number(ci.total_price) > 0) {
             items.push({
               type: 'soin_hospitalisation',
-              description: `${ci.care_type}: ${ci.description}`,
+              description: careDesc,
               quantity: ci.quantity || 1,
               unit_price: Number(ci.unit_price) || 0,
               reference_id: ci.id,
