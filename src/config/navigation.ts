@@ -14,6 +14,7 @@ import {
   FileDown,
   BedDouble,
   Scissors,
+  Baby,
   LucideIcon,
 } from 'lucide-react';
 
