@@ -122,22 +122,35 @@ export function useCreateInvoice() {
     }) => {
       const total_amount = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
 
+      // Build invoice data - let the DB trigger generate invoice_number
+      const invoiceData: any = {
+        patient_id,
+        created_by,
+        total_amount,
+        convention_id: convention_id || null,
+        company_amount: company_amount || 0,
+        insurance_amount: insurance_amount || 0,
+        patient_amount: patient_amount ?? total_amount,
+        status: 'en_attente',
+      };
+
+      // Only include visit_id if provided
+      if (visit_id) {
+        invoiceData.visit_id = visit_id;
+      }
+
+      console.log('[Billing] Creating invoice with data:', JSON.stringify(invoiceData));
+
       const { data: invoice, error: invErr } = await supabase
         .from('invoices')
-        .insert({
-          patient_id,
-          visit_id: visit_id || null,
-          created_by,
-          total_amount,
-          invoice_number: '',
-          convention_id: convention_id || null,
-          company_amount: company_amount || 0,
-          insurance_amount: insurance_amount || 0,
-          patient_amount: patient_amount ?? total_amount,
-        } as any)
+        .insert(invoiceData)
         .select()
         .single();
-      if (invErr) throw invErr;
+      if (invErr) {
+        console.error('[Billing] Invoice creation error:', invErr);
+        throw invErr;
+      }
+      console.log('[Billing] Invoice created:', invoice.id, invoice.invoice_number);
 
       // Create invoice items
       const itemsToInsert = items.map(i => ({

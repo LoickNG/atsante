@@ -171,7 +171,8 @@ export default function Billing() {
       toast({ title: 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
       resetSearch();
     } catch (error: any) {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+      console.error('[Billing] Full error:', error);
+      toast({ title: 'Erreur de facturation', description: error?.message || JSON.stringify(error), variant: 'destructive' });
     }
   };
 
