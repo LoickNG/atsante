@@ -95,7 +95,7 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
           background: white; overflow: hidden;
         }
         .header {
-          background: #7fb3c8;
+          background: ${HOSPITAL.color};
           color: white; padding: 2mm 3mm;
           display: flex; align-items: center; gap: 2mm;
           border-bottom: 0.8mm solid #c0392b;
