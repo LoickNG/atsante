@@ -58,6 +58,10 @@ export default function Settings() {
             <BedDouble className="h-4 w-4" />
             Chambres
           </TabsTrigger>
+          <TabsTrigger value="licences" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            Licences
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clinique">
