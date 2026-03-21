@@ -240,6 +240,7 @@ export function usePatientBillableItems(patientId: string | undefined) {
               source_table: 'hospitalizations',
             });
           }
+        }
       }
 
       return items;
