@@ -4,13 +4,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { Stethoscope, Pill, FlaskConical, ImageIcon, Loader2, Baby } from 'lucide-react';
+import { Stethoscope as StethoscopeIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Patient } from '@/hooks/usePatients';
 import { useVisits } from '@/hooks/useVisits';
 import { useConsultations } from '@/hooks/useConsultations';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
-import { useMaternityAdmissions, useBirths } from '@/hooks/useMaternity';
+import { useMaternityAdmissions, useBirths, usePrenatalVisits } from '@/hooks/useMaternity';
 
 interface PatientHistoryDialogProps {
   patient: Patient | null;
@@ -25,6 +26,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
   const { data: allImagingRequests } = useImagingRequests();
   const { data: allAdmissions } = useMaternityAdmissions();
   const { data: allBirths } = useBirths();
+  const { data: allPrenatalVisits } = usePrenatalVisits();
 
   if (!patient) return null;
 
@@ -33,6 +35,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
   const patientImaging = (allImagingRequests || []).filter(r => r.patient_id === patient.id);
   const patientAdmissions = (allAdmissions || []).filter(a => a.patient_id === patient.id);
   const patientBirths = (allBirths || []).filter(b => b.patient_id === patient.id);
+  const patientPrenatal = (allPrenatalVisits || []).filter(v => v.patient_id === patient.id);
 
   const formatDateTime = (d: string) =>
     new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -178,6 +181,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
                   <div className="space-y-3">
                     {patientAdmissions.map(admission => {
                       const admissionBirths = patientBirths.filter(b => b.maternity_admission_id === admission.id);
+                      const admPrenatal = patientPrenatal.filter(v => v.maternity_admission_id === admission.id);
                       return (
                         <div key={admission.id} className="p-3 rounded-lg border bg-pink-500/5 space-y-2">
                           <div className="flex items-center justify-between">
@@ -211,6 +215,32 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
                             <p className="text-xs">G{admission.gravida}P{admission.para ?? 0} • {admission.blood_group || '?'}{admission.rhesus || ''}</p>
                           )}
 
+                          {/* Prenatal visits */}
+                          {admPrenatal.length > 0 && (
+                            <div className="mt-2 space-y-1.5 border-t border-primary/20 pt-2">
+                              <p className="text-xs font-semibold text-primary">Consultations prénatales ({admPrenatal.length})</p>
+                              {admPrenatal.map((visit, idx) => (
+                                <div key={visit.id} className="p-2 rounded bg-background/80 text-xs space-y-0.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">CPN #{admPrenatal.length - idx} — {visit.gestational_weeks ? `${visit.gestational_weeks} SA` : ''}</span>
+                                    <span className="text-muted-foreground">{formatDateTime(visit.visit_date)}</span>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 text-muted-foreground">
+                                    {visit.weight_kg && <span>Poids: {visit.weight_kg}kg</span>}
+                                    {visit.blood_pressure && <span>TA: {visit.blood_pressure}</span>}
+                                    {visit.uterine_height_cm && <span>HU: {visit.uterine_height_cm}cm</span>}
+                                    {visit.fetal_heart_rate && <span>BCF: {visit.fetal_heart_rate}bpm</span>}
+                                    {visit.presentation && <span>Prés: {visit.presentation}</span>}
+                                    {visit.hemoglobin && <span>Hb: {visit.hemoglobin}g/dL</span>}
+                                  </div>
+                                  {visit.ultrasound_notes && <p className="text-muted-foreground">Écho: {visit.ultrasound_notes}</p>}
+                                  {visit.complications && <p className="text-destructive">⚠ {visit.complications}</p>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Births */}
                           {admissionBirths.length > 0 && (
                             <div className="mt-2 space-y-1.5 border-t border-pink-200/50 pt-2">
                               <p className="text-xs font-semibold text-pink-600">Naissances</p>

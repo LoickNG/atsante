@@ -48,6 +48,34 @@ export interface Birth {
   patients?: { first_name: string; last_name: string; code: string };
 }
 
+export interface PrenatalVisit {
+  id: string;
+  maternity_admission_id: string;
+  patient_id: string;
+  visit_date: string;
+  gestational_weeks: number | null;
+  weight_kg: number | null;
+  blood_pressure: string | null;
+  uterine_height_cm: number | null;
+  fetal_heart_rate: number | null;
+  presentation: string | null;
+  edema: string | null;
+  urine_protein: string | null;
+  blood_sugar: number | null;
+  hemoglobin: number | null;
+  ultrasound_notes: string | null;
+  ultrasound_date: string | null;
+  lab_notes: string | null;
+  vaccinations: string | null;
+  complications: string | null;
+  recommendations: string | null;
+  next_appointment: string | null;
+  notes: string | null;
+  performed_by: string | null;
+  created_at: string;
+}
+
+
 export function useMaternityAdmissions() {
   return useQuery({
     queryKey: ['maternity_admissions'],
@@ -136,6 +164,38 @@ export function useCreateBirth() {
       qc.invalidateQueries({ queryKey: ['births'] });
       qc.invalidateQueries({ queryKey: ['maternity_admissions'] });
       toast.success('Naissance enregistrée avec succès 🎉');
+    },
+    onError: (e: any) => toast.error('Erreur: ' + e.message),
+  });
+}
+
+export function usePrenatalVisits(admissionId?: string) {
+  return useQuery({
+    queryKey: ['prenatal_visits', admissionId],
+    queryFn: async () => {
+      let query = supabase
+        .from('prenatal_visits')
+        .select('*')
+        .order('visit_date', { ascending: false });
+      if (admissionId) query = query.eq('maternity_admission_id', admissionId);
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as PrenatalVisit[];
+    },
+  });
+}
+
+export function useCreatePrenatalVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (visit: Partial<PrenatalVisit>) => {
+      const { data, error } = await supabase.from('prenatal_visits').insert(visit as any).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['prenatal_visits'] });
+      toast.success('Consultation prénatale enregistrée');
     },
     onError: (e: any) => toast.error('Erreur: ' + e.message),
   });

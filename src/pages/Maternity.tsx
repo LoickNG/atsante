@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Baby, Heart, Clock, Check, User, Plus, Loader2, AlertTriangle, BedDouble, Printer, FileText,
+  Baby, Heart, Check, Plus, Loader2, AlertTriangle, BedDouble, Printer, Stethoscope, Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ import {
   useMaternityAdmissions, useActiveMaternityAdmissions,
   useCreateMaternityAdmission, useUpdateMaternityAdmission,
   useBirths, useCreateBirth,
+  usePrenatalVisits, useCreatePrenatalVisit,
   MaternityAdmission,
 } from '@/hooks/useMaternity';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,7 +55,9 @@ const Maternity = () => {
   const [isBirthDialogOpen, setIsBirthDialogOpen] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<MaternityAdmission | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [birthPatient, setBirthPatient] = useState<Patient | null>(null);
+  const [isPrenatalDialogOpen, setIsPrenatalDialogOpen] = useState(false);
+  const [prenatalAdmission, setPrenatalAdmission] = useState<MaternityAdmission | null>(null);
+  const [viewPrenatalAdmissionId, setViewPrenatalAdmissionId] = useState<string | null>(null);
 
   const { user } = useAuth();
   const { data: clinicData } = useClinicSettings();
@@ -62,9 +65,11 @@ const Maternity = () => {
   const { data: allAdmissions, isLoading } = useMaternityAdmissions();
   const { data: activeAdmissions } = useActiveMaternityAdmissions();
   const { data: allBirths } = useBirths();
+  const { data: allPrenatalVisits } = usePrenatalVisits();
   const createAdmission = useCreateMaternityAdmission();
   const updateAdmission = useUpdateMaternityAdmission();
   const createBirth = useCreateBirth();
+  const createPrenatalVisit = useCreatePrenatalVisit();
 
   // Admission form
   const [admForm, setAdmForm] = useState({
@@ -94,6 +99,29 @@ const Maternity = () => {
     head_circumference_cm: '',
     complications: '',
     baby_status: 'vivant',
+    notes: '',
+  });
+
+  // Prenatal form
+  const [prenatalForm, setPrenatalForm] = useState({
+    visit_date: new Date().toISOString().slice(0, 16),
+    gestational_weeks: '',
+    weight_kg: '',
+    blood_pressure: '',
+    uterine_height_cm: '',
+    fetal_heart_rate: '',
+    presentation: '',
+    edema: '',
+    urine_protein: '',
+    blood_sugar: '',
+    hemoglobin: '',
+    ultrasound_notes: '',
+    ultrasound_date: '',
+    lab_notes: '',
+    vaccinations: '',
+    complications: '',
+    recommendations: '',
+    next_appointment: '',
     notes: '',
   });
 
@@ -160,7 +188,50 @@ const Maternity = () => {
     await updateAdmission.mutateAsync({ id, status: 'sortie', discharge_date: new Date().toISOString() } as any);
   };
 
-  const printBirthCertificate = (birth: Birth, admission?: MaternityAdmission) => {
+  const handleOpenPrenatalDialog = (admission: MaternityAdmission) => {
+    setPrenatalAdmission(admission);
+    setPrenatalForm({
+      visit_date: new Date().toISOString().slice(0, 16),
+      gestational_weeks: admission.gestational_weeks?.toString() || '',
+      weight_kg: '', blood_pressure: '', uterine_height_cm: '', fetal_heart_rate: '',
+      presentation: '', edema: '', urine_protein: '', blood_sugar: '', hemoglobin: '',
+      ultrasound_notes: '', ultrasound_date: '', lab_notes: '', vaccinations: '',
+      complications: '', recommendations: '', next_appointment: '', notes: '',
+    });
+    setIsPrenatalDialogOpen(true);
+  };
+
+  const handleCreatePrenatalVisit = async () => {
+    if (!prenatalAdmission) return;
+    await createPrenatalVisit.mutateAsync({
+      maternity_admission_id: prenatalAdmission.id,
+      patient_id: prenatalAdmission.patient_id,
+      visit_date: prenatalForm.visit_date,
+      gestational_weeks: prenatalForm.gestational_weeks ? parseInt(prenatalForm.gestational_weeks) : null,
+      weight_kg: prenatalForm.weight_kg ? parseFloat(prenatalForm.weight_kg) : null,
+      blood_pressure: prenatalForm.blood_pressure || null,
+      uterine_height_cm: prenatalForm.uterine_height_cm ? parseFloat(prenatalForm.uterine_height_cm) : null,
+      fetal_heart_rate: prenatalForm.fetal_heart_rate ? parseInt(prenatalForm.fetal_heart_rate) : null,
+      presentation: prenatalForm.presentation || null,
+      edema: prenatalForm.edema || null,
+      urine_protein: prenatalForm.urine_protein || null,
+      blood_sugar: prenatalForm.blood_sugar ? parseFloat(prenatalForm.blood_sugar) : null,
+      hemoglobin: prenatalForm.hemoglobin ? parseFloat(prenatalForm.hemoglobin) : null,
+      ultrasound_notes: prenatalForm.ultrasound_notes || null,
+      ultrasound_date: prenatalForm.ultrasound_date || null,
+      lab_notes: prenatalForm.lab_notes || null,
+      vaccinations: prenatalForm.vaccinations || null,
+      complications: prenatalForm.complications || null,
+      recommendations: prenatalForm.recommendations || null,
+      next_appointment: prenatalForm.next_appointment || null,
+      notes: prenatalForm.notes || null,
+      performed_by: user?.id || null,
+    } as any);
+    setIsPrenatalDialogOpen(false);
+    setPrenatalAdmission(null);
+  };
+
+  const printBirthCertificate = (birth: any) => {
     const motherName = birth.patients ? `${birth.patients.first_name} ${birth.patients.last_name}` : 'Inconnue';
     printMultiResultDocument({
       clinic: clinicData,
@@ -186,9 +257,6 @@ const Maternity = () => {
       }],
     });
   };
-
-  // Need Birth type in scope
-  type Birth = typeof allBirths extends (infer T)[] | undefined ? T : never;
 
   if (isLoading) {
     return (
@@ -251,10 +319,10 @@ const Maternity = () => {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Sorties</p>
-                  <p className="text-2xl font-bold text-muted-foreground">{discharged.length}</p>
+                  <p className="text-sm text-muted-foreground">CPN enregistrées</p>
+                  <p className="text-2xl font-bold text-accent-foreground">{allPrenatalVisits?.length || 0}</p>
                 </div>
-                <Check className="h-8 w-8 text-muted-foreground" />
+                <Stethoscope className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -268,6 +336,10 @@ const Maternity = () => {
               {(activeAdmissions?.length || 0) > 0 && (
                 <Badge variant="destructive" className="ml-1 text-[10px]">{activeAdmissions?.length}</Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="prenatal" className="gap-2">
+              <Stethoscope className="h-4 w-4" />
+              Suivi prénatal
             </TabsTrigger>
             <TabsTrigger value="births" className="gap-2">
               <Baby className="h-4 w-4" />
@@ -298,6 +370,7 @@ const Maternity = () => {
                       const patient = admission.patients;
                       const riskCfg = riskLevels.find(r => r.value === admission.risk_level);
                       const admissionBirths = allBirths?.filter(b => b.maternity_admission_id === admission.id) || [];
+                      const admPrenatal = allPrenatalVisits?.filter(v => v.maternity_admission_id === admission.id) || [];
                       return (
                         <div key={admission.id} className={cn(
                           'p-4 border rounded-lg bg-card',
@@ -332,15 +405,27 @@ const Maternity = () => {
                                   <span>Admise le {formatDateTime(admission.admission_date)}</span>
                                   {admission.expected_due_date && <span>• DPA: {formatDate(admission.expected_due_date)}</span>}
                                 </div>
-                                {admissionBirths.length > 0 && (
-                                  <div className="mt-2 flex items-center gap-2">
-                                    <Baby className="h-4 w-4 text-success" />
-                                    <span className="text-sm text-success font-medium">{admissionBirths.length} naissance(s) enregistrée(s)</span>
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-3 mt-2">
+                                  {admissionBirths.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <Baby className="h-4 w-4 text-success" />
+                                      <span className="text-sm text-success font-medium">{admissionBirths.length} naissance(s)</span>
+                                    </div>
+                                  )}
+                                  {admPrenatal.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                      <Stethoscope className="h-4 w-4 text-primary" />
+                                      <span className="text-sm text-primary font-medium">{admPrenatal.length} CPN</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap justify-end">
+                              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => handleOpenPrenatalDialog(admission)}>
+                                <Stethoscope className="h-4 w-4" />
+                                CPN
+                              </Button>
                               <Button size="sm" className="gap-1.5" onClick={() => handleOpenBirthDialog(admission)}>
                                 <Baby className="h-4 w-4" />
                                 Naissance
@@ -353,6 +438,115 @@ const Maternity = () => {
                           {admission.notes && (
                             <div className="mt-3 p-2 bg-muted/50 rounded text-sm text-muted-foreground">
                               {admission.notes}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Prenatal tab */}
+          <TabsContent value="prenatal">
+            <Card>
+              <CardHeader>
+                <CardTitle>Suivi prénatal (CPN)</CardTitle>
+                <CardDescription>Consultations prénatales par admission</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(activeAdmissions?.length || 0) === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Stethoscope className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p>Aucune admission active pour le suivi prénatal</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {activeAdmissions?.map(admission => {
+                      const patient = admission.patients;
+                      const admPrenatal = (allPrenatalVisits || []).filter(v => v.maternity_admission_id === admission.id);
+                      const isExpanded = viewPrenatalAdmissionId === admission.id;
+                      return (
+                        <div key={admission.id} className="border rounded-lg overflow-hidden">
+                          <div className="p-4 bg-muted/20 flex items-center justify-between cursor-pointer"
+                            onClick={() => setViewPrenatalAdmissionId(isExpanded ? null : admission.id)}>
+                            <div className="flex items-center gap-3">
+                              <Heart className="h-5 w-5 text-primary" />
+                              <div>
+                                <p className="font-semibold text-sm">
+                                  {patient ? `${patient.first_name} ${patient.last_name}` : 'Patiente'}
+                                  <span className="text-muted-foreground font-normal ml-2">
+                                    G{admission.gravida}P{admission.para} • SA: {admission.gestational_weeks || '?'}
+                                  </span>
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {admPrenatal.length} consultation(s) prénatale(s)
+                                  {admPrenatal.length > 0 && ` • Dernière: ${formatDate(admPrenatal[0].visit_date)}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" className="gap-1.5"
+                                onClick={e => { e.stopPropagation(); handleOpenPrenatalDialog(admission); }}>
+                                <Plus className="h-3 w-3" /> Nouvelle CPN
+                              </Button>
+                              <Eye className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
+                            </div>
+                          </div>
+                          {isExpanded && (
+                            <div className="p-4 space-y-3">
+                              {admPrenatal.length === 0 ? (
+                                <p className="text-sm text-muted-foreground text-center py-4">Aucune CPN enregistrée</p>
+                              ) : (
+                                admPrenatal.map((visit, idx) => (
+                                  <div key={visit.id} className="p-3 border rounded-lg bg-card">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <Badge variant="secondary" className="text-xs">
+                                        CPN #{admPrenatal.length - idx}
+                                      </Badge>
+                                      <span className="text-xs text-muted-foreground">{formatDateTime(visit.visit_date)}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                                      {visit.gestational_weeks && <div><span className="text-muted-foreground">SA:</span> {visit.gestational_weeks}</div>}
+                                      {visit.weight_kg && <div><span className="text-muted-foreground">Poids:</span> {visit.weight_kg} kg</div>}
+                                      {visit.blood_pressure && <div><span className="text-muted-foreground">TA:</span> {visit.blood_pressure}</div>}
+                                      {visit.uterine_height_cm && <div><span className="text-muted-foreground">HU:</span> {visit.uterine_height_cm} cm</div>}
+                                      {visit.fetal_heart_rate && <div><span className="text-muted-foreground">BCF:</span> {visit.fetal_heart_rate} bpm</div>}
+                                      {visit.presentation && <div><span className="text-muted-foreground">Présentation:</span> {visit.presentation}</div>}
+                                      {visit.edema && <div><span className="text-muted-foreground">Œdème:</span> {visit.edema}</div>}
+                                      {visit.hemoglobin && <div><span className="text-muted-foreground">Hb:</span> {visit.hemoglobin} g/dL</div>}
+                                    </div>
+                                    {visit.ultrasound_notes && (
+                                      <div className="mt-2 p-2 bg-muted/30 rounded text-xs">
+                                        <span className="font-medium">Échographie:</span> {visit.ultrasound_notes}
+                                      </div>
+                                    )}
+                                    {visit.lab_notes && (
+                                      <div className="mt-1 p-2 bg-muted/30 rounded text-xs">
+                                        <span className="font-medium">Analyses:</span> {visit.lab_notes}
+                                      </div>
+                                    )}
+                                    {visit.vaccinations && (
+                                      <div className="mt-1 text-xs"><span className="font-medium">Vaccinations:</span> {visit.vaccinations}</div>
+                                    )}
+                                    {visit.complications && (
+                                      <div className="mt-1 p-2 bg-destructive/5 border border-destructive/20 rounded text-xs text-destructive">
+                                        <AlertTriangle className="h-3 w-3 inline mr-1" /> {visit.complications}
+                                      </div>
+                                    )}
+                                    {visit.recommendations && (
+                                      <div className="mt-1 text-xs"><span className="font-medium">Recommandations:</span> {visit.recommendations}</div>
+                                    )}
+                                    {visit.next_appointment && (
+                                      <div className="mt-1 text-xs text-primary font-medium">
+                                        Prochain RDV: {formatDate(visit.next_appointment)}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))
+                              )}
                             </div>
                           )}
                         </div>
@@ -586,7 +780,7 @@ const Maternity = () => {
                   Mère: {selectedAdmission.patients?.first_name} {selectedAdmission.patients?.last_name}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  {selectedAdmission.pregnancy_type === 'simple' ? 'Grossesse simple' : selectedAdmission.pregnancy_type === 'gemellaire' ? 'Grossesse gémellaire' : 'Grossesse multiple'}
+                  {pregnancyTypes.find(p => p.value === selectedAdmission.pregnancy_type)?.label}
                   {' • '} G{selectedAdmission.gravida}P{selectedAdmission.para}
                 </p>
               </div>
@@ -682,6 +876,173 @@ const Maternity = () => {
               <Button onClick={handleCreateBirth} disabled={createBirth.isPending} className="gap-1.5">
                 <Baby className="h-4 w-4" />
                 Enregistrer la naissance
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Prenatal Visit Dialog */}
+        <Dialog open={isPrenatalDialogOpen} onOpenChange={setIsPrenatalDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Stethoscope className="h-5 w-5" />
+                Consultation prénatale (CPN)
+              </DialogTitle>
+            </DialogHeader>
+            {prenatalAdmission && (
+              <div className="p-3 bg-muted/50 rounded-lg text-sm mb-2">
+                <p className="font-medium">
+                  Patiente: {prenatalAdmission.patients?.first_name} {prenatalAdmission.patients?.last_name}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  G{prenatalAdmission.gravida}P{prenatalAdmission.para} • SA: {prenatalAdmission.gestational_weeks || '?'}
+                  {prenatalAdmission.expected_due_date && ` • DPA: ${formatDate(prenatalAdmission.expected_due_date)}`}
+                </p>
+              </div>
+            )}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Date de la consultation</Label>
+                  <Input type="datetime-local" value={prenatalForm.visit_date}
+                    onChange={e => setPrenatalForm(f => ({ ...f, visit_date: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Semaines d'aménorrhée</Label>
+                  <Input type="number" value={prenatalForm.gestational_weeks}
+                    onChange={e => setPrenatalForm(f => ({ ...f, gestational_weeks: e.target.value }))} placeholder="SA" />
+                </div>
+              </div>
+
+              <h4 className="text-sm font-semibold text-muted-foreground border-b pb-1">Examen clinique</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Poids (kg)</Label>
+                  <Input type="number" step="0.1" value={prenatalForm.weight_kg}
+                    onChange={e => setPrenatalForm(f => ({ ...f, weight_kg: e.target.value }))} placeholder="Ex: 65" />
+                </div>
+                <div>
+                  <Label>Tension artérielle</Label>
+                  <Input value={prenatalForm.blood_pressure}
+                    onChange={e => setPrenatalForm(f => ({ ...f, blood_pressure: e.target.value }))} placeholder="Ex: 12/8" />
+                </div>
+                <div>
+                  <Label>Hauteur utérine (cm)</Label>
+                  <Input type="number" step="0.5" value={prenatalForm.uterine_height_cm}
+                    onChange={e => setPrenatalForm(f => ({ ...f, uterine_height_cm: e.target.value }))} placeholder="Ex: 28" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>BCF (bpm)</Label>
+                  <Input type="number" value={prenatalForm.fetal_heart_rate}
+                    onChange={e => setPrenatalForm(f => ({ ...f, fetal_heart_rate: e.target.value }))} placeholder="Ex: 140" />
+                </div>
+                <div>
+                  <Label>Présentation</Label>
+                  <Select value={prenatalForm.presentation} onValueChange={v => setPrenatalForm(f => ({ ...f, presentation: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cephalique">Céphalique</SelectItem>
+                      <SelectItem value="siege">Siège</SelectItem>
+                      <SelectItem value="transverse">Transverse</SelectItem>
+                      <SelectItem value="indeterminee">Indéterminée</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Œdèmes</Label>
+                  <Select value={prenatalForm.edema} onValueChange={v => setPrenatalForm(f => ({ ...f, edema: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="absent">Absent</SelectItem>
+                      <SelectItem value="leger">Léger</SelectItem>
+                      <SelectItem value="modere">Modéré</SelectItem>
+                      <SelectItem value="important">Important</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <h4 className="text-sm font-semibold text-muted-foreground border-b pb-1">Analyses & examens</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Protéinurie</Label>
+                  <Select value={prenatalForm.urine_protein} onValueChange={v => setPrenatalForm(f => ({ ...f, urine_protein: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="negatif">Négatif</SelectItem>
+                      <SelectItem value="traces">Traces</SelectItem>
+                      <SelectItem value="1+">1+</SelectItem>
+                      <SelectItem value="2+">2+</SelectItem>
+                      <SelectItem value="3+">3+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Glycémie (g/L)</Label>
+                  <Input type="number" step="0.01" value={prenatalForm.blood_sugar}
+                    onChange={e => setPrenatalForm(f => ({ ...f, blood_sugar: e.target.value }))} placeholder="Ex: 0.9" />
+                </div>
+                <div>
+                  <Label>Hémoglobine (g/dL)</Label>
+                  <Input type="number" step="0.1" value={prenatalForm.hemoglobin}
+                    onChange={e => setPrenatalForm(f => ({ ...f, hemoglobin: e.target.value }))} placeholder="Ex: 11.5" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Échographie — Notes</Label>
+                  <Textarea value={prenatalForm.ultrasound_notes}
+                    onChange={e => setPrenatalForm(f => ({ ...f, ultrasound_notes: e.target.value }))} placeholder="Résultats échographiques..." rows={2} />
+                </div>
+                <div>
+                  <Label>Date échographie</Label>
+                  <Input type="date" value={prenatalForm.ultrasound_date}
+                    onChange={e => setPrenatalForm(f => ({ ...f, ultrasound_date: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <Label>Autres analyses</Label>
+                <Textarea value={prenatalForm.lab_notes}
+                  onChange={e => setPrenatalForm(f => ({ ...f, lab_notes: e.target.value }))} placeholder="NFS, sérologies, groupage..." rows={2} />
+              </div>
+
+              <h4 className="text-sm font-semibold text-muted-foreground border-b pb-1">Suivi</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Vaccinations</Label>
+                  <Input value={prenatalForm.vaccinations}
+                    onChange={e => setPrenatalForm(f => ({ ...f, vaccinations: e.target.value }))} placeholder="VAT, etc." />
+                </div>
+                <div>
+                  <Label>Prochain rendez-vous</Label>
+                  <Input type="date" value={prenatalForm.next_appointment}
+                    onChange={e => setPrenatalForm(f => ({ ...f, next_appointment: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <Label>Complications</Label>
+                <Input value={prenatalForm.complications}
+                  onChange={e => setPrenatalForm(f => ({ ...f, complications: e.target.value }))} placeholder="Le cas échéant..." />
+              </div>
+              <div>
+                <Label>Recommandations</Label>
+                <Textarea value={prenatalForm.recommendations}
+                  onChange={e => setPrenatalForm(f => ({ ...f, recommendations: e.target.value }))} placeholder="Régime, repos, médicaments..." rows={2} />
+              </div>
+              <div>
+                <Label>Notes</Label>
+                <Textarea value={prenatalForm.notes}
+                  onChange={e => setPrenatalForm(f => ({ ...f, notes: e.target.value }))} placeholder="Observations supplémentaires..." rows={2} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPrenatalDialogOpen(false)}>Annuler</Button>
+              <Button onClick={handleCreatePrenatalVisit} disabled={createPrenatalVisit.isPending} className="gap-1.5">
+                <Stethoscope className="h-4 w-4" />
+                Enregistrer la CPN
               </Button>
             </DialogFooter>
           </DialogContent>
