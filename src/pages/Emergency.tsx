@@ -234,8 +234,6 @@ export default function Emergency() {
     setOrientDialogOpen(true);
   };
 
-  const [showInvoicePrompt, setShowInvoicePrompt] = useState(false);
-  const [orientedPatientId, setOrientedPatientId] = useState<string | null>(null);
 
   const handleOrient = async () => {
     if (!selectedVisit) return;
