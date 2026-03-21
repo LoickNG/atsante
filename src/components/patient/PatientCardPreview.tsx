@@ -139,9 +139,8 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
     </head><body>
       <div class="card">
         <div class="header">
-          <div class="logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-          </div>
+          ${HOSPITAL.logo_url ? `<img src="${HOSPITAL.logo_url}" style="width:8mm;height:8mm;object-fit:contain;border-radius:4px;flex-shrink:0;" />` : `<div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></div>`}
+          <div>
           <div>
             <p class="hospital-name">${HOSPITAL.name}</p>
             <p class="hospital-addr">${HOSPITAL.subtitle} — ${HOSPITAL.address}</p>
