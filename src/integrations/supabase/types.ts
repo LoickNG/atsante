@@ -622,6 +622,60 @@ export type Database = {
           },
         ]
       }
+      licenses: {
+        Row: {
+          clinic_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          current_users: number
+          enabled_modules: string[]
+          expiry_date: string
+          id: string
+          is_active: boolean
+          license_key: string
+          max_users: number
+          notes: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          current_users?: number
+          enabled_modules?: string[]
+          expiry_date?: string
+          id?: string
+          is_active?: boolean
+          license_key?: string
+          max_users?: number
+          notes?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          current_users?: number
+          enabled_modules?: string[]
+          expiry_date?: string
+          id?: string
+          is_active?: boolean
+          license_key?: string
+          max_users?: number
+          notes?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       medical_acts: {
         Row: {
           category: string
