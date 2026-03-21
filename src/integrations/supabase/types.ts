@@ -987,6 +987,30 @@ export type Database = {
         }
         Relationships: []
       }
+      specialties: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          value?: string
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string

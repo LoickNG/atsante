@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleLabel, getRoleColor } from '@/config/navigation';
-import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { useSpecialties, getSpecialtyLabel } from '@/config/specialties';
 import { UserRole } from '@/types';
 import { UserPlus, Shield, Loader2, Search } from 'lucide-react';
 import { z } from 'zod';
@@ -38,6 +38,7 @@ export function UserManagement() {
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('accueil');
   const [newSpecialty, setNewSpecialty] = useState('');
+  const specialtiesList = useSpecialties();
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -174,7 +175,7 @@ export function UserManagement() {
                     <Select value={newSpecialty} onValueChange={setNewSpecialty}>
                       <SelectTrigger><SelectValue placeholder="Choisir une spécialité" /></SelectTrigger>
                       <SelectContent>
-                        {SPECIALTIES.map(s => (
+                        {specialtiesList.map(s => (
                           <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                         ))}
                       </SelectContent>
