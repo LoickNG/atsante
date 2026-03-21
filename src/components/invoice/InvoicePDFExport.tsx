@@ -141,10 +141,20 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     </div>
   </div>` : ''}
 
+  ${discountPct > 0 ? `
+  <div style="background:#fef2f2;border:1px solid #fecaca;padding:10px;border-radius:6px;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <span>Sous-total avant remise</span><span>${formatCurrency(total + discountAmt)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#dc2626;font-weight:bold">
+      <span>Remise (${discountPct}%)</span><span>- ${formatCurrency(discountAmt)}</span>
+    </div>
+  </div>` : ''}
+
   <table class="totals">
-    <tr><td>Sous-total</td><td style="text-align:right">${formatCurrency(total)}</td></tr>
-    <tr class="paid"><td>Payé</td><td style="text-align:right">${formatCurrency(paid)}</td></tr>
-    <tr class="reste"><td>Reste à payer</td><td style="text-align:right">${formatCurrency(reste > 0 ? reste : 0)}</td></tr>
+    <tr><td>Total</td><td style="text-align:right">${formatCurrency(total)}</td></tr>
+    ${!isProforma ? `<tr class="paid"><td>Payé</td><td style="text-align:right">${formatCurrency(paid)}</td></tr>
+    <tr class="reste"><td>Reste à payer</td><td style="text-align:right">${formatCurrency(reste > 0 ? reste : 0)}</td></tr>` : ''}
   </table>
 
   ${paymentRows ? `
