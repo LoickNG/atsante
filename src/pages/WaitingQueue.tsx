@@ -262,11 +262,6 @@ const WaitingQueue = () => {
                   Ajouter un patient
                 </Button>
               </DialogTrigger>
-                <Button className="gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Ajouter un patient
-                </Button>
-              </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Ajouter à la file d'attente</DialogTitle>
