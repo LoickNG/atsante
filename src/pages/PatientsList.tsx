@@ -22,6 +22,7 @@ import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
 import { PatientHistoryDialog } from '@/components/patient/PatientHistoryDialog';
 import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
 import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
+import { QRScannerDialog } from '@/components/patient/QRScannerDialog';
 import { DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 const PatientsList = () => {
