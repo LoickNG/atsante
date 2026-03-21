@@ -29,8 +29,9 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     const insuranceAmt = Number(invoice.insurance_amount);
     const patientAmt = Number(invoice.patient_amount);
 
-    const itemRows = (invoice.items || []).map(item => `
+    const itemRows = (invoice.items || []).map((item, idx) => `
       <tr>
+        <td style="text-align:center">${idx + 1}</td>
         <td>${item.description}</td>
         <td style="text-align:center">${item.quantity}</td>
         <td style="text-align:right">${formatCurrency(Number(item.unit_price))}</td>
