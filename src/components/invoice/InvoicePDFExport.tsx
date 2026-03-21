@@ -14,6 +14,12 @@ const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
+  const { data: clinic } = useClinicSettings();
+  const clinicName = clinic?.name || 'Ma Clinique';
+  const clinicSubtitle = [clinic?.slogan, clinic?.city].filter(Boolean).join(' — ') || 'Clinique Médicale';
+  const clinicPhone = clinic?.phone || '';
+  const clinicAddress = clinic?.address || '';
+
   const handlePrint = () => {
     const patient = invoice.patient;
     const total = Number(invoice.total_amount);
