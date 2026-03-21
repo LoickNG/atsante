@@ -7,7 +7,8 @@ import { ConventionManagement } from '@/components/admin/ConventionManagement';
 import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement';
 import { RoomManagement } from '@/components/admin/RoomManagement';
 import { ClinicSettingsManagement } from '@/components/admin/ClinicSettingsManagement';
-import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2 } from 'lucide-react';
+import { LicenseManagement } from '@/components/admin/LicenseManagement';
+import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2, Key } from 'lucide-react';
 import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 
 export default function Settings() {
@@ -57,6 +58,10 @@ export default function Settings() {
             <BedDouble className="h-4 w-4" />
             Chambres
           </TabsTrigger>
+          <TabsTrigger value="licences" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            Licences
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clinique">
@@ -85,6 +90,10 @@ export default function Settings() {
 
         <TabsContent value="chambres">
           <RoomManagement />
+        </TabsContent>
+
+        <TabsContent value="licences">
+          <LicenseManagement />
         </TabsContent>
       </Tabs>
     </AppLayout>
