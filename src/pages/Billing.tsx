@@ -29,6 +29,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
+  proforma: { label: 'Pro Forma', className: 'bg-secondary/50 text-secondary-foreground border-secondary/30' },
   en_attente: { label: 'En attente', className: 'bg-warning/10 text-warning border-warning/30' },
   partiel: { label: 'Partiel', className: 'bg-info/10 text-info border-info/30' },
   paye: { label: 'Payé', className: 'bg-success/10 text-success border-success/30' },
