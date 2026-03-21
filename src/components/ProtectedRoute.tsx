@@ -2,6 +2,8 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { UserRole } from '@/types';
 import { Loader2 } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -11,6 +13,18 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const location = useLocation();
+  const hasShownToast = useRef(false);
+
+  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role);
+
+  useEffect(() => {
+    if (isUnauthorized && !hasShownToast.current) {
+      hasShownToast.current = true;
+      toast.error("Accès refusé", {
+        description: "Vous n'avez pas les permissions nécessaires pour accéder à cette page.",
+      });
+    }
+  }, [isUnauthorized]);
 
   if (loading) {
     return (
@@ -27,8 +41,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // If roles are specified, check authorization
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
+  if (isUnauthorized) {
     return <Navigate to="/" replace />;
   }
 
