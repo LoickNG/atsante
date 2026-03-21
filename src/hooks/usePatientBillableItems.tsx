@@ -33,15 +33,28 @@ export function usePatientBillableItems(patientId: string | undefined) {
       const invoiceIds = (existingInvoices || []).map(i => i.id);
 
       let billedReferenceIds: string[] = [];
+      let billedDescriptions: Set<string> = new Set();
       if (invoiceIds.length > 0) {
         const { data: billedItems } = await supabase
           .from('invoice_items')
-          .select('reference_id')
+          .select('reference_id, description, type')
           .in('invoice_id', invoiceIds);
         billedReferenceIds = (billedItems || [])
           .map(i => i.reference_id)
           .filter(Boolean) as string[];
+        // Also track descriptions for items without reference_id (legacy invoices)
+        for (const item of billedItems || []) {
+          if (item.description && item.type) {
+            billedDescriptions.add(`${item.type}::${item.description}`);
+          }
+        }
       }
+
+      const isAlreadyBilled = (refId: string, type: string, description: string): boolean => {
+        if (billedReferenceIds.includes(refId)) return true;
+        // Fallback: match by type+description for legacy items without reference_id
+        return billedDescriptions.has(`${type}::${description}`);
+      };
 
       const items: BillableItem[] = [];
 
