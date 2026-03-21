@@ -29,8 +29,9 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     const insuranceAmt = Number(invoice.insurance_amount);
     const patientAmt = Number(invoice.patient_amount);
 
-    const itemRows = (invoice.items || []).map(item => `
+    const itemRows = (invoice.items || []).map((item, idx) => `
       <tr>
+        <td style="text-align:center">${idx + 1}</td>
         <td>${item.description}</td>
         <td style="text-align:center">${item.quantity}</td>
         <td style="text-align:right">${formatCurrency(Number(item.unit_price))}</td>
@@ -110,7 +111,8 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   <table>
     <thead>
       <tr>
-        <th>Description</th>
+        <th style="text-align:center;width:40px">N°</th>
+        <th>Désignation</th>
         <th style="text-align:center;width:60px">Qté</th>
         <th style="text-align:right;width:120px">Prix unitaire</th>
         <th style="text-align:right;width:120px">Total</th>
@@ -118,6 +120,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     </thead>
     <tbody>
       ${itemRows}
+      <tr style="background:#f0f4ff;font-weight:bold">
+        <td colspan="4" style="text-align:right;border-top:2px solid #2563eb">TOTAL</td>
+        <td style="text-align:right;border-top:2px solid #2563eb">${formatCurrency(total)}</td>
+      </tr>
     </tbody>
   </table>
 
@@ -148,7 +154,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 
   <div class="footer">
     <p>Document confidentiel — Facture ${invoice.invoice_number}</p>
-    <p>SantéPro — Clinique Médicale — Imprimé le ${formatDate(new Date().toISOString())}</p>
+    <p>${clinicName} — ${clinicSubtitle} — Imprimé le ${formatDate(new Date().toISOString())}</p>
   </div>
 </body>
 </html>`;
