@@ -500,7 +500,8 @@ const Maternity = () => {
                             <div className="p-4 space-y-3">
                               {admPrenatal.length === 0 ? (
                                 <p className="text-sm text-muted-foreground text-center py-4">Aucune CPN enregistrée</p>
-                              ) : (
+                              ) : (<>
+                                <PrenatalCharts visits={admPrenatal} />
                                 admPrenatal.map((visit, idx) => (
                                   <div key={visit.id} className="p-3 border rounded-lg bg-card">
                                     <div className="flex items-center justify-between mb-2">
