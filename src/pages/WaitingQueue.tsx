@@ -55,6 +55,7 @@ const WaitingQueue = () => {
   const createVisit = useCreateVisit();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [visitType, setVisitType] = useState<'consultation' | 'urgence' | 'suivi'>('consultation');
   const [visitSpecialty, setVisitSpecialty] = useState('generaliste');
