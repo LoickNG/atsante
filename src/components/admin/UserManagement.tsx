@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleLabel, getRoleColor } from '@/config/navigation';
+import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
 import { UserRole } from '@/types';
 import { UserPlus, Shield, Loader2, Search } from 'lucide-react';
 import { z } from 'zod';
@@ -19,6 +20,7 @@ interface UserWithRole {
   email: string;
   full_name: string;
   role: UserRole | null;
+  specialty: string | null;
   created_at: string;
 }
 
@@ -35,12 +37,12 @@ export function UserManagement() {
   const [newFullName, setNewFullName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('accueil');
-
+  const [newSpecialty, setNewSpecialty] = useState('');
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
-        supabase.from('profiles').select('user_id, email, full_name, created_at'),
+        supabase.from('profiles').select('user_id, email, full_name, specialty, created_at'),
         supabase.from('user_roles').select('user_id, role'),
       ]);
       if (pErr) throw pErr;
@@ -52,6 +54,7 @@ export function UserManagement() {
         email: p.email,
         full_name: p.full_name,
         role: rolesMap.get(p.user_id) || null,
+        specialty: (p as any).specialty || null,
         created_at: p.created_at,
       })));
     } catch (error) {
@@ -78,14 +81,14 @@ export function UserManagement() {
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email: newEmail, password: newPassword, full_name: newFullName, role: newRole },
+        body: { email: newEmail, password: newPassword, full_name: newFullName, role: newRole, specialty: newRole === 'medecin' ? newSpecialty : undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
       toast({ title: 'Succès', description: data?.message || `Compte créé pour ${newFullName}. Un email de réinitialisation du mot de passe a été envoyé.` });
       setDialogOpen(false);
-      setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil');
+      setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil'); setNewSpecialty('');
       fetchUsers();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Impossible de créer le compte', variant: 'destructive' });
@@ -165,6 +168,19 @@ export function UserManagement() {
                     </SelectContent>
                   </Select>
                 </div>
+                {newRole === 'medecin' && (
+                  <div className="space-y-2">
+                    <Label>Spécialité *</Label>
+                    <Select value={newSpecialty} onValueChange={setNewSpecialty}>
+                      <SelectTrigger><SelectValue placeholder="Choisir une spécialité" /></SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTIES.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
@@ -186,17 +202,18 @@ export function UserManagement() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rôle actuel</TableHead>
+                  <TableHead>Spécialité</TableHead>
                   <TableHead>Changer le rôle</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       Aucun utilisateur trouvé
                     </TableCell>
                   </TableRow>
@@ -212,6 +229,13 @@ export function UserManagement() {
                       ) : (
                         <Badge variant="outline">Aucun rôle</Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      {u.role === 'medecin' && u.specialty ? (
+                        <Badge variant="outline">{getSpecialtyLabel(u.specialty)}</Badge>
+                      ) : u.role === 'medecin' ? (
+                        <span className="text-xs text-muted-foreground">Non définie</span>
+                      ) : '-'}
                     </TableCell>
                     <TableCell>
                       <Select value={u.role || ''} onValueChange={v => handleChangeRole(u.user_id, v as UserRole)}>

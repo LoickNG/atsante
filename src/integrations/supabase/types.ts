@@ -212,6 +212,7 @@ export type Database = {
       hospitalizations: {
         Row: {
           admission_date: string
+          bed_number: number | null
           consultation_id: string | null
           created_at: string
           discharge_date: string | null
@@ -227,6 +228,7 @@ export type Database = {
         }
         Insert: {
           admission_date?: string
+          bed_number?: number | null
           consultation_id?: string | null
           created_at?: string
           discharge_date?: string | null
@@ -242,6 +244,7 @@ export type Database = {
         }
         Update: {
           admission_date?: string
+          bed_number?: number | null
           consultation_id?: string | null
           created_at?: string
           discharge_date?: string | null
@@ -919,6 +922,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          specialty: string | null
           updated_at: string
           user_id: string
         }
@@ -928,6 +932,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          specialty?: string | null
           updated_at?: string
           user_id: string
         }
@@ -937,6 +942,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          specialty?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1055,6 +1061,7 @@ export type Database = {
           id: string
           notes: string | null
           patient_id: string
+          specialty: string | null
           status: string
           temperature: number | null
           type: string
@@ -1071,6 +1078,7 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id: string
+          specialty?: string | null
           status?: string
           temperature?: number | null
           type: string
@@ -1087,6 +1095,7 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id?: string
+          specialty?: string | null
           status?: string
           temperature?: number | null
           type?: string

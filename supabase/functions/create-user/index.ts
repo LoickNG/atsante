@@ -69,7 +69,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, full_name, role } = body;
+    const { email, password, full_name, role, specialty } = body;
 
     // Server-side input validation
     if (!email || typeof email !== "string" || email.length > 255) {
@@ -112,6 +112,7 @@ serve(async (req) => {
       user_id: newUser.user!.id,
       email: email.trim(),
       full_name: full_name.trim(),
+      specialty: role === "medecin" && specialty ? specialty : null,
     });
 
     // Assign role

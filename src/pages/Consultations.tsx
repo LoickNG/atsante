@@ -33,6 +33,9 @@ import { useCreateHospitalization } from '@/hooks/useHospitalizations';
 import { useAvailableRooms } from '@/hooks/useHospitalizations';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 interface PrescriptionItem {
   medicationId: string;
@@ -61,6 +64,7 @@ const Consultations = () => {
 
   const [selectedVisit, setSelectedVisit] = useState<VisitWithPatient | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [doctorSpecialty, setDoctorSpecialty] = useState<string | null>(null);
   
   const [symptoms, setSymptoms] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
@@ -80,10 +84,28 @@ const Consultations = () => {
   const [hospRoomId, setHospRoomId] = useState('');
   const [hospReason, setHospReason] = useState('');
 
+  // Fetch doctor's specialty
+  useEffect(() => {
+    if (user) {
+      supabase.from('profiles').select('specialty').eq('user_id', user.id).single()
+        .then(({ data }) => {
+          if (data?.specialty) setDoctorSpecialty(data.specialty as string);
+        });
+    }
+  }, [user]);
+
   const selectedPatient = selectedVisit?.patients || null;
 
-  // Only show visits that have been called (en_cours) - not waiting ones
-  const calledVisits = (queueVisits || []).filter(v => v.status === 'en_cours');
+  // Only show visits that have been called (en_cours) and match doctor's specialty
+  const calledVisits = (queueVisits || []).filter(v => {
+    if (v.status !== 'en_cours') return false;
+    // Filter by doctor specialty if set
+    if (doctorSpecialty) {
+      const visitSpec = (v as any).specialty;
+      return !visitSpec || visitSpec === doctorSpecialty;
+    }
+    return true;
+  });
 
   const filteredVisits = calledVisits.filter(({ patients }) => {
     if (!patients) return false;

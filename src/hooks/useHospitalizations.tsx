@@ -19,6 +19,7 @@ export interface Hospitalization {
   consultation_id: string | null;
   visit_id: string | null;
   room_id: string | null;
+  bed_number: number | null;
   admission_date: string;
   discharge_date: string | null;
   reason: string;
@@ -133,6 +134,50 @@ export function useHospitalizations(status?: string) {
   });
 }
 
+export function useRoomOccupancy(roomId?: string) {
+  return useQuery({
+    queryKey: ['hospitalizations', 'room-occupancy', roomId],
+    enabled: !!roomId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hospitalizations')
+        .select('bed_number')
+        .eq('room_id', roomId!)
+        .eq('status', 'en_cours');
+      if (error) throw error;
+      return (data || []).map(h => h.bed_number).filter(Boolean) as number[];
+    },
+  });
+}
+
+export function useAllRoomOccupancies() {
+  return useQuery({
+    queryKey: ['hospitalizations', 'all-room-occupancies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hospitalizations')
+        .select('room_id, bed_number')
+        .eq('status', 'en_cours')
+        .not('room_id', 'is', null);
+      if (error) throw error;
+      const map: Record<string, number[]> = {};
+      for (const h of data || []) {
+        if (h.room_id) {
+          if (!map[h.room_id]) map[h.room_id] = [];
+          if (h.bed_number) map[h.room_id].push(h.bed_number);
+        }
+      }
+      return map;
+    },
+  });
+}
+
+function getRoomCapacity(category: string): number {
+  if (category === '4_lits') return 4;
+  if (category === '2_lits') return 2;
+  return 1;
+}
+
 export function useCreateHospitalization() {
   const qc = useQueryClient();
   return useMutation({
@@ -144,11 +189,51 @@ export function useCreateHospitalization() {
       reason: string;
       doctor_id: string;
     }) => {
-      const { data, error } = await supabase.from('hospitalizations').insert(hosp).select().single();
-      if (error) throw error;
+      let bed_number: number | null = null;
+
       if (hosp.room_id) {
-        await supabase.from('rooms').update({ is_available: false }).eq('id', hosp.room_id);
+        // Get room info to determine capacity
+        const { data: room } = await supabase
+          .from('rooms')
+          .select('category')
+          .eq('id', hosp.room_id)
+          .single();
+
+        const capacity = room ? getRoomCapacity(room.category) : 1;
+
+        // Get currently occupied beds
+        const { data: occupied } = await supabase
+          .from('hospitalizations')
+          .select('bed_number')
+          .eq('room_id', hosp.room_id)
+          .eq('status', 'en_cours');
+
+        const occupiedBeds = (occupied || []).map(h => h.bed_number).filter(Boolean) as number[];
+
+        // Assign next available bed
+        for (let i = 1; i <= capacity; i++) {
+          if (!occupiedBeds.includes(i)) {
+            bed_number = i;
+            break;
+          }
+        }
+
+        if (bed_number === null) {
+          throw new Error('Cette chambre est complète, aucun lit disponible');
+        }
+
+        // Mark room unavailable only if all beds will be occupied
+        if (occupiedBeds.length + 1 >= capacity) {
+          await supabase.from('rooms').update({ is_available: false }).eq('id', hosp.room_id);
+        }
       }
+
+      const { data, error } = await supabase
+        .from('hospitalizations')
+        .insert({ ...hosp, bed_number } as any)
+        .select()
+        .single();
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -169,7 +254,21 @@ export function useDischargePatient() {
       }).eq('id', id);
       if (error) throw error;
       if (room_id) {
-        await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
+        // Check if there are still other patients in this room
+        const { data: remaining } = await supabase
+          .from('hospitalizations')
+          .select('id')
+          .eq('room_id', room_id)
+          .eq('status', 'en_cours')
+          .neq('id', id);
+        
+        // Always mark room available when a bed is freed (capacity check on assign)
+        if (!remaining || remaining.length === 0) {
+          await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
+        } else {
+          // Room still has patients but a bed freed up - mark available for new assignments
+          await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
+        }
       }
     },
     onSuccess: () => {

@@ -37,10 +37,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePatients } from '@/hooks/usePatients';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { supabase } from '@/integrations/supabase/client';
 
 const WaitingQueue = () => {
   const { user, role } = useAuth();
@@ -53,7 +55,19 @@ const WaitingQueue = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [visitType, setVisitType] = useState<'consultation' | 'urgence' | 'suivi'>('consultation');
+  const [visitSpecialty, setVisitSpecialty] = useState('generaliste');
   const [searchPatient, setSearchPatient] = useState('');
+  const [doctorSpecialty, setDoctorSpecialty] = useState<string | null>(null);
+
+  // Fetch current user's specialty if they are a doctor
+  useEffect(() => {
+    if (user && role === 'medecin') {
+      supabase.from('profiles').select('specialty').eq('user_id', user.id).single()
+        .then(({ data }) => {
+          if (data?.specialty) setDoctorSpecialty(data.specialty as string);
+        });
+    }
+  }, [user, role]);
   
   // Vital signs dialog state
   const [isVitalsDialogOpen, setIsVitalsDialogOpen] = useState(false);
@@ -157,11 +171,13 @@ const WaitingQueue = () => {
         patient_id: selectedPatientId,
         type: visitType,
         status: 'en_attente',
+        specialty: visitSpecialty,
       } as any);
       toast.success('Patient ajouté à la file d\'attente');
       setIsAddDialogOpen(false);
       setSelectedPatientId('');
       setVisitType('consultation');
+      setVisitSpecialty('generaliste');
       setSearchPatient('');
     } catch (error) {
       toast.error('Erreur lors de l\'ajout');
@@ -287,6 +303,17 @@ const WaitingQueue = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Spécialité demandée</Label>
+                    <Select value={visitSpecialty} onValueChange={setVisitSpecialty}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTIES.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -337,14 +364,24 @@ const WaitingQueue = () => {
 
         {/* Queue List */}
         <div className="space-y-4">
-          {queueVisits?.length === 0 ? (
+          {(() => {
+            // Filter visits: doctors see only their specialty
+            const visibleVisits = (queueVisits || []).filter(v => {
+              if (role === 'medecin' && doctorSpecialty) {
+                const visitSpec = (v as any).specialty;
+                return !visitSpec || visitSpec === doctorSpecialty;
+              }
+              return true;
+            });
+            
+            if (visibleVisits.length === 0) return (
             <div className="text-center py-12 text-muted-foreground">
               <Clock className="h-12 w-12 mx-auto mb-3 opacity-20" />
               <p className="font-medium">Aucun patient dans la file d'attente</p>
-              <p className="text-sm">Ajoutez un patient pour commencer</p>
+              <p className="text-sm">{role === 'medecin' && doctorSpecialty ? `Pour la spécialité: ${getSpecialtyLabel(doctorSpecialty)}` : 'Ajoutez un patient pour commencer'}</p>
             </div>
-          ) : (
-            queueVisits?.map((visit, index) => {
+            );
+            return visibleVisits.map((visit, index) => {
               const patient = visit.patients;
               if (!patient) return null;
 
@@ -393,6 +430,11 @@ const WaitingQueue = () => {
                       {!hasVitals && isWaiting && (
                         <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning-foreground border-warning/30">
                           Signes vitaux manquants
+                        </Badge>
+                      )}
+                      {(visit as any).specialty && (
+                        <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+                          {getSpecialtyLabel((visit as any).specialty)}
                         </Badge>
                       )}
                     </div>
@@ -480,8 +522,8 @@ const WaitingQueue = () => {
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
 
         {/* Vital Signs Dialog */}

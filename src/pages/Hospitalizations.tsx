@@ -299,7 +299,7 @@ export default function Hospitalizations() {
                       {hosp.rooms ? (
                         <div className="flex items-center gap-2">
                           <BedDouble className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>Chambre {hosp.rooms.room_number}</span>
+                          <span>Chambre {hosp.rooms.room_number}{(hosp as any).bed_number ? ` — Lit ${(hosp as any).bed_number}` : ''}</span>
                           <Badge variant="outline" className="text-[10px] gap-1">
                             {hosp.rooms.comfort === 'climatise' ? <Snowflake className="h-2.5 w-2.5" /> : <Wind className="h-2.5 w-2.5" />}
                             {getCategoryLabel(hosp.rooms.category)}
