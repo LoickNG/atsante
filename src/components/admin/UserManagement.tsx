@@ -37,7 +37,7 @@ export function UserManagement() {
   const [newFullName, setNewFullName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('accueil');
-
+  const [newSpecialty, setNewSpecialty] = useState('');
   const fetchUsers = async () => {
     setLoading(true);
     try {
