@@ -15,7 +15,9 @@ import {
   Thermometer,
   Heart,
   Activity,
+  QrCode,
 } from 'lucide-react';
+import { QRScannerDialog } from '@/components/patient/QRScannerDialog';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWaitingQueue, useTodayVisits, useUpdateVisit, useCreateVisit } from '@/hooks/useVisits';
@@ -53,6 +55,7 @@ const WaitingQueue = () => {
   const createVisit = useCreateVisit();
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [visitType, setVisitType] = useState<'consultation' | 'urgence' | 'suivi'>('consultation');
   const [visitSpecialty, setVisitSpecialty] = useState('generaliste');
@@ -247,7 +250,12 @@ const WaitingQueue = () => {
           description={`${waitingCount} en attente • ${inProgressCount} en consultation`}
         >
           {canAddToQueue && (
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <div className="flex gap-2">
+              <Button variant="outline" className="gap-2" onClick={() => setIsQRScannerOpen(true)}>
+                <QrCode className="h-4 w-4" />
+                Scanner QR
+              </Button>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-2">
                   <UserPlus className="h-4 w-4" />
@@ -326,6 +334,8 @@ const WaitingQueue = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <QRScannerDialog open={isQRScannerOpen} onOpenChange={setIsQRScannerOpen} />
+            </div>
           )}
         </PageHeader>
 
