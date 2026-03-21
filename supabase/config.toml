@@ -1,4 +1,10 @@
 project_id = "wziwaoqxnteklnuwpnpi"
 
+[auth]
+min_password_length = 8
+
+[auth.password]
+leaked_password_protection = "warn_user"
+
 [functions.diagnostic-assistant]
 verify_jwt = false
