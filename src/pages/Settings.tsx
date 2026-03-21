@@ -91,6 +91,10 @@ export default function Settings() {
         <TabsContent value="chambres">
           <RoomManagement />
         </TabsContent>
+
+        <TabsContent value="licences">
+          <LicenseManagement />
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
