@@ -11,7 +11,7 @@ import { useVisits } from '@/hooks/useVisits';
 import { useConsultations } from '@/hooks/useConsultations';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
-import { useMaternityAdmissions, useBirths } from '@/hooks/useMaternity';
+import { useMaternityAdmissions, useBirths, usePrenatalVisits } from '@/hooks/useMaternity';
 
 interface PatientHistoryDialogProps {
   patient: Patient | null;
