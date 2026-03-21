@@ -134,6 +134,50 @@ export function useHospitalizations(status?: string) {
   });
 }
 
+export function useRoomOccupancy(roomId?: string) {
+  return useQuery({
+    queryKey: ['hospitalizations', 'room-occupancy', roomId],
+    enabled: !!roomId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hospitalizations')
+        .select('bed_number')
+        .eq('room_id', roomId!)
+        .eq('status', 'en_cours');
+      if (error) throw error;
+      return (data || []).map(h => h.bed_number).filter(Boolean) as number[];
+    },
+  });
+}
+
+export function useAllRoomOccupancies() {
+  return useQuery({
+    queryKey: ['hospitalizations', 'all-room-occupancies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('hospitalizations')
+        .select('room_id, bed_number')
+        .eq('status', 'en_cours')
+        .not('room_id', 'is', null);
+      if (error) throw error;
+      const map: Record<string, number[]> = {};
+      for (const h of data || []) {
+        if (h.room_id) {
+          if (!map[h.room_id]) map[h.room_id] = [];
+          if (h.bed_number) map[h.room_id].push(h.bed_number);
+        }
+      }
+      return map;
+    },
+  });
+}
+
+function getRoomCapacity(category: string): number {
+  if (category === '4_lits') return 4;
+  if (category === '2_lits') return 2;
+  return 1;
+}
+
 export function useCreateHospitalization() {
   const qc = useQueryClient();
   return useMutation({
@@ -145,11 +189,51 @@ export function useCreateHospitalization() {
       reason: string;
       doctor_id: string;
     }) => {
-      const { data, error } = await supabase.from('hospitalizations').insert(hosp).select().single();
-      if (error) throw error;
+      let bed_number: number | null = null;
+
       if (hosp.room_id) {
-        await supabase.from('rooms').update({ is_available: false }).eq('id', hosp.room_id);
+        // Get room info to determine capacity
+        const { data: room } = await supabase
+          .from('rooms')
+          .select('category')
+          .eq('id', hosp.room_id)
+          .single();
+
+        const capacity = room ? getRoomCapacity(room.category) : 1;
+
+        // Get currently occupied beds
+        const { data: occupied } = await supabase
+          .from('hospitalizations')
+          .select('bed_number')
+          .eq('room_id', hosp.room_id)
+          .eq('status', 'en_cours');
+
+        const occupiedBeds = (occupied || []).map(h => h.bed_number).filter(Boolean) as number[];
+
+        // Assign next available bed
+        for (let i = 1; i <= capacity; i++) {
+          if (!occupiedBeds.includes(i)) {
+            bed_number = i;
+            break;
+          }
+        }
+
+        if (bed_number === null) {
+          throw new Error('Cette chambre est complète, aucun lit disponible');
+        }
+
+        // Mark room unavailable only if all beds will be occupied
+        if (occupiedBeds.length + 1 >= capacity) {
+          await supabase.from('rooms').update({ is_available: false }).eq('id', hosp.room_id);
+        }
       }
+
+      const { data, error } = await supabase
+        .from('hospitalizations')
+        .insert({ ...hosp, bed_number } as any)
+        .select()
+        .single();
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
