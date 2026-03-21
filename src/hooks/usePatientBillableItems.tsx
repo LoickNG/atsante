@@ -225,19 +225,23 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .not('room_id', 'is', null);
 
       for (const h of (hospWithRooms || []) as any[]) {
-        if (!billedReferenceIds.includes(h.id) && h.rooms?.price_per_night > 0) {
+        if (h.rooms?.price_per_night > 0) {
           const start = new Date(h.admission_date);
           const end = h.discharge_date ? new Date(h.discharge_date) : new Date();
           const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-          items.push({
-            type: 'hebergement',
-            description: `Hébergement chambre ${h.rooms.room_number} (${days} jour${days > 1 ? 's' : ''})`,
-            quantity: days,
-            unit_price: Number(h.rooms.price_per_night),
-            reference_id: h.id,
-            source_table: 'hospitalizations',
-          });
+          const hebDesc = `Hébergement chambre ${h.rooms.room_number} (${days} jour${days > 1 ? 's' : ''})`;
+          if (!isAlreadyBilled(h.id, 'hebergement', hebDesc)) {
+            items.push({
+              type: 'hebergement',
+              description: hebDesc,
+              quantity: days,
+              unit_price: Number(h.rooms.price_per_night),
+              reference_id: h.id,
+              source_table: 'hospitalizations',
+            });
+          }
         }
+      }
       }
 
       return items;
