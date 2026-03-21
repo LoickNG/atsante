@@ -30,8 +30,14 @@ import {
   Printer,
   Loader2,
   Search,
+  CalendarIcon,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useLabRequests, usePendingLabRequests, useUpdateLabRequest, LabRequestWithPatient } from '@/hooks/useLabRequests';
 import { useAuth } from '@/hooks/useAuth';

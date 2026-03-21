@@ -12,9 +12,13 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ImageIcon, Clock, Check, AlertTriangle, User, FileText, Printer, Camera, Upload, Loader2, Search,
+  ImageIcon, Clock, Check, AlertTriangle, User, FileText, Printer, Camera, Upload, Loader2, Search, CalendarIcon, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useImagingRequests, usePendingImagingRequests, useUpdateImagingRequest, ImagingRequestWithPatient } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
