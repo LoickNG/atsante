@@ -547,8 +547,8 @@ const Maternity = () => {
                                       </div>
                                     )}
                                   </div>
-                                ))
-                              )}
+                                </>)
+                              }
                             </div>
                           )}
                         </div>
