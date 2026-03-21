@@ -59,6 +59,14 @@ const Imaging = () => {
     ? completedRequests.filter(r => r.patient_id === selectedPatient.id)
     : completedRequests;
 
+  const filteredCompletedRequests = patientCompletedRequests.filter(r => {
+    if (!r.completed_at) return true;
+    const completedDate = new Date(r.completed_at);
+    if (dateFrom && isBefore(completedDate, startOfDay(dateFrom))) return false;
+    if (dateTo && isAfter(completedDate, endOfDay(dateTo))) return false;
+    return true;
+  });
+
   const getExamTypeName = (examType: string) => imagingExamTypes.find(t => t.id === examType)?.name || examType;
 
   const formatDateTime = (dateStr: string) => new Date(dateStr).toLocaleString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
