@@ -23,6 +23,7 @@ import SurgeryPage from "./pages/Surgery";
 import Maternity from "./pages/Maternity";
 import Emergency from "./pages/Emergency";
 import Auth from "./pages/Auth";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/installer" element={<Install />} />
             <Route path="/" element={
               <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
                 <Dashboard />
