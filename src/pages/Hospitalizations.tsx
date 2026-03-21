@@ -712,9 +712,7 @@ export default function Hospitalizations() {
                     {(medicalActs || [])
                       .filter(a => a.category === 'analyse')
                       .map(a => (
-                        <SelectItem key={a.id} value={a.name}>
-                          {a.name} — {new Intl.NumberFormat('fr-FR').format(Number(a.unit_price))} FCFA
-                        </SelectItem>
+                        <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
                       ))}
                   </SelectContent>
                 </Select>
@@ -729,9 +727,7 @@ export default function Hospitalizations() {
                       {(medicalActs || [])
                         .filter(a => a.category === 'imagerie')
                         .map(a => (
-                          <SelectItem key={a.id} value={a.name}>
-                            {a.name} — {new Intl.NumberFormat('fr-FR').format(Number(a.unit_price))} FCFA
-                          </SelectItem>
+                          <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
