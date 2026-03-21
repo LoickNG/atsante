@@ -124,14 +124,11 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .in('category', ['laboratoire', 'analyse']);
 
       for (const lr of labRequests || []) {
-        if (!billedReferenceIds.includes(lr.id)) {
-          // Improved fuzzy matching: check if either string contains words from the other
+        if (!isAlreadyBilled(lr.id, 'analyse', lr.test_type)) {
           const testLower = lr.test_type.toLowerCase();
           const matchAct = (labActs || []).find(a => {
             const actLower = a.name.toLowerCase();
-            // Direct contains
             if (actLower.includes(testLower) || testLower.includes(actLower)) return true;
-            // Word-based matching: extract significant words (3+ chars) and check overlap
             const testWords = testLower.split(/[\s(),\-\/]+/).filter(w => w.length >= 3);
             const actWords = actLower.split(/[\s(),\-\/]+/).filter(w => w.length >= 3);
             const matchCount = testWords.filter(tw => actWords.some(aw => aw.includes(tw) || tw.includes(aw))).length;
