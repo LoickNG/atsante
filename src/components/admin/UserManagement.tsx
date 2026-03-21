@@ -168,6 +168,19 @@ export function UserManagement() {
                     </SelectContent>
                   </Select>
                 </div>
+                {newRole === 'medecin' && (
+                  <div className="space-y-2">
+                    <Label>Spécialité *</Label>
+                    <Select value={newSpecialty} onValueChange={setNewSpecialty}>
+                      <SelectTrigger><SelectValue placeholder="Choisir une spécialité" /></SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTIES.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Annuler</Button>
