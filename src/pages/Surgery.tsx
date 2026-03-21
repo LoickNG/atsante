@@ -66,7 +66,7 @@ export default function Surgery() {
   const [saving, setSaving] = useState(false);
 
   // Form state
-  const [formPatientId, setFormPatientId] = useState('');
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [formRoomId, setFormRoomId] = useState('');
   const [formDoctorId, setFormDoctorId] = useState('');
   const [formDate, setFormDate] = useState('');
