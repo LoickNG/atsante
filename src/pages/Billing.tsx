@@ -29,6 +29,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
 
 const statusConfig: Record<string, { label: string; className: string }> = {
+  proforma: { label: 'Pro Forma', className: 'bg-secondary/50 text-secondary-foreground border-secondary/30' },
   en_attente: { label: 'En attente', className: 'bg-warning/10 text-warning border-warning/30' },
   partiel: { label: 'Partiel', className: 'bg-info/10 text-info border-info/30' },
   paye: { label: 'Payé', className: 'bg-success/10 text-success border-success/30' },
@@ -71,6 +72,8 @@ export default function Billing() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [priceOverrides, setPriceOverrides] = useState<Record<number, number>>({});
+  const [isProforma, setIsProforma] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState(0);
 
   const { data: searchResults } = useSearchPatients(patientSearch);
   const { data: billableItems, isLoading: billableLoading } = usePatientBillableItems(selectedPatient?.id);
@@ -154,10 +157,14 @@ export default function Billing() {
   }, [priceOverrides]);
 
   const selectedBillable = (billableItems || []).filter((_, i) => selectedItems.has(i));
-  const invoiceTotal = selectedBillable.reduce((s, item) => {
+  const invoiceSubtotal = selectedBillable.reduce((s, item) => {
     const idx = (billableItems || []).indexOf(item);
     return s + item.quantity * getItemPrice(item, idx);
   }, 0);
+  // Discount for non-convention patients
+  const effectiveDiscount = !patientConvention && discountPercent > 0 ? discountPercent : 0;
+  const discountAmt = Math.round(invoiceSubtotal * effectiveDiscount / 100);
+  const invoiceTotal = invoiceSubtotal - discountAmt;
   const companyAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.company_coverage_percent / 100) : 0;
   const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
   const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
@@ -189,8 +196,11 @@ export default function Billing() {
         company_amount: companyAmount,
         insurance_amount: insuranceAmount,
         patient_amount: patientAmount,
+        is_proforma: isProforma,
+        discount_percent: effectiveDiscount,
+        discount_amount: discountAmt,
       } as any);
-      toast({ title: 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
+      toast({ title: isProforma ? 'Facture pro forma générée' : 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
       resetSearch();
     } catch (error: any) {
       console.error('[Billing] Full error:', error);
@@ -204,6 +214,8 @@ export default function Billing() {
     setPatientConvention(null);
     setSelectedItems(new Set());
     setPriceOverrides({});
+    setIsProforma(false);
+    setDiscountPercent(0);
   };
 
   // Filter invoice list
@@ -388,6 +400,32 @@ export default function Billing() {
                       })}
                     </div>
 
+                    {/* Discount for non-convention patients */}
+                    {!patientConvention && invoiceSubtotal > 0 && (
+                      <div className="p-3 rounded-lg bg-muted/50 border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-semibold">Remise (%)</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              className="w-20 h-8 text-right text-sm"
+                              value={discountPercent}
+                              onChange={e => setDiscountPercent(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                        {discountAmt > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Sous-total : {formatCurrency(invoiceSubtotal)}</span>
+                            <span className="text-destructive font-medium">- {formatCurrency(discountAmt)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Total & convention breakdown */}
                     <div className="space-y-2 pt-2">
                       <div className="flex justify-between items-center p-3 rounded-lg bg-primary/5 border border-primary/20">
@@ -418,6 +456,18 @@ export default function Billing() {
                         </div>
                       )}
 
+                      {/* Proforma toggle */}
+                      <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+                        <Checkbox
+                          id="proforma"
+                          checked={isProforma}
+                          onCheckedChange={(v) => setIsProforma(!!v)}
+                        />
+                        <Label htmlFor="proforma" className="text-sm cursor-pointer">
+                          Facture Pro Forma (devis estimatif, non comptabilisée)
+                        </Label>
+                      </div>
+
                       <Button
                         className="w-full gap-2 h-11"
                         size="lg"
@@ -426,7 +476,7 @@ export default function Billing() {
                       >
                         {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                         <Receipt className="h-4 w-4" />
-                        Générer la facture — {formatCurrency(invoiceTotal)}
+                        {isProforma ? 'Générer le pro forma' : 'Générer la facture'} — {formatCurrency(invoiceTotal)}
                       </Button>
                     </div>
                   </div>
@@ -473,6 +523,7 @@ export default function Billing() {
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Statut" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="proforma">Pro Forma</SelectItem>
                   <SelectItem value="en_attente">En attente</SelectItem>
                   <SelectItem value="partiel">Partiel</SelectItem>
                   <SelectItem value="paye">Payé</SelectItem>

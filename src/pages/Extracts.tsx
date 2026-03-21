@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Loader2, FileDown, Building2, ShieldCheck, Calendar, Filter,
+  Loader2, FileDown, Building2, ShieldCheck, Filter, FileSpreadsheet,
 } from 'lucide-react';
 import { useInvoices, type InvoiceWithDetails } from '@/hooks/useBilling';
 import { useConventions, usePartnerCompanies, useInsuranceCompanies } from '@/hooks/useConventions';
+import * as XLSX from 'xlsx';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
@@ -21,6 +21,46 @@ const formatCurrency = (amount: number) =>
 const formatDate = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 type ExtractType = 'company' | 'insurance';
+
+function buildExportRows(
+  invoicesToExport: InvoiceWithDetails[],
+  conventions: any[],
+  extractType: ExtractType
+) {
+  return invoicesToExport.map(inv => {
+    const conv = conventions.find(c => c.id === inv.convention_id);
+    const amount = extractType === 'company' ? Number(inv.company_amount) : Number(inv.insurance_amount);
+    return {
+      'N° Facture': inv.invoice_number,
+      'Patient': inv.patient ? `${inv.patient.first_name} ${inv.patient.last_name}` : '—',
+      'Code Patient': inv.patient?.code || '—',
+      'Convention': conv?.name || '—',
+      'Date': formatDate(inv.created_at),
+      'Total Facture': Number(inv.total_amount),
+      [extractType === 'company' ? 'Part Société' : 'Part Assurance']: amount,
+      'Statut': inv.status === 'paye' ? 'Payé' : inv.status === 'partiel' ? 'Partiel' : 'En attente',
+    };
+  });
+}
+
+function exportToExcel(rows: Record<string, any>[], filename: string) {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Relevé');
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+}
+
+function exportToCSV(rows: Record<string, any>[], filename: string) {
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const csv = XLSX.utils.sheet_to_csv(ws, { FS: ';' });
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function Extracts() {
   const [extractType, setExtractType] = useState<ExtractType>('company');
@@ -33,7 +73,6 @@ export default function Extracts() {
   const { data: companies } = usePartnerCompanies();
   const { data: insurances } = useInsuranceCompanies();
 
-  // Get convention IDs grouped by company or insurance
   const conventionsByEntity = useMemo(() => {
     if (!conventions) return {};
     const map: Record<string, string[]> = {};
@@ -46,24 +85,23 @@ export default function Extracts() {
     return map;
   }, [conventions, extractType]);
 
-  // Filter invoices that have a convention and relevant amounts
   const filteredInvoices = useMemo(() => {
     if (!invoices) return [];
     return invoices.filter(inv => {
       if (!inv.convention_id) return false;
+      // Exclude proforma invoices from extracts
+      if ((inv as any).is_proforma) return false;
 
       const relevantAmount = extractType === 'company'
         ? Number(inv.company_amount)
         : Number(inv.insurance_amount);
       if (relevantAmount <= 0) return false;
 
-      // Entity filter
       if (selectedEntityId !== 'all') {
         const conventionIds = conventionsByEntity[selectedEntityId] || [];
         if (!conventionIds.includes(inv.convention_id)) return false;
       }
 
-      // Date filter
       if (dateFrom && new Date(inv.created_at) < new Date(dateFrom)) return false;
       if (dateTo) {
         const to = new Date(dateTo);
@@ -75,7 +113,6 @@ export default function Extracts() {
     });
   }, [invoices, extractType, selectedEntityId, conventionsByEntity, dateFrom, dateTo]);
 
-  // Group by entity for summary
   const groupedSummary = useMemo(() => {
     const groups: Record<string, { name: string; invoices: InvoiceWithDetails[]; totalAmount: number }> = {};
 
@@ -100,10 +137,30 @@ export default function Extracts() {
   }, [filteredInvoices, conventions, extractType]);
 
   const grandTotal = groupedSummary.reduce((s, [, g]) => s + g.totalAmount, 0);
-
   const entities = extractType === 'company' ? companies : insurances;
 
-  // Print extract
+  const getExportFilename = (entityName?: string) => {
+    const type = extractType === 'company' ? 'Societe' : 'Assurance';
+    const entity = entityName || 'Tous';
+    const period = dateFrom || dateTo ? `_${dateFrom || 'debut'}_${dateTo || 'fin'}` : '';
+    return `Releve_${type}_${entity}${period}`.replace(/\s+/g, '_');
+  };
+
+  const handleExport = (format: 'excel' | 'csv', entityId?: string) => {
+    const invoicesToExport = entityId
+      ? groupedSummary.find(([id]) => id === entityId)?.[1].invoices || []
+      : filteredInvoices;
+    const entityName = entityId
+      ? groupedSummary.find(([id]) => id === entityId)?.[1].name
+      : undefined;
+
+    const rows = buildExportRows(invoicesToExport, conventions || [], extractType);
+    const filename = getExportFilename(entityName);
+
+    if (format === 'excel') exportToExcel(rows, filename);
+    else exportToCSV(rows, filename);
+  };
+
   const handlePrintExtract = (entityId?: string) => {
     const entityName = entityId
       ? groupedSummary.find(([id]) => id === entityId)?.[1].name
@@ -155,7 +212,6 @@ export default function Extracts() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Shared filters */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -193,7 +249,6 @@ export default function Extracts() {
             </CardContent>
           </Card>
 
-        {/* Summary Cards */}
         <div className="grid gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="pt-6">
@@ -217,7 +272,6 @@ export default function Extracts() {
           </Card>
         </div>
 
-        {/* Results */}
         {invoicesLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -230,11 +284,19 @@ export default function Extracts() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {/* Export all button */}
-            <div className="flex justify-end">
+            {/* Export all buttons */}
+            <div className="flex justify-end gap-2 flex-wrap">
+              <Button variant="outline" onClick={() => handleExport('csv')} className="gap-2">
+                <FileDown className="h-4 w-4" />
+                Exporter CSV
+              </Button>
+              <Button variant="outline" onClick={() => handleExport('excel')} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                Exporter Excel
+              </Button>
               <Button onClick={() => handlePrintExtract()} className="gap-2">
                 <FileDown className="h-4 w-4" />
-                Exporter tout — {formatCurrency(grandTotal)}
+                Imprimer tout — {formatCurrency(grandTotal)}
               </Button>
             </div>
 
@@ -253,10 +315,20 @@ export default function Extracts() {
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handlePrintExtract(entityId)} className="gap-1">
-                    <FileDown className="h-3.5 w-3.5" />
-                    Exporter
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleExport('csv', entityId)} className="gap-1" title="CSV">
+                      <FileDown className="h-3.5 w-3.5" />
+                      CSV
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleExport('excel', entityId)} className="gap-1" title="Excel">
+                      <FileSpreadsheet className="h-3.5 w-3.5" />
+                      Excel
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handlePrintExtract(entityId)} className="gap-1">
+                      <FileDown className="h-3.5 w-3.5" />
+                      Imprimer
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="overflow-x-auto">
@@ -299,7 +371,6 @@ export default function Extracts() {
                             </TableRow>
                           );
                         })}
-                        {/* Total row */}
                         <TableRow className="font-semibold bg-muted/30">
                           <TableCell colSpan={4} className="text-right">Total</TableCell>
                           <TableCell className="text-right text-primary">{formatCurrency(group.totalAmount)}</TableCell>

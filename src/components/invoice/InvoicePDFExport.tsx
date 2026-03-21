@@ -22,6 +22,9 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 
   const handlePrint = () => {
     const patient = invoice.patient;
+    const isProforma = (invoice as any).is_proforma;
+    const discountPct = Number((invoice as any).discount_percent || 0);
+    const discountAmt = Number((invoice as any).discount_amount || 0);
     const total = Number(invoice.total_amount);
     const paid = Number(invoice.paid_amount);
     const reste = total - paid;
@@ -52,7 +55,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Facture ${invoice.invoice_number}</title>
+<title>${isProforma ? 'PRO FORMA' : 'Facture'} ${invoice.invoice_number}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #1a1a1a; padding: 15mm; }
@@ -88,7 +91,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   <div class="header">
     <div>
       <h1>${clinicName}</h1>
-      <div class="subtitle">${clinicSubtitle} — Facture</div>
+      <div class="subtitle">${clinicSubtitle} — ${isProforma ? 'PRO FORMA' : 'Facture'}</div>
       ${clinicAddress ? `<div class="subtitle">${clinicAddress}</div>` : ''}
       ${clinicPhone ? `<div class="subtitle">Tél: ${clinicPhone}</div>` : ''}
     </div>
@@ -96,9 +99,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
       <div class="inv-num">${invoice.invoice_number}</div>
       <div class="inv-date">Date : ${formatDate(invoice.created_at)}</div>
       <div style="margin-top:6px">
+        ${isProforma ? '<span class="status-badge" style="background:#e5e7eb;color:#374151">PRO FORMA</span>' : `
         <span class="status-badge status-${invoice.status}">
           ${invoice.status === 'paye' ? 'PAYÉ' : invoice.status === 'partiel' ? 'PARTIEL' : 'EN ATTENTE'}
-        </span>
+        </span>`}
       </div>
     </div>
   </div>
@@ -137,10 +141,20 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     </div>
   </div>` : ''}
 
+  ${discountPct > 0 ? `
+  <div style="background:#fef2f2;border:1px solid #fecaca;padding:10px;border-radius:6px;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <span>Sous-total avant remise</span><span>${formatCurrency(total + discountAmt)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#dc2626;font-weight:bold">
+      <span>Remise (${discountPct}%)</span><span>- ${formatCurrency(discountAmt)}</span>
+    </div>
+  </div>` : ''}
+
   <table class="totals">
-    <tr><td>Sous-total</td><td style="text-align:right">${formatCurrency(total)}</td></tr>
-    <tr class="paid"><td>Payé</td><td style="text-align:right">${formatCurrency(paid)}</td></tr>
-    <tr class="reste"><td>Reste à payer</td><td style="text-align:right">${formatCurrency(reste > 0 ? reste : 0)}</td></tr>
+    <tr><td>Total</td><td style="text-align:right">${formatCurrency(total)}</td></tr>
+    ${!isProforma ? `<tr class="paid"><td>Payé</td><td style="text-align:right">${formatCurrency(paid)}</td></tr>
+    <tr class="reste"><td>Reste à payer</td><td style="text-align:right">${formatCurrency(reste > 0 ? reste : 0)}</td></tr>` : ''}
   </table>
 
   ${paymentRows ? `
@@ -153,7 +167,8 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   </table>` : ''}
 
   <div class="footer">
-    <p>Document confidentiel — Facture ${invoice.invoice_number}</p>
+    ${isProforma ? '<p style="font-size:11px;font-weight:bold;color:#dc2626;margin-bottom:8px">⚠ Ce document est un devis estimatif (Pro Forma) et ne constitue pas une facture définitive.</p>' : ''}
+    <p>Document confidentiel — ${isProforma ? 'Pro Forma' : 'Facture'} ${invoice.invoice_number}</p>
     <p>${clinicName} — ${clinicSubtitle} — Imprimé le ${formatDate(new Date().toISOString())}</p>
   </div>
 </body>
