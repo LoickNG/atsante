@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import {
   Loader2, AlertTriangle, Plus, Clock, Stethoscope, ArrowRight, Activity,
-  Ambulance, Heart, Thermometer, User, CheckCircle2,
+  Ambulance, Heart, Thermometer, User, CheckCircle2, Receipt,
 } from 'lucide-react';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
@@ -67,6 +68,7 @@ function getWaitDuration(arrivedAt: string): string {
 export default function Emergency() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('board');
   const [admitDialogOpen, setAdmitDialogOpen] = useState(false);
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
@@ -88,6 +90,8 @@ export default function Emergency() {
   // Orientation form state
   const [orientation, setOrientation] = useState('sortie');
   const [orientationNotes, setOrientationNotes] = useState('');
+  const [showInvoicePrompt, setShowInvoicePrompt] = useState(false);
+  const [orientedPatientId, setOrientedPatientId] = useState<string | null>(null);
 
   const { data: allVisits, isLoading } = useEmergencyVisits();
   const createVisit = useCreateEmergencyVisit();
@@ -230,6 +234,7 @@ export default function Emergency() {
     setOrientDialogOpen(true);
   };
 
+
   const handleOrient = async () => {
     if (!selectedVisit) return;
     try {
@@ -242,9 +247,18 @@ export default function Emergency() {
       });
       toast({ title: 'Patient orienté', description: ORIENTATION_OPTIONS.find(o => o.value === orientation)?.label });
       setOrientDialogOpen(false);
+      // Prompt for invoice generation
+      if (orientation !== 'deces') {
+        setOrientedPatientId(selectedVisit.patient_id);
+        setShowInvoicePrompt(true);
+      }
     } catch (e: any) {
       toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
     }
+  };
+
+  const handleGoToInvoice = (patientId: string) => {
+    navigate(`/facturation?patient_id=${patientId}`);
   };
 
   return (
@@ -428,6 +442,7 @@ export default function Emergency() {
                         <TableHead>Diagnostic</TableHead>
                         <TableHead>Orientation</TableHead>
                         <TableHead>Statut</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -454,12 +469,22 @@ export default function Emergency() {
                             <TableCell>
                               <Badge variant="outline" className="bg-success/10 text-success border-success/30">Terminé</Badge>
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                                onClick={() => handleGoToInvoice(visit.patient_id)}
+                              >
+                                <Receipt className="h-3.5 w-3.5" /> Facturer
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
                       {(allVisits || []).filter(v => v.status === 'termine').length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                             Aucun historique
                           </TableCell>
                         </TableRow>
@@ -667,6 +692,36 @@ export default function Emergency() {
             <Button onClick={handleOrient} disabled={updateVisit.isPending}>
               {updateVisit.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Confirmer l'orientation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invoice Prompt Dialog */}
+      <Dialog open={showInvoicePrompt} onOpenChange={setShowInvoicePrompt}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              Générer une facture ?
+            </DialogTitle>
+            <DialogDescription>
+              Le patient a été orienté. Souhaitez-vous générer sa facture maintenant ?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowInvoicePrompt(false)}>
+              Plus tard
+            </Button>
+            <Button
+              onClick={() => {
+                setShowInvoicePrompt(false);
+                if (orientedPatientId) handleGoToInvoice(orientedPatientId);
+              }}
+              className="gap-2"
+            >
+              <Receipt className="h-4 w-4" />
+              Générer la facture
             </Button>
           </DialogFooter>
         </DialogContent>
