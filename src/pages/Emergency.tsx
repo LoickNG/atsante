@@ -696,6 +696,36 @@ export default function Emergency() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Invoice Prompt Dialog */}
+      <Dialog open={showInvoicePrompt} onOpenChange={setShowInvoicePrompt}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              Générer une facture ?
+            </DialogTitle>
+            <DialogDescription>
+              Le patient a été orienté. Souhaitez-vous générer sa facture maintenant ?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowInvoicePrompt(false)}>
+              Plus tard
+            </Button>
+            <Button
+              onClick={() => {
+                setShowInvoicePrompt(false);
+                if (orientedPatientId) handleGoToInvoice(orientedPatientId);
+              }}
+              className="gap-2"
+            >
+              <Receipt className="h-4 w-4" />
+              Générer la facture
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
