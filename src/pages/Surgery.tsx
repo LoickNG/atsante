@@ -120,7 +120,7 @@ export default function Surgery() {
   useEffect(() => { fetchData(); }, []);
 
   const handleScheduleSurgery = async () => {
-    if (!formPatientId || !formRoomId || !formDoctorId || !formDate || !formType) {
+    if (!selectedPatient || !formRoomId || !formDoctorId || !formDate || !formType) {
       toast({ title: 'Erreur', description: 'Veuillez remplir tous les champs obligatoires', variant: 'destructive' });
       return;
     }
