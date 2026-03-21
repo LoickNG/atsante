@@ -192,8 +192,9 @@ export function useRecordPayment() {
         .single();
       if (invErr) throw invErr;
 
-      // For convention invoices, the amount owed by the patient is patient_amount
-      const amountOwed = (Number(inv.patient_amount) > 0 && Number(inv.patient_amount) < Number(inv.total_amount))
+      // For convention invoices, the patient only owes patient_amount (can be 0 if fully covered)
+      const hasConvention = Number(inv.company_amount) > 0 || Number(inv.insurance_amount) > 0;
+      const amountOwed = hasConvention
         ? Number(inv.patient_amount)
         : Number(inv.total_amount);
       const newPaidAmount = Number(inv.paid_amount) + totalPaid;

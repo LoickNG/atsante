@@ -68,9 +68,10 @@ export default function Payments() {
     }
   }, [invoiceIdParam]);
 
-  // For convention patients, only patient_amount is due; otherwise total_amount
+  // For convention patients, patient_amount is what the patient owes (can be 0 if fully covered)
+  const hasConvention = selectedInvoice && (Number(selectedInvoice.company_amount) > 0 || Number(selectedInvoice.insurance_amount) > 0);
   const invoiceOwed = selectedInvoice
-    ? (Number(selectedInvoice.patient_amount) > 0 && Number(selectedInvoice.patient_amount) < Number(selectedInvoice.total_amount))
+    ? hasConvention
       ? Number(selectedInvoice.patient_amount)
       : Number(selectedInvoice.total_amount)
     : 0;
