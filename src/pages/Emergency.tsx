@@ -469,6 +469,16 @@ export default function Emergency() {
                             <TableCell>
                               <Badge variant="outline" className="bg-success/10 text-success border-success/30">Terminé</Badge>
                             </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                                onClick={() => handleGoToInvoice(visit.patient_id)}
+                              >
+                                <Receipt className="h-3.5 w-3.5" /> Facturer
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
