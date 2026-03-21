@@ -171,11 +171,13 @@ const WaitingQueue = () => {
         patient_id: selectedPatientId,
         type: visitType,
         status: 'en_attente',
+        specialty: visitSpecialty,
       } as any);
       toast.success('Patient ajouté à la file d\'attente');
       setIsAddDialogOpen(false);
       setSelectedPatientId('');
       setVisitType('consultation');
+      setVisitSpecialty('generaliste');
       setSearchPatient('');
     } catch (error) {
       toast.error('Erreur lors de l\'ajout');
