@@ -23,6 +23,7 @@ import SurgeryPage from "./pages/Surgery";
 import Maternity from "./pages/Maternity";
 import Emergency from "./pages/Emergency";
 import Auth from "./pages/Auth";
+import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
