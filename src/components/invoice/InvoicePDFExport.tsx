@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { type InvoiceWithDetails } from '@/hooks/useBilling';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 interface InvoicePDFExportProps {
   invoice: InvoiceWithDetails;
