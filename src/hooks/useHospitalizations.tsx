@@ -254,7 +254,21 @@ export function useDischargePatient() {
       }).eq('id', id);
       if (error) throw error;
       if (room_id) {
-        await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
+        // Check if there are still other patients in this room
+        const { data: remaining } = await supabase
+          .from('hospitalizations')
+          .select('id')
+          .eq('room_id', room_id)
+          .eq('status', 'en_cours')
+          .neq('id', id);
+        
+        // Always mark room available when a bed is freed (capacity check on assign)
+        if (!remaining || remaining.length === 0) {
+          await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
+        } else {
+          // Room still has patients but a bed freed up - mark available for new assignments
+          await supabase.from('rooms').update({ is_available: true }).eq('id', room_id);
+        }
       }
     },
     onSuccess: () => {
