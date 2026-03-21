@@ -190,25 +190,24 @@ export default function Hospitalizations() {
     if (!selectedHosp || !user || !examTestType) return;
     try {
       if (examCategory === 'laboratoire') {
-        // Lab request needs a consultation_id - use the hospitalization's consultation if available
         await createLabRequest.mutateAsync({
           patient_id: selectedHosp.patient_id,
-          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          consultation_id: selectedHosp.consultation_id || undefined,
           test_type: examTestType,
           priority: examPriority,
           status: 'demande',
-        });
+        } as any);
       } else {
         await createImagingRequest.mutateAsync({
           patient_id: selectedHosp.patient_id,
-          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          consultation_id: selectedHosp.consultation_id || undefined,
           exam_type: examTestType,
           body_part: examBodyPart,
           priority: examPriority,
           status: 'demande',
-        });
+        } as any);
       }
-      toast.success(`Demande d'examen envoyée`);
+      toast.success(`Demande d'examen envoyée au service ${examCategory === 'laboratoire' ? 'laboratoire' : 'imagerie'}`);
       setExamDialogOpen(false);
       setExamTestType(''); setExamBodyPart(''); setExamPriority('normale');
     } catch (e: any) {
