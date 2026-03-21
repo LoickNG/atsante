@@ -69,6 +69,10 @@ const App = () => (
                 <Hospitalizations />
               </ProtectedRoute>
             } />
+            <Route path="/bloc-operatoire" element={
+              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+                <SurgeryPage />
+              </ProtectedRoute>
             <Route path="/pharmacie" element={
               <ProtectedRoute allowedRoles={['admin', 'pharmacien', 'medecin']}>
                 <Pharmacy />

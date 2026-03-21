@@ -75,6 +75,12 @@ export const navigationConfig: NavSection[] = [
         roles: ['admin', 'medecin', 'infirmier'],
       },
       {
+        title: 'Bloc Opératoire',
+        href: '/bloc-operatoire',
+        icon: Scissors,
+        roles: ['admin', 'medecin', 'infirmier'],
+      },
+      {
         title: 'File d\'attente',
         href: '/file-attente',
         icon: Activity,
