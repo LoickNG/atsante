@@ -35,6 +35,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
   const patientImaging = (allImagingRequests || []).filter(r => r.patient_id === patient.id);
   const patientAdmissions = (allAdmissions || []).filter(a => a.patient_id === patient.id);
   const patientBirths = (allBirths || []).filter(b => b.patient_id === patient.id);
+  const patientPrenatal = (allPrenatalVisits || []).filter(v => v.patient_id === patient.id);
 
   const formatDateTime = (d: string) =>
     new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
