@@ -33,6 +33,9 @@ import { useCreateHospitalization } from '@/hooks/useHospitalizations';
 import { useAvailableRooms } from '@/hooks/useHospitalizations';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 interface PrescriptionItem {
   medicationId: string;
