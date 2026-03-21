@@ -86,8 +86,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 <body>
   <div class="header">
     <div>
-      <h1>SantéPro</h1>
-      <div class="subtitle">Clinique Médicale — Facture</div>
+      <h1>${clinicName}</h1>
+      <div class="subtitle">${clinicSubtitle} — Facture</div>
+      ${clinicAddress ? `<div class="subtitle">${clinicAddress}</div>` : ''}
+      ${clinicPhone ? `<div class="subtitle">Tél: ${clinicPhone}</div>` : ''}
     </div>
     <div class="invoice-info">
       <div class="inv-num">${invoice.invoice_number}</div>
