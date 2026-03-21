@@ -111,7 +111,8 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   <table>
     <thead>
       <tr>
-        <th>Description</th>
+        <th style="text-align:center;width:40px">N°</th>
+        <th>Désignation</th>
         <th style="text-align:center;width:60px">Qté</th>
         <th style="text-align:right;width:120px">Prix unitaire</th>
         <th style="text-align:right;width:120px">Total</th>
@@ -119,6 +120,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     </thead>
     <tbody>
       ${itemRows}
+      <tr style="background:#f0f4ff;font-weight:bold">
+        <td colspan="4" style="text-align:right;border-top:2px solid #2563eb">TOTAL</td>
+        <td style="text-align:right;border-top:2px solid #2563eb">${formatCurrency(total)}</td>
+      </tr>
     </tbody>
   </table>
 
