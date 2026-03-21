@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleLabel, getRoleColor } from '@/config/navigation';
-import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { useSpecialties, getSpecialtyLabel } from '@/config/specialties';
 import { UserRole } from '@/types';
 import { UserPlus, Shield, Loader2, Search } from 'lucide-react';
 import { z } from 'zod';

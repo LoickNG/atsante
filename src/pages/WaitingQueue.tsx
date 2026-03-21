@@ -41,7 +41,7 @@ import { useState, useEffect } from 'react';
 import { usePatients } from '@/hooks/usePatients';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { useSpecialties, getSpecialtyLabel } from '@/config/specialties';
 import { supabase } from '@/integrations/supabase/client';
 
 const WaitingQueue = () => {
