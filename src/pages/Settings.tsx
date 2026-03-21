@@ -27,8 +27,12 @@ export default function Settings() {
     <AppLayout>
       <PageHeader title="Administration" description="Vue d'ensemble et gestion de la clinique" />
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+      <Tabs defaultValue="clinique" className="space-y-6">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="clinique" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Clinique
+          </TabsTrigger>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Vue d'ensemble
@@ -54,6 +58,10 @@ export default function Settings() {
             Chambres
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="clinique">
+          <ClinicSettingsManagement />
+        </TabsContent>
 
         <TabsContent value="overview">
           <AdminOverview />
