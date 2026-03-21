@@ -3,13 +3,14 @@ import { Separator } from '@/components/ui/separator';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { Stethoscope, Pill, FlaskConical, ImageIcon, Loader2 } from 'lucide-react';
+import { Stethoscope, Pill, FlaskConical, ImageIcon, Loader2, Baby } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Patient } from '@/hooks/usePatients';
 import { useVisits } from '@/hooks/useVisits';
 import { useConsultations } from '@/hooks/useConsultations';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
+import { useMaternityAdmissions, useBirths } from '@/hooks/useMaternity';
 
 interface PatientHistoryDialogProps {
   patient: Patient | null;
@@ -22,12 +23,16 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
   const { data: consultations } = useConsultations(patient?.id);
   const { data: allLabRequests } = useLabRequests();
   const { data: allImagingRequests } = useImagingRequests();
+  const { data: allAdmissions } = useMaternityAdmissions();
+  const { data: allBirths } = useBirths();
 
   if (!patient) return null;
 
   const patientVisits = (allVisits || []).filter(v => v.patient_id === patient.id);
   const patientLabs = (allLabRequests || []).filter(r => r.patient_id === patient.id);
   const patientImaging = (allImagingRequests || []).filter(r => r.patient_id === patient.id);
+  const patientAdmissions = (allAdmissions || []).filter(a => a.patient_id === patient.id);
+  const patientBirths = (allBirths || []).filter(b => b.patient_id === patient.id);
 
   const formatDateTime = (d: string) =>
     new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -45,7 +50,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
         ) : (
           <div className="space-y-4">
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               <div className="text-center p-2 bg-muted/30 rounded-lg">
                 <p className="text-lg font-bold">{patientVisits.length}</p>
                 <p className="text-[10px] text-muted-foreground">Visites</p>
@@ -61,6 +66,10 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
               <div className="text-center p-2 bg-muted/30 rounded-lg">
                 <p className="text-lg font-bold">{patientImaging.length}</p>
                 <p className="text-[10px] text-muted-foreground">Imageries</p>
+              </div>
+              <div className="text-center p-2 bg-pink-500/10 rounded-lg">
+                <p className="text-lg font-bold">{patientBirths.length}</p>
+                <p className="text-[10px] text-muted-foreground">Naissances</p>
               </div>
             </div>
 
@@ -153,6 +162,85 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
                         </Badge>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Maternity Admissions & Births */}
+            {patientAdmissions.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Baby className="h-4 w-4 text-pink-500" /> Maternité
+                  </h4>
+                  <div className="space-y-3">
+                    {patientAdmissions.map(admission => {
+                      const admissionBirths = patientBirths.filter(b => b.maternity_admission_id === admission.id);
+                      return (
+                        <div key={admission.id} className="p-3 rounded-lg border bg-pink-500/5 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-sm">
+                                Grossesse {admission.pregnancy_type === 'simple' ? 'simple' : admission.pregnancy_type}
+                                {admission.gestational_weeks && ` — ${admission.gestational_weeks} SA`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Admission: {formatDateTime(admission.admission_date)}
+                              </p>
+                              {admission.expected_due_date && (
+                                <p className="text-xs text-muted-foreground">
+                                  DPA: {new Date(admission.expected_due_date).toLocaleDateString('fr-FR')}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <Badge variant={admission.status === 'en_cours' ? 'secondary' : 'default'} className="text-[10px]">
+                                {admission.status === 'en_cours' ? 'En cours' : admission.status === 'sortie' ? 'Sortie' : admission.status}
+                              </Badge>
+                              {admission.risk_level !== 'normal' && (
+                                <Badge variant="destructive" className="text-[10px]">
+                                  Risque {admission.risk_level}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+
+                          {admission.gravida && (
+                            <p className="text-xs">G{admission.gravida}P{admission.para ?? 0} • {admission.blood_group || '?'}{admission.rhesus || ''}</p>
+                          )}
+
+                          {admissionBirths.length > 0 && (
+                            <div className="mt-2 space-y-1.5 border-t border-pink-200/50 pt-2">
+                              <p className="text-xs font-semibold text-pink-600">Naissances</p>
+                              {admissionBirths.map(birth => (
+                                <div key={birth.id} className="flex items-center gap-2 p-2 rounded bg-background/80">
+                                  <Baby className="h-3.5 w-3.5 text-pink-500 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-xs">
+                                      {birth.baby_first_name || '—'} {birth.baby_last_name || ''} ({birth.baby_gender === 'M' ? 'Garçon' : 'Fille'})
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                      {formatDateTime(birth.birth_date)} • {birth.delivery_type === 'voie_basse' ? 'Voie basse' : birth.delivery_type === 'cesarienne' ? 'Césarienne' : birth.delivery_type}
+                                      {birth.birth_weight_grams && ` • ${birth.birth_weight_grams}g`}
+                                    </p>
+                                    {(birth.apgar_1min != null || birth.apgar_5min != null) && (
+                                      <p className="text-[10px] text-muted-foreground">
+                                        APGAR: {birth.apgar_1min ?? '?'}/{birth.apgar_5min ?? '?'}/{birth.apgar_10min ?? '?'}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Badge variant={birth.baby_status === 'vivant' ? 'default' : 'destructive'} className="text-[10px]">
+                                    {birth.baby_status}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </>
