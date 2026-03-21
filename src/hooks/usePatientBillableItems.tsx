@@ -96,11 +96,12 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .in('consultation_id', (consultations || []).map(c => c.id));
 
       for (const p of (prescriptions || []) as any[]) {
-        if (!billedReferenceIds.includes(p.id)) {
-          const med = p.medications;
+        const med = p.medications;
+        const medDesc = med?.name || 'Médicament';
+        if (!isAlreadyBilled(p.id, 'medicament', medDesc)) {
           items.push({
             type: 'medicament',
-            description: med?.name || 'Médicament',
+            description: medDesc,
             quantity: p.quantity || 1,
             unit_price: med?.unit_price ? Number(med.unit_price) : 0,
             reference_id: p.id,
