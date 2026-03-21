@@ -321,7 +321,7 @@ const Laboratory = () => {
                 <CardDescription>
                   {selectedPatient
                     ? `Résultats pour ${selectedPatient.first_name} ${selectedPatient.last_name}`
-                    : 'Analyses terminées et validées'}
+                    : 'Analyses terminées, regroupées par patient'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -331,59 +331,76 @@ const Laboratory = () => {
                     <p>Aucun résultat disponible</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {patientCompletedRequests.map(request => {
-                      const patient = request.patients;
-                      return (
-                        <div key={request.id} className="p-4 border rounded-lg bg-success/5 border-success/20">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-semibold">{request.test_type}</p>
-                                <Badge className="bg-success text-success-foreground text-[10px]">Validé</Badge>
-                              </div>
-                              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  <span>{patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu'}</span>
+                  <div className="space-y-6">
+                    {(() => {
+                      const grouped = patientCompletedRequests.reduce<Record<string, LabRequestWithPatient[]>>((acc, r) => {
+                        const key = r.patient_id;
+                        if (!acc[key]) acc[key] = [];
+                        acc[key].push(r);
+                        return acc;
+                      }, {});
+                      return Object.entries(grouped).map(([patientId, requests]) => {
+                        const patient = requests[0].patients;
+                        const patientName = patient ? `${patient.first_name} ${patient.last_name}` : 'Patient inconnu';
+                        const patientCode = patient?.code || '';
+                        return (
+                          <Card key={patientId} className="border-success/20">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                    <User className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-base">{patientName}</CardTitle>
+                                    <CardDescription className="font-mono text-xs">{patientCode} • {requests.length} analyse(s)</CardDescription>
+                                  </div>
                                 </div>
-                                <span>•</span>
-                                <span className="font-mono text-xs">{patient?.code || ''}</span>
+                                <Button size="sm" className="gap-1.5" onClick={() => {
+                                  printMultiResultDocument({
+                                    clinic: clinicData,
+                                    patientName,
+                                    patientCode,
+                                    documentTitle: 'Résultats d\'Analyses de Laboratoire',
+                                    items: requests.map(r => ({
+                                      title: r.test_type,
+                                      date: r.completed_at ? new Date(r.completed_at).toLocaleDateString('fr-FR') : '',
+                                      content: r.results || 'Aucun résultat',
+                                    })),
+                                  });
+                                }}>
+                                  <Printer className="h-4 w-4" />
+                                  Imprimer tout ({requests.length})
+                                </Button>
                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="gap-1.5">
-                                <Eye className="h-4 w-4" />
-                                Voir
-                              </Button>
-                              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
-                                const p = request.patients;
-                                printResultDocument({
-                                  clinic: clinicData,
-                                  patientName: p ? `${p.first_name} ${p.last_name}` : 'Patient inconnu',
-                                  patientCode: p?.code || '',
-                                  title: 'Résultats d\'Analyse de Laboratoire',
-                                  subtitle: request.test_type,
-                                  date: request.completed_at ? new Date(request.completed_at).toLocaleDateString('fr-FR') : '',
-                                  content: request.results || 'Aucun résultat',
-                                });
-                              }}>
-                                <Printer className="h-4 w-4" />
-                                Imprimer
-                              </Button>
-                            </div>
-                          </div>
-                          {request.results && (
-                            <div className="p-3 bg-background rounded border text-sm">
-                              <p className="whitespace-pre-wrap">{request.results}</p>
-                            </div>
-                          )}
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Validé le {request.completed_at && formatDateTime(request.completed_at)}
-                          </p>
-                        </div>
-                      );
-                    })}
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                {requests.map(request => (
+                                  <div key={request.id} className="p-3 border rounded-lg bg-success/5 border-success/20">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <FlaskConical className="h-4 w-4 text-success" />
+                                        <p className="font-medium text-sm">{request.test_type}</p>
+                                        <Badge className="bg-success text-success-foreground text-[10px]">Validé</Badge>
+                                      </div>
+                                      <span className="text-xs text-muted-foreground">
+                                        {request.completed_at && formatDateTime(request.completed_at)}
+                                      </span>
+                                    </div>
+                                    {request.results && (
+                                      <div className="p-2 bg-background rounded border text-sm">
+                                        <p className="whitespace-pre-wrap">{request.results}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      });
+                    })()}
                   </div>
                 )}
               </CardContent>
