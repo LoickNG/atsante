@@ -81,7 +81,7 @@ export function UserManagement() {
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email: newEmail, password: newPassword, full_name: newFullName, role: newRole },
+        body: { email: newEmail, password: newPassword, full_name: newFullName, role: newRole, specialty: newRole === 'medecin' ? newSpecialty : undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
