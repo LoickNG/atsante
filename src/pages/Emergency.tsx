@@ -68,6 +68,7 @@ function getWaitDuration(arrivedAt: string): string {
 export default function Emergency() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('board');
   const [admitDialogOpen, setAdmitDialogOpen] = useState(false);
   const [triageDialogOpen, setTriageDialogOpen] = useState(false);
