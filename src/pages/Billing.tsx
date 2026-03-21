@@ -57,6 +57,7 @@ export default function Billing() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // List view state
   const [search, setSearch] = useState('');
@@ -75,6 +76,26 @@ export default function Billing() {
   const { data: billableItems, isLoading: billableLoading } = usePatientBillableItems(selectedPatient?.id);
   const { data: allConventions } = useConventions();
   const createInvoice = useCreateInvoice();
+
+  // Auto-load patient from URL query param (e.g. from Emergency module)
+  useEffect(() => {
+    const patientId = searchParams.get('patient_id');
+    if (patientId && !selectedPatient) {
+      (async () => {
+        const { data } = await supabase
+          .from('patients')
+          .select('*')
+          .eq('id', patientId)
+          .single();
+        if (data) {
+          handleSelectPatient(data as unknown as Patient);
+          // Clean up URL
+          searchParams.delete('patient_id');
+          setSearchParams(searchParams, { replace: true });
+        }
+      })();
+    }
+  }, [searchParams]);
 
   // Auto-select all items when they load
   useEffect(() => {
