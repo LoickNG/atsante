@@ -110,6 +110,9 @@ export function useCreateInvoice() {
       company_amount,
       insurance_amount,
       patient_amount,
+      is_proforma,
+      discount_percent,
+      discount_amount,
     }: {
       patient_id: string;
       visit_id?: string;
@@ -119,6 +122,9 @@ export function useCreateInvoice() {
       company_amount?: number;
       insurance_amount?: number;
       patient_amount?: number;
+      is_proforma?: boolean;
+      discount_percent?: number;
+      discount_amount?: number;
     }) => {
       const total_amount = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
 
