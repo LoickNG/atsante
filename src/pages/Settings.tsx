@@ -44,6 +44,10 @@ export default function Settings() {
             <Receipt className="h-4 w-4" />
             Tarifs & Actes
           </TabsTrigger>
+          <TabsTrigger value="specialites" className="flex items-center gap-2">
+            <Stethoscope className="h-4 w-4" />
+            Spécialités
+          </TabsTrigger>
           <TabsTrigger value="chambres" className="flex items-center gap-2">
             <BedDouble className="h-4 w-4" />
             Chambres
