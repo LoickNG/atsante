@@ -45,6 +45,7 @@ export function usePendingPrescriptions() {
           )
         `)
         .eq('dispensed', false)
+        .not('medication_id', 'is', null)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
