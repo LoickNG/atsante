@@ -69,7 +69,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, full_name, role } = body;
+    const { email, password, full_name, role, specialty } = body;
 
     // Server-side input validation
     if (!email || typeof email !== "string" || email.length > 255) {
