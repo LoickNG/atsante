@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ImageIcon, Clock, Check, AlertTriangle, User, FileText, Printer, Eye, Camera, Upload, Loader2, Search,
+  ImageIcon, Clock, Check, AlertTriangle, User, FileText, Printer, Camera, Upload, Loader2, Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
