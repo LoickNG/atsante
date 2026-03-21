@@ -167,7 +167,8 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   </table>` : ''}
 
   <div class="footer">
-    <p>Document confidentiel — Facture ${invoice.invoice_number}</p>
+    ${isProforma ? '<p style="font-size:11px;font-weight:bold;color:#dc2626;margin-bottom:8px">⚠ Ce document est un devis estimatif (Pro Forma) et ne constitue pas une facture définitive.</p>' : ''}
+    <p>Document confidentiel — ${isProforma ? 'Pro Forma' : 'Facture'} ${invoice.invoice_number}</p>
     <p>${clinicName} — ${clinicSubtitle} — Imprimé le ${formatDate(new Date().toISOString())}</p>
   </div>
 </body>
