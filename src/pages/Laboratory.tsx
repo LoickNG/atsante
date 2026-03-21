@@ -29,7 +29,6 @@ import {
   FileText,
   Printer,
   Loader2,
-  Loader2,
   Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
