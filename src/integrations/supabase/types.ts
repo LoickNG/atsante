@@ -1155,6 +1155,102 @@ export type Database = {
           },
         ]
       }
+      prenatal_visits: {
+        Row: {
+          blood_pressure: string | null
+          blood_sugar: number | null
+          complications: string | null
+          created_at: string
+          edema: string | null
+          fetal_heart_rate: number | null
+          gestational_weeks: number | null
+          hemoglobin: number | null
+          id: string
+          lab_notes: string | null
+          maternity_admission_id: string
+          next_appointment: string | null
+          notes: string | null
+          patient_id: string
+          performed_by: string | null
+          presentation: string | null
+          recommendations: string | null
+          ultrasound_date: string | null
+          ultrasound_notes: string | null
+          urine_protein: string | null
+          uterine_height_cm: number | null
+          vaccinations: string | null
+          visit_date: string
+          weight_kg: number | null
+        }
+        Insert: {
+          blood_pressure?: string | null
+          blood_sugar?: number | null
+          complications?: string | null
+          created_at?: string
+          edema?: string | null
+          fetal_heart_rate?: number | null
+          gestational_weeks?: number | null
+          hemoglobin?: number | null
+          id?: string
+          lab_notes?: string | null
+          maternity_admission_id: string
+          next_appointment?: string | null
+          notes?: string | null
+          patient_id: string
+          performed_by?: string | null
+          presentation?: string | null
+          recommendations?: string | null
+          ultrasound_date?: string | null
+          ultrasound_notes?: string | null
+          urine_protein?: string | null
+          uterine_height_cm?: number | null
+          vaccinations?: string | null
+          visit_date?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          blood_pressure?: string | null
+          blood_sugar?: number | null
+          complications?: string | null
+          created_at?: string
+          edema?: string | null
+          fetal_heart_rate?: number | null
+          gestational_weeks?: number | null
+          hemoglobin?: number | null
+          id?: string
+          lab_notes?: string | null
+          maternity_admission_id?: string
+          next_appointment?: string | null
+          notes?: string | null
+          patient_id?: string
+          performed_by?: string | null
+          presentation?: string | null
+          recommendations?: string | null
+          ultrasound_date?: string | null
+          ultrasound_notes?: string | null
+          urine_protein?: string | null
+          uterine_height_cm?: number | null
+          vaccinations?: string | null
+          visit_date?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prenatal_visits_maternity_admission_id_fkey"
+            columns: ["maternity_admission_id"]
+            isOneToOne: false
+            referencedRelation: "maternity_admissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prenatal_visits_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescriptions: {
         Row: {
           consultation_id: string
