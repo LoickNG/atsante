@@ -625,6 +625,12 @@ const Maternity = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
+                              {admPrenatal.length > 0 && (
+                                <Button size="sm" variant="outline" className="gap-1.5"
+                                  onClick={e => { e.stopPropagation(); printPrenatalBooklet(admission); }}>
+                                  <Printer className="h-3 w-3" /> Imprimer carnet
+                                </Button>
+                              )}
                               <Button size="sm" variant="outline" className="gap-1.5"
                                 onClick={e => { e.stopPropagation(); handleOpenPrenatalDialog(admission); }}>
                                 <Plus className="h-3 w-3" /> Nouvelle CPN
