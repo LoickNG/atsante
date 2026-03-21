@@ -46,6 +46,7 @@ interface PaymentEntry {
 export default function Payments() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const invoiceIdParam = searchParams.get('invoice');
 
