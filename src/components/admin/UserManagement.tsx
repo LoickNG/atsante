@@ -175,7 +175,7 @@ export function UserManagement() {
                     <Select value={newSpecialty} onValueChange={setNewSpecialty}>
                       <SelectTrigger><SelectValue placeholder="Choisir une spécialité" /></SelectTrigger>
                       <SelectContent>
-                        {SPECIALTIES.map(s => (
+                        {specialtiesList.map(s => (
                           <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                         ))}
                       </SelectContent>

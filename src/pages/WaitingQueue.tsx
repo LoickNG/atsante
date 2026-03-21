@@ -309,7 +309,7 @@ const WaitingQueue = () => {
                     <Select value={visitSpecialty} onValueChange={setVisitSpecialty}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {SPECIALTIES.map(s => (
+                        {specialtiesList.map(s => (
                           <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                         ))}
                       </SelectContent>
