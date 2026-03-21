@@ -90,6 +90,8 @@ export default function Emergency() {
   // Orientation form state
   const [orientation, setOrientation] = useState('sortie');
   const [orientationNotes, setOrientationNotes] = useState('');
+  const [showInvoicePrompt, setShowInvoicePrompt] = useState(false);
+  const [orientedPatientId, setOrientedPatientId] = useState<string | null>(null);
 
   const { data: allVisits, isLoading } = useEmergencyVisits();
   const createVisit = useCreateEmergencyVisit();
