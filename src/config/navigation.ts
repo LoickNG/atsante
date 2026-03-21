@@ -82,6 +82,12 @@ export const navigationConfig: NavSection[] = [
         roles: ['admin', 'medecin', 'infirmier'],
       },
       {
+        title: 'Maternité',
+        href: '/maternite',
+        icon: Baby,
+        roles: ['admin', 'medecin', 'infirmier'],
+      },
+      {
         title: 'File d\'attente',
         href: '/file-attente',
         icon: Activity,
