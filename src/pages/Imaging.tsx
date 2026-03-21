@@ -41,6 +41,8 @@ const Imaging = () => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const { user } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
