@@ -88,7 +88,7 @@ export function UserManagement() {
 
       toast({ title: 'Succès', description: data?.message || `Compte créé pour ${newFullName}. Un email de réinitialisation du mot de passe a été envoyé.` });
       setDialogOpen(false);
-      setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil');
+      setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil'); setNewSpecialty('');
       fetchUsers();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Impossible de créer le compte', variant: 'destructive' });
