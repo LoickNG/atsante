@@ -675,9 +675,12 @@ export type Database = {
           convention_id: string | null
           created_at: string
           created_by: string
+          discount_amount: number
+          discount_percent: number
           id: string
           insurance_amount: number
           invoice_number: string
+          is_proforma: boolean
           paid_amount: number
           paid_at: string | null
           patient_amount: number
@@ -691,9 +694,12 @@ export type Database = {
           convention_id?: string | null
           created_at?: string
           created_by: string
+          discount_amount?: number
+          discount_percent?: number
           id?: string
           insurance_amount?: number
           invoice_number: string
+          is_proforma?: boolean
           paid_amount?: number
           paid_at?: string | null
           patient_amount?: number
@@ -707,9 +713,12 @@ export type Database = {
           convention_id?: string | null
           created_at?: string
           created_by?: string
+          discount_amount?: number
+          discount_percent?: number
           id?: string
           insurance_amount?: number
           invoice_number?: string
+          is_proforma?: boolean
           paid_amount?: number
           paid_at?: string | null
           patient_amount?: number
