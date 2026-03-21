@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import Extracts from "./pages/Extracts";
 import Hospitalizations from "./pages/Hospitalizations";
 import SurgeryPage from "./pages/Surgery";
+import Maternity from "./pages/Maternity";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
