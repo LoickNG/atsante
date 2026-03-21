@@ -231,6 +231,13 @@ export function UserManagement() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {u.role === 'medecin' && u.specialty ? (
+                        <Badge variant="outline">{getSpecialtyLabel(u.specialty)}</Badge>
+                      ) : u.role === 'medecin' ? (
+                        <span className="text-xs text-muted-foreground">Non définie</span>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell>
                       <Select value={u.role || ''} onValueChange={v => handleChangeRole(u.user_id, v as UserRole)}>
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Assigner un rôle" />
