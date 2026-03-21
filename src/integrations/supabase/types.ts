@@ -287,6 +287,105 @@ export type Database = {
           },
         ]
       }
+      emergency_visits: {
+        Row: {
+          arrival_mode: string
+          arrived_at: string
+          blood_pressure: string | null
+          care_started_at: string | null
+          chief_complaint: string
+          completed_at: string | null
+          created_at: string
+          diagnosis: string | null
+          doctor_id: string | null
+          heart_rate: number | null
+          hospitalization_id: string | null
+          id: string
+          nurse_id: string | null
+          orientation: string | null
+          orientation_notes: string | null
+          patient_id: string
+          respiratory_rate: number | null
+          spo2: number | null
+          status: string
+          temperature: number | null
+          treatment_notes: string | null
+          triage_level: string
+          triaged_at: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          arrival_mode?: string
+          arrived_at?: string
+          blood_pressure?: string | null
+          care_started_at?: string | null
+          chief_complaint: string
+          completed_at?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id?: string | null
+          heart_rate?: number | null
+          hospitalization_id?: string | null
+          id?: string
+          nurse_id?: string | null
+          orientation?: string | null
+          orientation_notes?: string | null
+          patient_id: string
+          respiratory_rate?: number | null
+          spo2?: number | null
+          status?: string
+          temperature?: number | null
+          treatment_notes?: string | null
+          triage_level?: string
+          triaged_at?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          arrival_mode?: string
+          arrived_at?: string
+          blood_pressure?: string | null
+          care_started_at?: string | null
+          chief_complaint?: string
+          completed_at?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id?: string | null
+          heart_rate?: number | null
+          hospitalization_id?: string | null
+          id?: string
+          nurse_id?: string | null
+          orientation?: string | null
+          orientation_notes?: string | null
+          patient_id?: string
+          respiratory_rate?: number | null
+          spo2?: number | null
+          status?: string
+          temperature?: number | null
+          treatment_notes?: string | null
+          triage_level?: string
+          triaged_at?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_visits_hospitalization_id_fkey"
+            columns: ["hospitalization_id"]
+            isOneToOne: false
+            referencedRelation: "hospitalizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_visits_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospitalization_care: {
         Row: {
           administered_at: string
