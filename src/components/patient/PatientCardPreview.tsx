@@ -7,19 +7,7 @@ import { Printer, User, Cross } from 'lucide-react';
 import { Patient } from '@/hooks/usePatients';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-interface PatientCardPreviewProps {
-  patient: Patient | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-const HOSPITAL = {
-  name: 'ATSanté',
-  subtitle: 'Centre Médical Polyvalent',
-  address: 'Lomé, Togo',
-  phone: '+228 90 00 00 00',
-};
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardPreviewProps) {
   if (!patient) return null;
