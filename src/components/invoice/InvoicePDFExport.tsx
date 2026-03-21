@@ -91,7 +91,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   <div class="header">
     <div>
       <h1>${clinicName}</h1>
-      <div class="subtitle">${clinicSubtitle} — Facture</div>
+      <div class="subtitle">${clinicSubtitle} — ${isProforma ? 'PRO FORMA' : 'Facture'}</div>
       ${clinicAddress ? `<div class="subtitle">${clinicAddress}</div>` : ''}
       ${clinicPhone ? `<div class="subtitle">Tél: ${clinicPhone}</div>` : ''}
     </div>
