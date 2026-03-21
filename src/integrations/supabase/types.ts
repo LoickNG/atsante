@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      clinic_settings: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          license_number: string | null
+          logo_url: string | null
+          name: string
+          phone: string | null
+          phone2: string | null
+          primary_color: string | null
+          slogan: string | null
+          tax_id: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          phone2?: string | null
+          primary_color?: string | null
+          slogan?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          logo_url?: string | null
+          name?: string
+          phone?: string | null
+          phone2?: string | null
+          primary_color?: string | null
+          slogan?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       consultations: {
         Row: {
           blood_pressure: string | null

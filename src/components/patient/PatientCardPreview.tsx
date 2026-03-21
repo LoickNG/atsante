@@ -7,6 +7,7 @@ import { Printer, User, Cross } from 'lucide-react';
 import { Patient } from '@/hooks/usePatients';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 interface PatientCardPreviewProps {
   patient: Patient | null;
@@ -14,15 +15,19 @@ interface PatientCardPreviewProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const HOSPITAL = {
-  name: 'ATSanté',
-  subtitle: 'Centre Médical Polyvalent',
-  address: 'Lomé, Togo',
-  phone: '+228 90 00 00 00',
-};
-
 export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardPreviewProps) {
+  const { data: clinicSettings } = useClinicSettings();
+  
   if (!patient) return null;
+
+  const HOSPITAL = {
+    name: clinicSettings?.name || 'Ma Clinique',
+    subtitle: clinicSettings?.slogan || '',
+    address: [clinicSettings?.city, clinicSettings?.country].filter(Boolean).join(', ') || '',
+    phone: clinicSettings?.phone || '',
+    logo_url: clinicSettings?.logo_url || '',
+    color: clinicSettings?.primary_color || '#7fb3c8',
+  };
 
   const { data: company } = useQuery({
     queryKey: ['partner_company', patient.company_id],
@@ -90,7 +95,7 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
           background: white; overflow: hidden;
         }
         .header {
-          background: #7fb3c8;
+          background: ${HOSPITAL.color};
           color: white; padding: 2mm 3mm;
           display: flex; align-items: center; gap: 2mm;
           border-bottom: 0.8mm solid #c0392b;
@@ -134,9 +139,8 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
     </head><body>
       <div class="card">
         <div class="header">
-          <div class="logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-          </div>
+          ${HOSPITAL.logo_url ? `<img src="${HOSPITAL.logo_url}" style="width:8mm;height:8mm;object-fit:contain;border-radius:4px;flex-shrink:0;" />` : `<div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></div>`}
+          <div>
           <div>
             <p class="hospital-name">${HOSPITAL.name}</p>
             <p class="hospital-addr">${HOSPITAL.subtitle} — ${HOSPITAL.address}</p>
@@ -183,10 +187,14 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
           <div className="w-full max-w-[380px] rounded-xl border-2 border-dashed overflow-hidden bg-card" style={{ aspectRatio: '85.6/54' }}>
             
             {/* Header - Blue band with logo */}
-            <div className="bg-[hsl(200,40%,62%)] text-white px-3 py-2 flex items-center gap-2 border-b-[3px] border-destructive">
-              <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center shrink-0">
-                <Cross className="h-4 w-4 text-white" fill="white" />
-              </div>
+            <div className="text-white px-3 py-2 flex items-center gap-2 border-b-[3px] border-destructive" style={{ backgroundColor: HOSPITAL.color }}>
+              {HOSPITAL.logo_url ? (
+                <img src={HOSPITAL.logo_url} alt="" className="h-8 w-8 object-contain rounded shrink-0" />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center shrink-0">
+                  <Cross className="h-4 w-4 text-white" fill="white" />
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="font-black text-[12px] leading-tight tracking-wide">{HOSPITAL.name}</p>
                 <p className="text-[8px] font-semibold leading-tight">{HOSPITAL.subtitle} — {HOSPITAL.address}</p>

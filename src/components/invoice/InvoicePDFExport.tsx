@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { type InvoiceWithDetails } from '@/hooks/useBilling';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 interface InvoicePDFExportProps {
   invoice: InvoiceWithDetails;
@@ -13,6 +14,12 @@ const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 
 export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
+  const { data: clinic } = useClinicSettings();
+  const clinicName = clinic?.name || 'Ma Clinique';
+  const clinicSubtitle = [clinic?.slogan, clinic?.city].filter(Boolean).join(' — ') || 'Clinique Médicale';
+  const clinicPhone = clinic?.phone || '';
+  const clinicAddress = clinic?.address || '';
+
   const handlePrint = () => {
     const patient = invoice.patient;
     const total = Number(invoice.total_amount);
@@ -79,8 +86,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 <body>
   <div class="header">
     <div>
-      <h1>SantéPro</h1>
-      <div class="subtitle">Clinique Médicale — Facture</div>
+      <h1>${clinicName}</h1>
+      <div class="subtitle">${clinicSubtitle} — Facture</div>
+      ${clinicAddress ? `<div class="subtitle">${clinicAddress}</div>` : ''}
+      ${clinicPhone ? `<div class="subtitle">Tél: ${clinicPhone}</div>` : ''}
     </div>
     <div class="invoice-info">
       <div class="inv-num">${invoice.invoice_number}</div>
