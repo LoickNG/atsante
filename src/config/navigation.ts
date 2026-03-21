@@ -14,6 +14,7 @@ import {
   FileDown,
   BedDouble,
   Scissors,
+  Baby,
   LucideIcon,
 } from 'lucide-react';
 
@@ -78,6 +79,12 @@ export const navigationConfig: NavSection[] = [
         title: 'Bloc Opératoire',
         href: '/bloc-operatoire',
         icon: Scissors,
+        roles: ['admin', 'medecin', 'infirmier'],
+      },
+      {
+        title: 'Maternité',
+        href: '/maternite',
+        icon: Baby,
         roles: ['admin', 'medecin', 'infirmier'],
       },
       {

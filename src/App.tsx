@@ -20,6 +20,7 @@ import Settings from "./pages/Settings";
 import Extracts from "./pages/Extracts";
 import Hospitalizations from "./pages/Hospitalizations";
 import SurgeryPage from "./pages/Surgery";
+import Maternity from "./pages/Maternity";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -110,6 +111,11 @@ const App = () => (
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/maternite" element={
+              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+                <Maternity />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

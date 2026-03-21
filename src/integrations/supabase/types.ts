@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      births: {
+        Row: {
+          apgar_10min: number | null
+          apgar_1min: number | null
+          apgar_5min: number | null
+          baby_first_name: string | null
+          baby_gender: string
+          baby_last_name: string | null
+          baby_status: string
+          birth_date: string
+          birth_height_cm: number | null
+          birth_weight_grams: number | null
+          complications: string | null
+          created_at: string
+          delivered_by: string | null
+          delivery_type: string
+          head_circumference_cm: number | null
+          id: string
+          maternity_admission_id: string
+          notes: string | null
+          patient_id: string
+        }
+        Insert: {
+          apgar_10min?: number | null
+          apgar_1min?: number | null
+          apgar_5min?: number | null
+          baby_first_name?: string | null
+          baby_gender: string
+          baby_last_name?: string | null
+          baby_status?: string
+          birth_date?: string
+          birth_height_cm?: number | null
+          birth_weight_grams?: number | null
+          complications?: string | null
+          created_at?: string
+          delivered_by?: string | null
+          delivery_type?: string
+          head_circumference_cm?: number | null
+          id?: string
+          maternity_admission_id: string
+          notes?: string | null
+          patient_id: string
+        }
+        Update: {
+          apgar_10min?: number | null
+          apgar_1min?: number | null
+          apgar_5min?: number | null
+          baby_first_name?: string | null
+          baby_gender?: string
+          baby_last_name?: string | null
+          baby_status?: string
+          birth_date?: string
+          birth_height_cm?: number | null
+          birth_weight_grams?: number | null
+          complications?: string | null
+          created_at?: string
+          delivered_by?: string | null
+          delivery_type?: string
+          head_circumference_cm?: number | null
+          id?: string
+          maternity_admission_id?: string
+          notes?: string | null
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "births_maternity_admission_id_fkey"
+            columns: ["maternity_admission_id"]
+            isOneToOne: false
+            referencedRelation: "maternity_admissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "births_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_settings: {
         Row: {
           address: string | null
@@ -675,6 +756,87 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      maternity_admissions: {
+        Row: {
+          admission_date: string
+          bed_number: number | null
+          blood_group: string | null
+          created_at: string
+          discharge_date: string | null
+          doctor_id: string
+          expected_due_date: string | null
+          gestational_weeks: number | null
+          gravida: number | null
+          id: string
+          notes: string | null
+          para: number | null
+          patient_id: string
+          pregnancy_type: string
+          rhesus: string | null
+          risk_level: string
+          room_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admission_date?: string
+          bed_number?: number | null
+          blood_group?: string | null
+          created_at?: string
+          discharge_date?: string | null
+          doctor_id: string
+          expected_due_date?: string | null
+          gestational_weeks?: number | null
+          gravida?: number | null
+          id?: string
+          notes?: string | null
+          para?: number | null
+          patient_id: string
+          pregnancy_type?: string
+          rhesus?: string | null
+          risk_level?: string
+          room_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admission_date?: string
+          bed_number?: number | null
+          blood_group?: string | null
+          created_at?: string
+          discharge_date?: string | null
+          doctor_id?: string
+          expected_due_date?: string | null
+          gestational_weeks?: number | null
+          gravida?: number | null
+          id?: string
+          notes?: string | null
+          para?: number | null
+          patient_id?: string
+          pregnancy_type?: string
+          rhesus?: string | null
+          risk_level?: string
+          room_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maternity_admissions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maternity_admissions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medical_acts: {
         Row: {
