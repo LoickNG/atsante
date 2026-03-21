@@ -70,6 +70,10 @@ export default function Settings() {
           <MedicalActsManagement />
         </TabsContent>
 
+        <TabsContent value="specialites">
+          <SpecialtyManagement />
+        </TabsContent>
+
         <TabsContent value="chambres">
           <RoomManagement />
         </TabsContent>
