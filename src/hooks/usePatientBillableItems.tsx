@@ -75,10 +75,11 @@ export function usePatientBillableItems(patientId: string | undefined) {
       const consultActName = consultActs?.[0]?.name || 'Consultation';
 
       for (const c of consultations || []) {
-        if (!billedReferenceIds.includes(c.id)) {
+        const desc = `${consultActName} du ${new Date(c.date).toLocaleDateString('fr-FR')}`;
+        if (!isAlreadyBilled(c.id, 'consultation', desc)) {
           items.push({
             type: 'consultation',
-            description: `${consultActName} du ${new Date(c.date).toLocaleDateString('fr-FR')}`,
+            description: desc,
             quantity: 1,
             unit_price: defaultConsultPrice,
             reference_id: c.id,
