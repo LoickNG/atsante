@@ -94,7 +94,7 @@ const PatientsList = () => {
           title="Patients"
           description={`${patients?.length || 0} patient(s) enregistré(s)`}
         >
-          <Button variant="outline" size="default" className="gap-2">
+          <Button variant="outline" size="default" className="gap-2" onClick={() => setQrScannerOpen(true)}>
             <QrCode className="h-4 w-4" />
             Scanner QR
           </Button>
