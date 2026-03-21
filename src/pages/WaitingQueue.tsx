@@ -364,14 +364,24 @@ const WaitingQueue = () => {
 
         {/* Queue List */}
         <div className="space-y-4">
-          {queueVisits?.length === 0 ? (
+          {(() => {
+            // Filter visits: doctors see only their specialty
+            const visibleVisits = (queueVisits || []).filter(v => {
+              if (role === 'medecin' && doctorSpecialty) {
+                const visitSpec = (v as any).specialty;
+                return !visitSpec || visitSpec === doctorSpecialty;
+              }
+              return true;
+            });
+            
+            if (visibleVisits.length === 0) return (
             <div className="text-center py-12 text-muted-foreground">
               <Clock className="h-12 w-12 mx-auto mb-3 opacity-20" />
               <p className="font-medium">Aucun patient dans la file d'attente</p>
-              <p className="text-sm">Ajoutez un patient pour commencer</p>
+              <p className="text-sm">{role === 'medecin' && doctorSpecialty ? `Pour la spécialité: ${getSpecialtyLabel(doctorSpecialty)}` : 'Ajoutez un patient pour commencer'}</p>
             </div>
-          ) : (
-            queueVisits?.map((visit, index) => {
+            );
+            return visibleVisits.map((visit, index) => {
               const patient = visit.patients;
               if (!patient) return null;
 
