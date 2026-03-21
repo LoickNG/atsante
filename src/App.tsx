@@ -21,6 +21,7 @@ import Extracts from "./pages/Extracts";
 import Hospitalizations from "./pages/Hospitalizations";
 import SurgeryPage from "./pages/Surgery";
 import Maternity from "./pages/Maternity";
+import Emergency from "./pages/Emergency";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
