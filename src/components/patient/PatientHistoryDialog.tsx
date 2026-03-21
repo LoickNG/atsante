@@ -4,6 +4,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { Stethoscope, Pill, FlaskConical, ImageIcon, Loader2, Baby } from 'lucide-react';
+import { Stethoscope as StethoscopeIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Patient } from '@/hooks/usePatients';
 import { useVisits } from '@/hooks/useVisits';
