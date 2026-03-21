@@ -49,6 +49,7 @@ const Laboratory = () => {
   const [resultText, setResultText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { user } = useAuth();
+  const { data: clinicData } = useClinicSettings();
 
   const { data: allRequests, isLoading } = useLabRequests();
   const { data: pendingRequests } = usePendingLabRequests();

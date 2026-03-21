@@ -38,6 +38,7 @@ const Imaging = () => {
   const [reportText, setReportText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { user } = useAuth();
+  const { data: clinicData } = useClinicSettings();
 
   const { data: allRequests, isLoading } = useImagingRequests();
   const { data: pendingRequests } = usePendingImagingRequests();
