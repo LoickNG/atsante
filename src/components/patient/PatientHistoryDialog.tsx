@@ -26,6 +26,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
   const { data: allImagingRequests } = useImagingRequests();
   const { data: allAdmissions } = useMaternityAdmissions();
   const { data: allBirths } = useBirths();
+  const { data: allPrenatalVisits } = usePrenatalVisits();
 
   if (!patient) return null;
 
