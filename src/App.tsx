@@ -117,6 +117,11 @@ const App = () => (
                 <Maternity />
               </ProtectedRoute>
             } />
+            <Route path="/urgences" element={
+              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier', 'accueil']}>
+                <Emergency />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

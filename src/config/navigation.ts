@@ -15,6 +15,7 @@ import {
   BedDouble,
   Scissors,
   Baby,
+  Siren,
   LucideIcon,
 } from 'lucide-react';
 
