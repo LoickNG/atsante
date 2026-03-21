@@ -12,9 +12,13 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  ImageIcon, Clock, Check, AlertTriangle, User, FileText, Printer, Camera, Upload, Loader2, Search,
+  ImageIcon, Clock, Check, AlertTriangle, User, FileText, Printer, Camera, Upload, Loader2, Search, CalendarIcon, X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { useImagingRequests, usePendingImagingRequests, useUpdateImagingRequest, ImagingRequestWithPatient } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
@@ -37,6 +41,8 @@ const Imaging = () => {
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportText, setReportText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const { user } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
@@ -52,6 +58,14 @@ const Imaging = () => {
   const patientCompletedRequests = selectedPatient
     ? completedRequests.filter(r => r.patient_id === selectedPatient.id)
     : completedRequests;
+
+  const filteredCompletedRequests = patientCompletedRequests.filter(r => {
+    if (!r.completed_at) return true;
+    const completedDate = new Date(r.completed_at);
+    if (dateFrom && isBefore(completedDate, startOfDay(dateFrom))) return false;
+    if (dateTo && isAfter(completedDate, endOfDay(dateTo))) return false;
+    return true;
+  });
 
   const getExamTypeName = (examType: string) => imagingExamTypes.find(t => t.id === examType)?.name || examType;
 
@@ -218,21 +232,54 @@ const Imaging = () => {
           <TabsContent value="completed">
             <Card>
               <CardHeader>
-                <CardTitle>Comptes rendus d'imagerie</CardTitle>
-                <CardDescription>
-                  {selectedPatient ? `Résultats pour ${selectedPatient.first_name} ${selectedPatient.last_name}` : 'Examens réalisés, regroupés par patient et consultation'}
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>Comptes rendus d'imagerie</CardTitle>
+                    <CardDescription>
+                      {selectedPatient ? `Résultats pour ${selectedPatient.first_name} ${selectedPatient.last_name}` : 'Examens réalisés, regroupés par patient et consultation'}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", !dateFrom && "text-muted-foreground")}>
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          {dateFrom ? format(dateFrom, 'dd MMM yyyy', { locale: fr }) : 'Du'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", !dateTo && "text-muted-foreground")}>
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          {dateTo ? format(dateTo, 'dd MMM yyyy', { locale: fr }) : 'Au'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                    {(dateFrom || dateTo) && (
+                      <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                {patientCompletedRequests.length === 0 ? (
+                {filteredCompletedRequests.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                    <p>Aucun compte rendu disponible</p>
+                    <p>Aucun compte rendu disponible{(dateFrom || dateTo) ? ' pour cette période' : ''}</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {(() => {
-                      const byPatient = patientCompletedRequests.reduce<Record<string, ImagingRequestWithPatient[]>>((acc, r) => {
+                      const byPatient = filteredCompletedRequests.reduce<Record<string, ImagingRequestWithPatient[]>>((acc, r) => {
                         if (!acc[r.patient_id]) acc[r.patient_id] = [];
                         acc[r.patient_id].push(r);
                         return acc;
