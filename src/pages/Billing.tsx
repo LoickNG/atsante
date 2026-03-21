@@ -195,8 +195,11 @@ export default function Billing() {
         company_amount: companyAmount,
         insurance_amount: insuranceAmount,
         patient_amount: patientAmount,
+        is_proforma: isProforma,
+        discount_percent: effectiveDiscount,
+        discount_amount: discountAmt,
       } as any);
-      toast({ title: 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
+      toast({ title: isProforma ? 'Facture pro forma générée' : 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
       resetSearch();
     } catch (error: any) {
       console.error('[Billing] Full error:', error);
