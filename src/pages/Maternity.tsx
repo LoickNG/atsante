@@ -30,6 +30,7 @@ import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
 import { useClinicSettings } from '@/hooks/useClinicSettings';
 import { printMultiResultDocument } from '@/utils/printResult';
+import { PrenatalCharts } from '@/components/maternity/PrenatalCharts';
 
 const pregnancyTypes = [
   { value: 'simple', label: 'Grossesse simple' },
@@ -499,8 +500,9 @@ const Maternity = () => {
                             <div className="p-4 space-y-3">
                               {admPrenatal.length === 0 ? (
                                 <p className="text-sm text-muted-foreground text-center py-4">Aucune CPN enregistrée</p>
-                              ) : (
-                                admPrenatal.map((visit, idx) => (
+                              ) : (<>
+                                <PrenatalCharts visits={admPrenatal} />
+                                {admPrenatal.map((visit, idx) => (
                                   <div key={visit.id} className="p-3 border rounded-lg bg-card">
                                     <div className="flex items-center justify-between mb-2">
                                       <Badge variant="secondary" className="text-xs">
@@ -545,8 +547,9 @@ const Maternity = () => {
                                       </div>
                                     )}
                                   </div>
-                                ))
-                              )}
+                                ))}
+                                </>)
+                              }
                             </div>
                           )}
                         </div>
