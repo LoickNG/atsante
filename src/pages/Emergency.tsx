@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import {
   Loader2, AlertTriangle, Plus, Clock, Stethoscope, ArrowRight, Activity,
-  Ambulance, Heart, Thermometer, User, CheckCircle2,
+  Ambulance, Heart, Thermometer, User, CheckCircle2, Receipt,
 } from 'lucide-react';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
