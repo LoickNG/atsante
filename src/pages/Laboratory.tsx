@@ -73,6 +73,15 @@ const Laboratory = () => {
     ? completedRequests.filter(r => r.patient_id === selectedPatient.id)
     : completedRequests;
 
+  // Apply date filter on completed results
+  const filteredCompletedRequests = patientCompletedRequests.filter(r => {
+    if (!r.completed_at) return true;
+    const completedDate = new Date(r.completed_at);
+    if (dateFrom && isBefore(completedDate, startOfDay(dateFrom))) return false;
+    if (dateTo && isAfter(completedDate, endOfDay(dateTo))) return false;
+    return true;
+  });
+
   const formatDateTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('fr-FR', {
       day: '2-digit',
