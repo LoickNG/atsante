@@ -188,7 +188,7 @@ export default function Surgery() {
   };
 
   const resetForm = () => {
-    setFormPatientId(''); setFormRoomId(''); setFormDoctorId('');
+    setSelectedPatient(null); setFormRoomId(''); setFormDoctorId('');
     setFormDate(''); setFormTime('08:00'); setFormDuration('60');
     setFormType(''); setFormDescription(''); setFormNotes('');
   };
