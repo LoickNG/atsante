@@ -38,6 +38,8 @@ import { useLabRequests, usePendingLabRequests, useUpdateLabRequest, LabRequestW
 import { useAuth } from '@/hooks/useAuth';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { printResultDocument } from '@/utils/printResult';
 import { Link } from 'react-router-dom';
 
 const Laboratory = () => {
@@ -47,6 +49,7 @@ const Laboratory = () => {
   const [resultText, setResultText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { user } = useAuth();
+  const { data: clinicData } = useClinicSettings();
 
   const { data: allRequests, isLoading } = useLabRequests();
   const { data: pendingRequests } = usePendingLabRequests();
@@ -353,7 +356,18 @@ const Laboratory = () => {
                                 <Eye className="h-4 w-4" />
                                 Voir
                               </Button>
-                              <Button size="sm" variant="outline" className="gap-1.5">
+                              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+                                const p = request.patients;
+                                printResultDocument({
+                                  clinic: clinicData,
+                                  patientName: p ? `${p.first_name} ${p.last_name}` : 'Patient inconnu',
+                                  patientCode: p?.code || '',
+                                  title: 'Résultats d\'Analyse de Laboratoire',
+                                  subtitle: request.test_type,
+                                  date: request.completed_at ? new Date(request.completed_at).toLocaleDateString('fr-FR') : '',
+                                  content: request.results || 'Aucun résultat',
+                                });
+                              }}>
                                 <Printer className="h-4 w-4" />
                                 Imprimer
                               </Button>

@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useImagingRequests, usePendingImagingRequests, useUpdateImagingRequest, ImagingRequestWithPatient } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { printResultDocument } from '@/utils/printResult';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
 import { Link } from 'react-router-dom';
@@ -36,6 +38,7 @@ const Imaging = () => {
   const [reportText, setReportText] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { user } = useAuth();
+  const { data: clinicData } = useClinicSettings();
 
   const { data: allRequests, isLoading } = useImagingRequests();
   const { data: pendingRequests } = usePendingImagingRequests();
@@ -250,7 +253,18 @@ const Imaging = () => {
                             </div>
                             <div className="flex gap-2">
                               <Button size="sm" variant="outline" className="gap-1.5"><Eye className="h-4 w-4" />Voir image</Button>
-                              <Button size="sm" variant="outline" className="gap-1.5"><Printer className="h-4 w-4" />Imprimer</Button>
+                              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => {
+                                const p = request.patients;
+                                printResultDocument({
+                                  clinic: clinicData,
+                                  patientName: p ? `${p.first_name} ${p.last_name}` : 'Patient inconnu',
+                                  patientCode: p?.code || '',
+                                  title: 'Résultats d\'Imagerie Médicale',
+                                  subtitle: `${getExamTypeName(request.exam_type)} — ${request.body_part}`,
+                                  date: request.completed_at ? new Date(request.completed_at).toLocaleDateString('fr-FR') : '',
+                                  content: request.report || 'Aucun compte rendu',
+                                });
+                              }}><Printer className="h-4 w-4" />Imprimer</Button>
                             </div>
                           </div>
                           {request.report && (
