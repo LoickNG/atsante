@@ -99,9 +99,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
       <div class="inv-num">${invoice.invoice_number}</div>
       <div class="inv-date">Date : ${formatDate(invoice.created_at)}</div>
       <div style="margin-top:6px">
+        ${isProforma ? '<span class="status-badge" style="background:#e5e7eb;color:#374151">PRO FORMA</span>' : `
         <span class="status-badge status-${invoice.status}">
           ${invoice.status === 'paye' ? 'PAYÉ' : invoice.status === 'partiel' ? 'PARTIEL' : 'EN ATTENTE'}
-        </span>
+        </span>`}
       </div>
     </div>
   </div>
