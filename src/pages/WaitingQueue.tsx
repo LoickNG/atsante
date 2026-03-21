@@ -56,6 +56,7 @@ const WaitingQueue = () => {
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [visitType, setVisitType] = useState<'consultation' | 'urgence' | 'suivi'>('consultation');
   const [visitSpecialty, setVisitSpecialty] = useState('generaliste');
+  const specialtiesList = useSpecialties();
   const [searchPatient, setSearchPatient] = useState('');
   const [doctorSpecialty, setDoctorSpecialty] = useState<string | null>(null);
 
