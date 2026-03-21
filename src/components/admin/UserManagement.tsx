@@ -202,10 +202,11 @@ export function UserManagement() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
+                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Rôle actuel</TableHead>
+                  <TableHead>Spécialité</TableHead>
                   <TableHead>Changer le rôle</TableHead>
                 </TableRow>
               </TableHeader>
