@@ -290,7 +290,7 @@ export type Database = {
         Row: {
           body_part: string
           completed_at: string | null
-          consultation_id: string
+          consultation_id: string | null
           exam_type: string
           id: string
           image_url: string | null
@@ -304,7 +304,7 @@ export type Database = {
         Insert: {
           body_part: string
           completed_at?: string | null
-          consultation_id: string
+          consultation_id?: string | null
           exam_type: string
           id?: string
           image_url?: string | null
@@ -318,7 +318,7 @@ export type Database = {
         Update: {
           body_part?: string
           completed_at?: string | null
-          consultation_id?: string
+          consultation_id?: string | null
           exam_type?: string
           id?: string
           image_url?: string | null
@@ -505,7 +505,7 @@ export type Database = {
       lab_requests: {
         Row: {
           completed_at: string | null
-          consultation_id: string
+          consultation_id: string | null
           id: string
           patient_id: string
           priority: string
@@ -519,7 +519,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
-          consultation_id: string
+          consultation_id?: string | null
           id?: string
           patient_id: string
           priority?: string
@@ -533,7 +533,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
-          consultation_id?: string
+          consultation_id?: string | null
           id?: string
           patient_id?: string
           priority?: string

@@ -190,25 +190,24 @@ export default function Hospitalizations() {
     if (!selectedHosp || !user || !examTestType) return;
     try {
       if (examCategory === 'laboratoire') {
-        // Lab request needs a consultation_id - use the hospitalization's consultation if available
         await createLabRequest.mutateAsync({
           patient_id: selectedHosp.patient_id,
-          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          consultation_id: selectedHosp.consultation_id || undefined,
           test_type: examTestType,
           priority: examPriority,
           status: 'demande',
-        });
+        } as any);
       } else {
         await createImagingRequest.mutateAsync({
           patient_id: selectedHosp.patient_id,
-          consultation_id: selectedHosp.consultation_id || selectedHosp.id,
+          consultation_id: selectedHosp.consultation_id || undefined,
           exam_type: examTestType,
           body_part: examBodyPart,
           priority: examPriority,
           status: 'demande',
-        });
+        } as any);
       }
-      toast.success(`Demande d'examen envoyée`);
+      toast.success(`Demande d'examen envoyée au service ${examCategory === 'laboratoire' ? 'laboratoire' : 'imagerie'}`);
       setExamDialogOpen(false);
       setExamTestType(''); setExamBodyPart(''); setExamPriority('normale');
     } catch (e: any) {
@@ -711,22 +710,12 @@ export default function Hospitalizations() {
                   <SelectTrigger><SelectValue placeholder="Sélectionner une analyse..." /></SelectTrigger>
                   <SelectContent>
                     {(medicalActs || [])
-                      .filter(a => a.category === 'laboratoire')
+                      .filter(a => a.category === 'analyse')
                       .map(a => (
-                        <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
+                        <SelectItem key={a.id} value={a.name}>
+                          {a.name} — {new Intl.NumberFormat('fr-FR').format(Number(a.unit_price))} FCFA
+                        </SelectItem>
                       ))}
-                    <SelectItem value="NFS">NFS</SelectItem>
-                    <SelectItem value="Glycémie">Glycémie</SelectItem>
-                    <SelectItem value="Bilan hépatique">Bilan hépatique</SelectItem>
-                    <SelectItem value="Bilan rénal">Bilan rénal</SelectItem>
-                    <SelectItem value="Ionogramme">Ionogramme</SelectItem>
-                    <SelectItem value="CRP">CRP</SelectItem>
-                    <SelectItem value="VS">VS</SelectItem>
-                    <SelectItem value="Hémoculture">Hémoculture</SelectItem>
-                    <SelectItem value="ECBU">ECBU</SelectItem>
-                    <SelectItem value="Goutte épaisse">Goutte épaisse</SelectItem>
-                    <SelectItem value="Groupe sanguin">Groupe sanguin</SelectItem>
-                    <SelectItem value="Sérologie">Sérologie</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -737,11 +726,13 @@ export default function Hospitalizations() {
                   <Select value={examTestType} onValueChange={setExamTestType}>
                     <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Radiographie">Radiographie</SelectItem>
-                      <SelectItem value="Échographie">Échographie</SelectItem>
-                      <SelectItem value="Scanner">Scanner</SelectItem>
-                      <SelectItem value="IRM">IRM</SelectItem>
-                      <SelectItem value="ECG">ECG</SelectItem>
+                      {(medicalActs || [])
+                        .filter(a => a.category === 'imagerie')
+                        .map(a => (
+                          <SelectItem key={a.id} value={a.name}>
+                            {a.name} — {new Intl.NumberFormat('fr-FR').format(Number(a.unit_price))} FCFA
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
