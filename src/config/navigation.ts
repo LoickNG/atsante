@@ -15,6 +15,7 @@ import {
   BedDouble,
   Scissors,
   Baby,
+  Siren,
   LucideIcon,
 } from 'lucide-react';
 
@@ -63,6 +64,12 @@ export const navigationConfig: NavSection[] = [
   {
     title: 'Soins',
     items: [
+      {
+        title: 'Urgences',
+        href: '/urgences',
+        icon: Siren,
+        roles: ['admin', 'medecin', 'infirmier', 'accueil'],
+      },
       {
         title: 'Consultations',
         href: '/consultations',
