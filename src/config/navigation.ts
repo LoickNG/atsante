@@ -13,6 +13,7 @@ import {
   Activity,
   FileDown,
   BedDouble,
+  Scissors,
   LucideIcon,
 } from 'lucide-react';
 
