@@ -343,7 +343,7 @@ export default function Surgery() {
                 <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
                   <div className="space-y-2">
                     <Label>Patient *</Label>
-                    <PatientSearchSelect value={formPatientId} onChange={setFormPatientId} />
+                    <PatientSearchSelect selectedPatient={selectedPatient} onSelect={setSelectedPatient} />
                   </div>
                   <div className="space-y-2">
                     <Label>Type d'intervention *</Label>
