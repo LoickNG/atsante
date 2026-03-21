@@ -7,7 +7,8 @@ import { ConventionManagement } from '@/components/admin/ConventionManagement';
 import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement';
 import { RoomManagement } from '@/components/admin/RoomManagement';
 import { ClinicSettingsManagement } from '@/components/admin/ClinicSettingsManagement';
-import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2 } from 'lucide-react';
+import { LicenseManagement } from '@/components/admin/LicenseManagement';
+import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2, Key } from 'lucide-react';
 import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 
 export default function Settings() {
