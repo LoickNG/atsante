@@ -259,6 +259,142 @@ const Maternity = () => {
     });
   };
 
+  const printPrenatalBooklet = (admission: MaternityAdmission) => {
+    const patient = admission.patients;
+    const patientName = patient ? `${patient.first_name} ${patient.last_name}` : 'Patiente';
+    const admPrenatal = (allPrenatalVisits || [])
+      .filter(v => v.maternity_admission_id === admission.id)
+      .sort((a, b) => new Date(a.visit_date).getTime() - new Date(b.visit_date).getTime());
+
+    if (admPrenatal.length === 0) {
+      toast.error('Aucune CPN enregistrée pour cette admission');
+      return;
+    }
+
+    const clinicName = clinicData?.name || 'Ma Clinique';
+    const clinicColor = clinicData?.primary_color || '#1e40af';
+    const clinicSlogan = clinicData?.slogan || '';
+    const clinicAddress = [clinicData?.address, clinicData?.city, clinicData?.country].filter(Boolean).join(', ');
+    const clinicPhone = [clinicData?.phone, clinicData?.phone2].filter(Boolean).join(' / ');
+    const logoHtml = clinicData?.logo_url ? `<img src="${clinicData.logo_url}" style="height:40px;object-fit:contain;" />` : '';
+
+    const riskLabel = riskLevels.find(r => r.value === admission.risk_level)?.label || admission.risk_level;
+    const pregLabel = pregnancyTypes.find(p => p.value === admission.pregnancy_type)?.label || admission.pregnancy_type;
+
+    const visitRows = admPrenatal.map((v, i) => `
+      <tr>
+        <td style="text-align:center;font-weight:600;">CPN ${i + 1}</td>
+        <td>${new Date(v.visit_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+        <td style="text-align:center;">${v.gestational_weeks ?? '-'}</td>
+        <td style="text-align:center;">${v.weight_kg ?? '-'}</td>
+        <td style="text-align:center;">${v.blood_pressure || '-'}</td>
+        <td style="text-align:center;">${v.uterine_height_cm ?? '-'}</td>
+        <td style="text-align:center;">${v.fetal_heart_rate ?? '-'}</td>
+        <td style="text-align:center;">${v.presentation || '-'}</td>
+        <td style="text-align:center;">${v.edema || '-'}</td>
+      </tr>
+    `).join('');
+
+    const detailBlocks = admPrenatal.map((v, i) => {
+      const details: string[] = [];
+      if (v.urine_protein) details.push(`Protéinurie: ${v.urine_protein}`);
+      if (v.blood_sugar) details.push(`Glycémie: ${v.blood_sugar}`);
+      if (v.hemoglobin) details.push(`Hémoglobine: ${v.hemoglobin} g/dL`);
+      if (v.ultrasound_notes) details.push(`Échographie${v.ultrasound_date ? ' (' + new Date(v.ultrasound_date).toLocaleDateString('fr-FR') + ')' : ''}: ${v.ultrasound_notes}`);
+      if (v.lab_notes) details.push(`Analyses: ${v.lab_notes}`);
+      if (v.vaccinations) details.push(`Vaccinations: ${v.vaccinations}`);
+      if (v.complications) details.push(`⚠ Complications: ${v.complications}`);
+      if (v.recommendations) details.push(`Recommandations: ${v.recommendations}`);
+      if (v.notes) details.push(`Notes: ${v.notes}`);
+      if (v.next_appointment) details.push(`Prochain RDV: ${new Date(v.next_appointment).toLocaleDateString('fr-FR')}`);
+
+      if (details.length === 0) return '';
+      return `
+        <div style="margin-bottom:12px;page-break-inside:avoid;">
+          <div style="font-weight:600;font-size:11px;color:${clinicColor};margin-bottom:4px;">
+            CPN ${i + 1} — ${new Date(v.visit_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </div>
+          <div style="padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;line-height:1.8;">
+            ${details.join('<br/>')}
+          </div>
+        </div>`;
+    }).filter(Boolean).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><title>Carnet de suivi prénatal</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',Tahoma,sans-serif; font-size:11px; color:#1a1a1a; padding:12mm; }
+  .header { display:flex; align-items:center; gap:16px; border-bottom:3px solid ${clinicColor}; padding-bottom:12px; margin-bottom:16px; }
+  .header-info h1 { font-size:18px; color:${clinicColor}; }
+  .header-info .slogan { font-size:9px; color:#666; font-style:italic; }
+  .header-info .contact { font-size:8px; color:#888; margin-top:4px; }
+  .title-box { text-align:center; padding:10px; background:${clinicColor}11; border-radius:6px; margin-bottom:16px; }
+  .title-box h2 { font-size:15px; color:${clinicColor}; text-transform:uppercase; letter-spacing:1px; }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; padding:12px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; }
+  .info-item { font-size:11px; }
+  .info-item .label { color:#666; font-size:10px; }
+  .info-item .value { font-weight:600; }
+  table { width:100%; border-collapse:collapse; margin-bottom:16px; font-size:10px; }
+  th { background:${clinicColor}; color:white; padding:6px 4px; text-align:center; font-size:9px; text-transform:uppercase; letter-spacing:0.5px; }
+  td { padding:5px 4px; border-bottom:1px solid #e2e8f0; }
+  tr:nth-child(even) { background:#f8fafc; }
+  .section-title { font-size:12px; font-weight:700; color:${clinicColor}; margin:16px 0 8px; padding-bottom:4px; border-bottom:1px solid ${clinicColor}44; }
+  .footer { margin-top:30px; border-top:1px solid #e2e8f0; padding-top:8px; text-align:center; font-size:7px; color:#aaa; }
+  @media print { body { padding:8mm; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    ${logoHtml}
+    <div class="header-info">
+      <h1>${clinicName}</h1>
+      ${clinicSlogan ? `<div class="slogan">${clinicSlogan}</div>` : ''}
+      <div class="contact">${clinicAddress}${clinicPhone ? ' — Tél: ' + clinicPhone : ''}</div>
+    </div>
+  </div>
+
+  <div class="title-box">
+    <h2>Carnet de Suivi Prénatal</h2>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item"><span class="label">Patiente:</span> <span class="value">${patientName}</span></div>
+    <div class="info-item"><span class="label">Code:</span> <span class="value">${patient?.code || ''}</span></div>
+    <div class="info-item"><span class="label">Date de naissance:</span> <span class="value">${patient?.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString('fr-FR') : '-'}</span></div>
+    <div class="info-item"><span class="label">Téléphone:</span> <span class="value">${patient?.phone || '-'}</span></div>
+    <div class="info-item"><span class="label">Gestité / Parité:</span> <span class="value">G${admission.gravida} P${admission.para}</span></div>
+    <div class="info-item"><span class="label">Type de grossesse:</span> <span class="value">${pregLabel}</span></div>
+    <div class="info-item"><span class="label">Groupe sanguin:</span> <span class="value">${admission.blood_group || '-'} ${admission.rhesus || ''}</span></div>
+    <div class="info-item"><span class="label">Niveau de risque:</span> <span class="value">${riskLabel}</span></div>
+    <div class="info-item"><span class="label">DPA:</span> <span class="value">${admission.expected_due_date ? new Date(admission.expected_due_date).toLocaleDateString('fr-FR') : '-'}</span></div>
+    <div class="info-item"><span class="label">Date d'admission:</span> <span class="value">${new Date(admission.admission_date).toLocaleDateString('fr-FR')}</span></div>
+  </div>
+
+  <div class="section-title">Tableau récapitulatif des consultations (${admPrenatal.length} CPN)</div>
+  <table>
+    <thead>
+      <tr>
+        <th>CPN</th><th>Date</th><th>SA</th><th>Poids (kg)</th><th>TA</th><th>HU (cm)</th><th>BCF (bpm)</th><th>Présentation</th><th>Œdème</th>
+      </tr>
+    </thead>
+    <tbody>${visitRows}</tbody>
+  </table>
+
+  ${detailBlocks ? `<div class="section-title">Détails des consultations</div>${detailBlocks}` : ''}
+
+  <div class="footer">
+    ${clinicName} — ${clinicAddress} ${clinicPhone ? '— Tél: ' + clinicPhone : ''} — Document imprimé le ${new Date().toLocaleDateString('fr-FR')}
+  </div>
+
+  <script>setTimeout(function() { window.print(); window.close(); }, 400);<\/script>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
+  };
+
   if (isLoading) {
     return (
       <AppLayout>
