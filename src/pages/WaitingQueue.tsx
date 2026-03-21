@@ -37,10 +37,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePatients } from '@/hooks/usePatients';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
+import { supabase } from '@/integrations/supabase/client';
 
 const WaitingQueue = () => {
   const { user, role } = useAuth();
