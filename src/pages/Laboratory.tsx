@@ -333,24 +333,57 @@ const Laboratory = () => {
           <TabsContent value="completed">
             <Card>
               <CardHeader>
-                <CardTitle>Résultats d'analyses</CardTitle>
-                <CardDescription>
-                  {selectedPatient
-                    ? `Résultats pour ${selectedPatient.first_name} ${selectedPatient.last_name}`
-                    : 'Analyses terminées, regroupées par patient et consultation'}
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>Résultats d'analyses</CardTitle>
+                    <CardDescription>
+                      {selectedPatient
+                        ? `Résultats pour ${selectedPatient.first_name} ${selectedPatient.last_name}`
+                        : 'Analyses terminées, regroupées par patient et consultation'}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", !dateFrom && "text-muted-foreground")}>
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          {dateFrom ? format(dateFrom, 'dd MMM yyyy', { locale: fr }) : 'Du'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className={cn("gap-1.5 text-xs", !dateTo && "text-muted-foreground")}>
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          {dateTo ? format(dateTo, 'dd MMM yyyy', { locale: fr }) : 'Au'}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+                      </PopoverContent>
+                    </Popover>
+                    {(dateFrom || dateTo) && (
+                      <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                {patientCompletedRequests.length === 0 ? (
+                {filteredCompletedRequests.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <FlaskConical className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                    <p>Aucun résultat disponible</p>
+                    <p>Aucun résultat disponible{(dateFrom || dateTo) ? ' pour cette période' : ''}</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {(() => {
                       // Group by patient
-                      const byPatient = patientCompletedRequests.reduce<Record<string, LabRequestWithPatient[]>>((acc, r) => {
+                      const byPatient = filteredCompletedRequests.reduce<Record<string, LabRequestWithPatient[]>>((acc, r) => {
                         if (!acc[r.patient_id]) acc[r.patient_id] = [];
                         acc[r.patient_id].push(r);
                         return acc;
