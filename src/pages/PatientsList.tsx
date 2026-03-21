@@ -312,6 +312,7 @@ const PatientsList = () => {
             <DeceasedPatientActions patient={selectedPatient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
           </>
         )}
+        <QRScannerDialog open={qrScannerOpen} onOpenChange={setQrScannerOpen} />
       </div>
     </AppLayout>
   );
