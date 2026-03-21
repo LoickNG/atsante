@@ -232,6 +232,9 @@ export default function Emergency() {
     setOrientDialogOpen(true);
   };
 
+  const [showInvoicePrompt, setShowInvoicePrompt] = useState(false);
+  const [orientedPatientId, setOrientedPatientId] = useState<string | null>(null);
+
   const handleOrient = async () => {
     if (!selectedVisit) return;
     try {
@@ -244,9 +247,18 @@ export default function Emergency() {
       });
       toast({ title: 'Patient orienté', description: ORIENTATION_OPTIONS.find(o => o.value === orientation)?.label });
       setOrientDialogOpen(false);
+      // Prompt for invoice generation
+      if (orientation !== 'deces') {
+        setOrientedPatientId(selectedVisit.patient_id);
+        setShowInvoicePrompt(true);
+      }
     } catch (e: any) {
       toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
     }
+  };
+
+  const handleGoToInvoice = (patientId: string) => {
+    navigate(`/facturation?patient_id=${patientId}`);
   };
 
   return (
