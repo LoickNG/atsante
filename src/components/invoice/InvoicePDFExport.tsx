@@ -22,6 +22,9 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 
   const handlePrint = () => {
     const patient = invoice.patient;
+    const isProforma = (invoice as any).is_proforma;
+    const discountPct = Number((invoice as any).discount_percent || 0);
+    const discountAmt = Number((invoice as any).discount_amount || 0);
     const total = Number(invoice.total_amount);
     const paid = Number(invoice.paid_amount);
     const reste = total - paid;
