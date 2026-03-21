@@ -502,7 +502,7 @@ const Maternity = () => {
                                 <p className="text-sm text-muted-foreground text-center py-4">Aucune CPN enregistrée</p>
                               ) : (<>
                                 <PrenatalCharts visits={admPrenatal} />
-                                admPrenatal.map((visit, idx) => (
+                                {admPrenatal.map((visit, idx) => (
                                   <div key={visit.id} className="p-3 border rounded-lg bg-card">
                                     <div className="flex items-center justify-between mb-2">
                                       <Badge variant="secondary" className="text-xs">
