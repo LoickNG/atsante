@@ -517,8 +517,8 @@ const WaitingQueue = () => {
                   </div>
                 </div>
               );
-            })
-          )}
+            });
+          })()}
         </div>
 
         {/* Vital Signs Dialog */}
