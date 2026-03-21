@@ -313,6 +313,7 @@ export default function Extracts() {
             ))}
           </div>
         )}
+        </Tabs>
       </div>
     </AppLayout>
   );
