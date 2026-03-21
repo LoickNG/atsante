@@ -55,7 +55,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Facture ${invoice.invoice_number}</title>
+<title>${isProforma ? 'PRO FORMA' : 'Facture'} ${invoice.invoice_number}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #1a1a1a; padding: 15mm; }
