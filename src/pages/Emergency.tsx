@@ -442,6 +442,7 @@ export default function Emergency() {
                         <TableHead>Diagnostic</TableHead>
                         <TableHead>Orientation</TableHead>
                         <TableHead>Statut</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
