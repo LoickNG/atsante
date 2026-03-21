@@ -156,10 +156,14 @@ export default function Billing() {
   }, [priceOverrides]);
 
   const selectedBillable = (billableItems || []).filter((_, i) => selectedItems.has(i));
-  const invoiceTotal = selectedBillable.reduce((s, item) => {
+  const invoiceSubtotal = selectedBillable.reduce((s, item) => {
     const idx = (billableItems || []).indexOf(item);
     return s + item.quantity * getItemPrice(item, idx);
   }, 0);
+  // Discount for non-convention patients
+  const effectiveDiscount = !patientConvention && discountPercent > 0 ? discountPercent : 0;
+  const discountAmt = Math.round(invoiceSubtotal * effectiveDiscount / 100);
+  const invoiceTotal = invoiceSubtotal - discountAmt;
   const companyAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.company_coverage_percent / 100) : 0;
   const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
   const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
