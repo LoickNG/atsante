@@ -523,6 +523,7 @@ export default function Billing() {
                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Statut" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="proforma">Pro Forma</SelectItem>
                   <SelectItem value="en_attente">En attente</SelectItem>
                   <SelectItem value="partiel">Partiel</SelectItem>
                   <SelectItem value="paye">Payé</SelectItem>
