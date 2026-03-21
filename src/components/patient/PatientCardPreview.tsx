@@ -187,10 +187,14 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
           <div className="w-full max-w-[380px] rounded-xl border-2 border-dashed overflow-hidden bg-card" style={{ aspectRatio: '85.6/54' }}>
             
             {/* Header - Blue band with logo */}
-            <div className="bg-[hsl(200,40%,62%)] text-white px-3 py-2 flex items-center gap-2 border-b-[3px] border-destructive">
-              <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center shrink-0">
-                <Cross className="h-4 w-4 text-white" fill="white" />
-              </div>
+            <div className="text-white px-3 py-2 flex items-center gap-2 border-b-[3px] border-destructive" style={{ backgroundColor: HOSPITAL.color }}>
+              {HOSPITAL.logo_url ? (
+                <img src={HOSPITAL.logo_url} alt="" className="h-8 w-8 object-contain rounded shrink-0" />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center shrink-0">
+                  <Cross className="h-4 w-4 text-white" fill="white" />
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="font-black text-[12px] leading-tight tracking-wide">{HOSPITAL.name}</p>
                 <p className="text-[8px] font-semibold leading-tight">{HOSPITAL.subtitle} — {HOSPITAL.address}</p>
