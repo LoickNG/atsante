@@ -15,7 +15,9 @@ import {
   Thermometer,
   Heart,
   Activity,
+  QrCode,
 } from 'lucide-react';
+import { QRScannerDialog } from '@/components/patient/QRScannerDialog';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useWaitingQueue, useTodayVisits, useUpdateVisit, useCreateVisit } from '@/hooks/useVisits';
