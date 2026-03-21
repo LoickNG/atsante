@@ -33,15 +33,28 @@ export function usePatientBillableItems(patientId: string | undefined) {
       const invoiceIds = (existingInvoices || []).map(i => i.id);
 
       let billedReferenceIds: string[] = [];
+      let billedDescriptions: Set<string> = new Set();
       if (invoiceIds.length > 0) {
         const { data: billedItems } = await supabase
           .from('invoice_items')
-          .select('reference_id')
+          .select('reference_id, description, type')
           .in('invoice_id', invoiceIds);
         billedReferenceIds = (billedItems || [])
           .map(i => i.reference_id)
           .filter(Boolean) as string[];
+        // Also track descriptions for items without reference_id (legacy invoices)
+        for (const item of billedItems || []) {
+          if (item.description && item.type) {
+            billedDescriptions.add(`${item.type}::${item.description}`);
+          }
+        }
       }
+
+      const isAlreadyBilled = (refId: string, type: string, description: string): boolean => {
+        if (billedReferenceIds.includes(refId)) return true;
+        // Fallback: match by type+description for legacy items without reference_id
+        return billedDescriptions.has(`${type}::${description}`);
+      };
 
       const items: BillableItem[] = [];
 
@@ -62,10 +75,11 @@ export function usePatientBillableItems(patientId: string | undefined) {
       const consultActName = consultActs?.[0]?.name || 'Consultation';
 
       for (const c of consultations || []) {
-        if (!billedReferenceIds.includes(c.id)) {
+        const desc = `${consultActName} du ${new Date(c.date).toLocaleDateString('fr-FR')}`;
+        if (!isAlreadyBilled(c.id, 'consultation', desc)) {
           items.push({
             type: 'consultation',
-            description: `${consultActName} du ${new Date(c.date).toLocaleDateString('fr-FR')}`,
+            description: desc,
             quantity: 1,
             unit_price: defaultConsultPrice,
             reference_id: c.id,
@@ -82,11 +96,12 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .in('consultation_id', (consultations || []).map(c => c.id));
 
       for (const p of (prescriptions || []) as any[]) {
-        if (!billedReferenceIds.includes(p.id)) {
-          const med = p.medications;
+        const med = p.medications;
+        const medDesc = med?.name || 'Médicament';
+        if (!isAlreadyBilled(p.id, 'medicament', medDesc)) {
           items.push({
             type: 'medicament',
-            description: med?.name || 'Médicament',
+            description: medDesc,
             quantity: p.quantity || 1,
             unit_price: med?.unit_price ? Number(med.unit_price) : 0,
             reference_id: p.id,
@@ -109,14 +124,11 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .in('category', ['laboratoire', 'analyse']);
 
       for (const lr of labRequests || []) {
-        if (!billedReferenceIds.includes(lr.id)) {
-          // Improved fuzzy matching: check if either string contains words from the other
+        if (!isAlreadyBilled(lr.id, 'analyse', lr.test_type)) {
           const testLower = lr.test_type.toLowerCase();
           const matchAct = (labActs || []).find(a => {
             const actLower = a.name.toLowerCase();
-            // Direct contains
             if (actLower.includes(testLower) || testLower.includes(actLower)) return true;
-            // Word-based matching: extract significant words (3+ chars) and check overlap
             const testWords = testLower.split(/[\s(),\-\/]+/).filter(w => w.length >= 3);
             const actWords = actLower.split(/[\s(),\-\/]+/).filter(w => w.length >= 3);
             const matchCount = testWords.filter(tw => actWords.some(aw => aw.includes(tw) || tw.includes(aw))).length;
@@ -157,8 +169,8 @@ export function usePatientBillableItems(patientId: string | undefined) {
       };
 
       for (const ir of imagingRequests || []) {
-        if (!billedReferenceIds.includes(ir.id)) {
-          const examLabel = `${ir.exam_type} - ${ir.body_part}`;
+        const examLabel = `${ir.exam_type} - ${ir.body_part}`;
+        if (!isAlreadyBilled(ir.id, 'imagerie', examLabel)) {
           const examLower = ir.exam_type.toLowerCase();
           const aliases = examTypeAliases[examLower] || [examLower];
           
@@ -191,10 +203,11 @@ export function usePatientBillableItems(patientId: string | undefined) {
           .in('hospitalization_id', hospIds);
 
         for (const ci of (careItems || []) as any[]) {
-          if (!billedReferenceIds.includes(ci.id) && Number(ci.total_price) > 0) {
+          const careDesc = `${ci.care_type}: ${ci.description}`;
+          if (!isAlreadyBilled(ci.id, 'soin_hospitalisation', careDesc) && Number(ci.total_price) > 0) {
             items.push({
               type: 'soin_hospitalisation',
-              description: `${ci.care_type}: ${ci.description}`,
+              description: careDesc,
               quantity: ci.quantity || 1,
               unit_price: Number(ci.unit_price) || 0,
               reference_id: ci.id,
@@ -212,18 +225,21 @@ export function usePatientBillableItems(patientId: string | undefined) {
         .not('room_id', 'is', null);
 
       for (const h of (hospWithRooms || []) as any[]) {
-        if (!billedReferenceIds.includes(h.id) && h.rooms?.price_per_night > 0) {
+        if (h.rooms?.price_per_night > 0) {
           const start = new Date(h.admission_date);
           const end = h.discharge_date ? new Date(h.discharge_date) : new Date();
           const days = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-          items.push({
-            type: 'hebergement',
-            description: `Hébergement chambre ${h.rooms.room_number} (${days} jour${days > 1 ? 's' : ''})`,
-            quantity: days,
-            unit_price: Number(h.rooms.price_per_night),
-            reference_id: h.id,
-            source_table: 'hospitalizations',
-          });
+          const hebDesc = `Hébergement chambre ${h.rooms.room_number} (${days} jour${days > 1 ? 's' : ''})`;
+          if (!isAlreadyBilled(h.id, 'hebergement', hebDesc)) {
+            items.push({
+              type: 'hebergement',
+              description: hebDesc,
+              quantity: days,
+              unit_price: Number(h.rooms.price_per_night),
+              reference_id: h.id,
+              source_table: 'hospitalizations',
+            });
+          }
         }
       }
 
