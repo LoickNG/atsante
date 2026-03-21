@@ -55,7 +55,19 @@ const WaitingQueue = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [visitType, setVisitType] = useState<'consultation' | 'urgence' | 'suivi'>('consultation');
+  const [visitSpecialty, setVisitSpecialty] = useState('generaliste');
   const [searchPatient, setSearchPatient] = useState('');
+  const [doctorSpecialty, setDoctorSpecialty] = useState<string | null>(null);
+
+  // Fetch current user's specialty if they are a doctor
+  useEffect(() => {
+    if (user && role === 'medecin') {
+      supabase.from('profiles').select('specialty').eq('user_id', user.id).single()
+        .then(({ data }) => {
+          if (data?.specialty) setDoctorSpecialty(data.specialty as string);
+        });
+    }
+  }, [user, role]);
   
   // Vital signs dialog state
   const [isVitalsDialogOpen, setIsVitalsDialogOpen] = useState(false);
