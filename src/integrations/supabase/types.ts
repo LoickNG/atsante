@@ -676,6 +676,36 @@ export type Database = {
         }
         Relationships: []
       }
+      operating_rooms: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          name: string
+          notes: string | null
+          room_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          name: string
+          notes?: string | null
+          room_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          name?: string
+          notes?: string | null
+          room_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_companies: {
         Row: {
           address: string | null
@@ -1048,6 +1078,82 @@ export type Database = {
             columns: ["medication_id"]
             isOneToOne: false
             referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      surgeries: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          doctor_id: string
+          estimated_duration_minutes: number
+          hospitalization_id: string | null
+          id: string
+          notes: string | null
+          operating_room_id: string
+          patient_id: string
+          scheduled_date: string
+          started_at: string | null
+          status: string
+          surgery_type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          doctor_id: string
+          estimated_duration_minutes?: number
+          hospitalization_id?: string | null
+          id?: string
+          notes?: string | null
+          operating_room_id: string
+          patient_id: string
+          scheduled_date: string
+          started_at?: string | null
+          status?: string
+          surgery_type: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          doctor_id?: string
+          estimated_duration_minutes?: number
+          hospitalization_id?: string | null
+          id?: string
+          notes?: string | null
+          operating_room_id?: string
+          patient_id?: string
+          scheduled_date?: string
+          started_at?: string | null
+          status?: string
+          surgery_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surgeries_hospitalization_id_fkey"
+            columns: ["hospitalization_id"]
+            isOneToOne: false
+            referencedRelation: "hospitalizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surgeries_operating_room_id_fkey"
+            columns: ["operating_room_id"]
+            isOneToOne: false
+            referencedRelation: "operating_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surgeries_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
