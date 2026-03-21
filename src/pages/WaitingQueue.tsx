@@ -339,6 +339,8 @@ const WaitingQueue = () => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <QRScannerDialog open={isQRScannerOpen} onOpenChange={setIsQRScannerOpen} />
+            </div>
           )}
         </PageHeader>
 
