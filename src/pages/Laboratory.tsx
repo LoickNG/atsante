@@ -38,6 +38,8 @@ import { useLabRequests, usePendingLabRequests, useUpdateLabRequest, LabRequestW
 import { useAuth } from '@/hooks/useAuth';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { printResultDocument } from '@/utils/printResult';
 import { Link } from 'react-router-dom';
 
 const Laboratory = () => {

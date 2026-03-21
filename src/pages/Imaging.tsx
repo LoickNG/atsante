@@ -18,6 +18,8 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useImagingRequests, usePendingImagingRequests, useUpdateImagingRequest, ImagingRequestWithPatient } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { printResultDocument } from '@/utils/printResult';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
 import { Link } from 'react-router-dom';
