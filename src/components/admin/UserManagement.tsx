@@ -42,7 +42,7 @@ export function UserManagement() {
     setLoading(true);
     try {
       const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
-        supabase.from('profiles').select('user_id, email, full_name, created_at'),
+        supabase.from('profiles').select('user_id, email, full_name, specialty, created_at'),
         supabase.from('user_roles').select('user_id, role'),
       ]);
       if (pErr) throw pErr;
@@ -54,6 +54,7 @@ export function UserManagement() {
         email: p.email,
         full_name: p.full_name,
         role: rolesMap.get(p.user_id) || null,
+        specialty: (p as any).specialty || null,
         created_at: p.created_at,
       })));
     } catch (error) {
