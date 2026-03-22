@@ -169,7 +169,8 @@ export default function Billing() {
   const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
   const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
 
-  const handleGenerateInvoice = async () => {
+  const handleGenerateInvoice = async (proforma?: boolean) => {
+    const useProforma = proforma ?? isProforma;
     if (!selectedPatient || selectedBillable.length === 0) {
       toast({ title: 'Erreur', description: 'Sélectionnez au moins une prestation', variant: 'destructive' });
       return;
@@ -196,11 +197,11 @@ export default function Billing() {
         company_amount: companyAmount,
         insurance_amount: insuranceAmount,
         patient_amount: patientAmount,
-        is_proforma: isProforma,
+        is_proforma: useProforma,
         discount_percent: effectiveDiscount,
         discount_amount: discountAmt,
       } as any);
-      toast({ title: isProforma ? 'Facture pro forma générée' : 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
+      toast({ title: useProforma ? 'Facture pro forma générée' : 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
       resetSearch();
     } catch (error: any) {
       console.error('[Billing] Full error:', error);
