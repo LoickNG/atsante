@@ -234,6 +234,11 @@ const Consultations = () => {
         status: 'termine',
       });
 
+      let labCreated = 0;
+      let imagingCreated = 0;
+      let labErrors = 0;
+      let imagingErrors = 0;
+
       for (const p of prescriptions) {
         const medName = p.isCustom ? p.medicationName : (medications || []).find(m => m.id === p.medicationId)?.name || '';
         if (p.medicationId || p.medicationName) {
@@ -252,38 +257,64 @@ const Consultations = () => {
       for (const testId of selectedLabTests) {
         const act = (labActs || []).find(a => a.id === testId);
         if (act) {
-          await createLabRequest.mutateAsync({
-            consultation_id: consultation.id,
-            patient_id: selectedPatient.id,
-            test_type: act.name,
-            priority: 'normale',
-          });
+          try {
+            await createLabRequest.mutateAsync({
+              consultation_id: consultation.id,
+              patient_id: selectedPatient.id,
+              test_type: act.name,
+              priority: 'normale',
+            });
+            labCreated++;
+          } catch (err) {
+            console.error('[Consultation] Erreur création analyse:', act.name, err);
+            labErrors++;
+          }
         }
       }
 
       for (const examId of selectedImagingExams) {
         const act = (imagingActs || []).find(a => a.id === examId);
         if (act) {
-          await createImagingRequest.mutateAsync({
-            consultation_id: consultation.id,
-            patient_id: selectedPatient.id,
-            exam_type: act.name,
-            body_part: imagingBodyPart || 'Non précisé',
-            priority: 'normale',
-          });
+          try {
+            await createImagingRequest.mutateAsync({
+              consultation_id: consultation.id,
+              patient_id: selectedPatient.id,
+              exam_type: act.name,
+              body_part: imagingBodyPart || 'Non précisé',
+              priority: 'normale',
+            });
+            imagingCreated++;
+          } catch (err) {
+            console.error('[Consultation] Erreur création imagerie:', act.name, err);
+            imagingErrors++;
+          }
         }
       }
 
       await updateVisit.mutateAsync({ id: selectedVisit.id, status: 'termine' });
 
-      toast.success(
-        <div className="flex flex-col gap-1">
-          <span className="font-semibold">Consultation enregistrée</span>
-          <span className="text-sm">
-            {prescriptions.filter(p => p.medicationId || p.medicationName).length} prescription(s), {selectedLabTests.length} analyse(s), {selectedImagingExams.length} imagerie(s)
-          </span>
-        </div>
-      );
+      const errorCount = labErrors + imagingErrors;
+      if (errorCount > 0) {
+        toast.warning(
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold">Consultation enregistrée avec des erreurs</span>
+            <span className="text-sm">
+              {labErrors > 0 && `${labErrors} analyse(s) non envoyée(s). `}
+              {imagingErrors > 0 && `${imagingErrors} imagerie(s) non envoyée(s). `}
+              Vérifiez les permissions.
+            </span>
+          </div>
+        );
+      } else {
+        toast.success(
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold">Consultation enregistrée</span>
+            <span className="text-sm">
+              {prescriptions.filter(p => p.medicationId || p.medicationName).length} prescription(s), {labCreated} analyse(s), {imagingCreated} imagerie(s)
+            </span>
+          </div>
+        );
+      }
       setSelectedVisit(null);
     } catch (error) {
       console.error('Erreur:', error);

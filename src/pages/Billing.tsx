@@ -169,7 +169,8 @@ export default function Billing() {
   const insuranceAmount = patientConvention ? Math.round(invoiceTotal * patientConvention.insurance_coverage_percent / 100) : 0;
   const patientAmount = patientConvention ? invoiceTotal - companyAmount - insuranceAmount : invoiceTotal;
 
-  const handleGenerateInvoice = async () => {
+  const handleGenerateInvoice = async (proforma?: boolean) => {
+    const useProforma = proforma ?? isProforma;
     if (!selectedPatient || selectedBillable.length === 0) {
       toast({ title: 'Erreur', description: 'Sélectionnez au moins une prestation', variant: 'destructive' });
       return;
@@ -196,11 +197,11 @@ export default function Billing() {
         company_amount: companyAmount,
         insurance_amount: insuranceAmount,
         patient_amount: patientAmount,
-        is_proforma: isProforma,
+        is_proforma: useProforma,
         discount_percent: effectiveDiscount,
         discount_amount: discountAmt,
       } as any);
-      toast({ title: isProforma ? 'Facture pro forma générée' : 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
+      toast({ title: useProforma ? 'Facture pro forma générée' : 'Facture générée', description: `Montant total : ${formatCurrency(invoiceTotal)}` });
       resetSearch();
     } catch (error: any) {
       console.error('[Billing] Full error:', error);
@@ -456,28 +457,30 @@ export default function Billing() {
                         </div>
                       )}
 
-                      {/* Proforma toggle */}
-                      <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                        <Checkbox
-                          id="proforma"
-                          checked={isProforma}
-                          onCheckedChange={(v) => setIsProforma(!!v)}
-                        />
-                        <Label htmlFor="proforma" className="text-sm cursor-pointer">
-                          Facture Pro Forma (devis estimatif, non comptabilisée)
-                        </Label>
+                      {/* Two separate buttons: regular invoice + pro forma */}
+                      <div className="flex gap-3">
+                        <Button
+                          className="flex-1 gap-2 h-11"
+                          size="lg"
+                          onClick={() => handleGenerateInvoice(false)}
+                          disabled={selectedItems.size === 0 || createInvoice.isPending}
+                        >
+                          {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <Receipt className="h-4 w-4" />
+                          Facturer — {formatCurrency(invoiceTotal)}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="gap-2 h-11"
+                          size="lg"
+                          onClick={() => handleGenerateInvoice(true)}
+                          disabled={selectedItems.size === 0 || createInvoice.isPending}
+                        >
+                          {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <FileText className="h-4 w-4" />
+                          Pro Forma
+                        </Button>
                       </div>
-
-                      <Button
-                        className="w-full gap-2 h-11"
-                        size="lg"
-                        onClick={handleGenerateInvoice}
-                        disabled={selectedItems.size === 0 || createInvoice.isPending}
-                      >
-                        {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                        <Receipt className="h-4 w-4" />
-                        {isProforma ? 'Générer le pro forma' : 'Générer la facture'} — {formatCurrency(invoiceTotal)}
-                      </Button>
                     </div>
                   </div>
                 )}
