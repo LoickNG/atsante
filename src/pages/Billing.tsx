@@ -456,28 +456,30 @@ export default function Billing() {
                         </div>
                       )}
 
-                      {/* Proforma toggle */}
-                      <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
-                        <Checkbox
-                          id="proforma"
-                          checked={isProforma}
-                          onCheckedChange={(v) => setIsProforma(!!v)}
-                        />
-                        <Label htmlFor="proforma" className="text-sm cursor-pointer">
-                          Facture Pro Forma (devis estimatif, non comptabilisée)
-                        </Label>
+                      {/* Two separate buttons: regular invoice + pro forma */}
+                      <div className="flex gap-3">
+                        <Button
+                          className="flex-1 gap-2 h-11"
+                          size="lg"
+                          onClick={() => { setIsProforma(false); setTimeout(() => handleGenerateInvoice(), 0); }}
+                          disabled={selectedItems.size === 0 || createInvoice.isPending}
+                        >
+                          {createInvoice.isPending && !isProforma && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <Receipt className="h-4 w-4" />
+                          Facturer — {formatCurrency(invoiceTotal)}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="gap-2 h-11"
+                          size="lg"
+                          onClick={() => { setIsProforma(true); setTimeout(() => handleGenerateInvoice(), 0); }}
+                          disabled={selectedItems.size === 0 || createInvoice.isPending}
+                        >
+                          {createInvoice.isPending && isProforma && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <FileText className="h-4 w-4" />
+                          Pro Forma
+                        </Button>
                       </div>
-
-                      <Button
-                        className="w-full gap-2 h-11"
-                        size="lg"
-                        onClick={handleGenerateInvoice}
-                        disabled={selectedItems.size === 0 || createInvoice.isPending}
-                      >
-                        {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                        <Receipt className="h-4 w-4" />
-                        {isProforma ? 'Générer le pro forma' : 'Générer la facture'} — {formatCurrency(invoiceTotal)}
-                      </Button>
                     </div>
                   </div>
                 )}
