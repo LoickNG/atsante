@@ -462,10 +462,10 @@ export default function Billing() {
                         <Button
                           className="flex-1 gap-2 h-11"
                           size="lg"
-                          onClick={() => { setIsProforma(false); setTimeout(() => handleGenerateInvoice(), 0); }}
+                          onClick={() => handleGenerateInvoice(false)}
                           disabled={selectedItems.size === 0 || createInvoice.isPending}
                         >
-                          {createInvoice.isPending && !isProforma && <Loader2 className="h-4 w-4 animate-spin" />}
+                          {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                           <Receipt className="h-4 w-4" />
                           Facturer — {formatCurrency(invoiceTotal)}
                         </Button>
@@ -473,10 +473,10 @@ export default function Billing() {
                           variant="outline"
                           className="gap-2 h-11"
                           size="lg"
-                          onClick={() => { setIsProforma(true); setTimeout(() => handleGenerateInvoice(), 0); }}
+                          onClick={() => handleGenerateInvoice(true)}
                           disabled={selectedItems.size === 0 || createInvoice.isPending}
                         >
-                          {createInvoice.isPending && isProforma && <Loader2 className="h-4 w-4 animate-spin" />}
+                          {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                           <FileText className="h-4 w-4" />
                           Pro Forma
                         </Button>
