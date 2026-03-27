@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -164,8 +165,9 @@ export default function Profile() {
   };
 
   return (
-    <AppLayout title="Mon Profil" subtitle="Gérez vos informations personnelles">
+    <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6">
+        <PageHeader title="Mon Profil" description="Gérez vos informations personnelles" />
         {/* Profile Card */}
         <Card>
           <CardHeader>
