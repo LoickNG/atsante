@@ -117,6 +117,7 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
           if (userIds.includes(staffUserId) && userIds.includes(user!.id) && userIds.length === 2) {
             setActiveConversation(conv);
             setView('chat');
+            markAsRead(conv.id);
             setSearchTerm('');
             return;
           }
@@ -134,6 +135,7 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
       participant_names: [staffMap.get(staffUserId) || 'Inconnu'],
     });
     setView('chat');
+    markAsRead(conv.id);
     setSearchTerm('');
   };
 
@@ -217,7 +219,7 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                             <button
                               key={conv.id}
                               className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
-                              onClick={() => { setActiveConversation(conv); setView('chat'); }}
+                              onClick={() => { setActiveConversation(conv); setView('chat'); markAsRead(conv.id); }}
                             >
                               <Avatar className="h-9 w-9 shrink-0">
                                 <AvatarFallback className="text-xs bg-primary/10 text-primary">
