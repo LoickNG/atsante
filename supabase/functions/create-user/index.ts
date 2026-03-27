@@ -110,13 +110,18 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create profile with service
+    // Get caller's clinic_id
+    const { data: callerProfile } = await adminClient.from("profiles").select("clinic_id").eq("user_id", caller.id).single();
+    const callerClinicId = callerProfile?.clinic_id || null;
+
+    // Create profile with service and clinic_id
     await adminClient.from("profiles").insert({
       user_id: newUser.user!.id,
       email: email.trim(),
       full_name: full_name.trim(),
       specialty: role === "medecin" && specialty ? specialty : null,
       service_id: service_id || null,
+      clinic_id: callerClinicId,
     });
 
     // Assign role
