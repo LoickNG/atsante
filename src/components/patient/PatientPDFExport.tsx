@@ -76,10 +76,18 @@ function buildReportHTML(
   prescriptions: any[],
   labRequests: any[],
   imagingRequests: any[],
-  visits: any[]
+  visits: any[],
+  clinic?: any
 ): string {
   const age = calculateAge(patient.date_of_birth);
   const today = formatDate(new Date().toISOString());
+  const clinicName = clinic?.name || 'Ma Clinique';
+  const clinicSubtitle = [clinic?.slogan, clinic?.city].filter(Boolean).join(' — ') || '';
+  const clinicAddress = [clinic?.address, clinic?.city, clinic?.country].filter(Boolean).join(', ');
+  const clinicPhone = clinic?.phone || '';
+  const clinicEmail = clinic?.email || '';
+  const clinicColor = clinic?.primary_color || '#2563eb';
+  const logoHtml = clinic?.logo_url ? `<img src="${clinic.logo_url}" style="height:40px;object-fit:contain;margin-right:10px;" />` : '';
 
   const consultationRows = (consultations || [])
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
