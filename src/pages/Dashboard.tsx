@@ -220,6 +220,7 @@ const Dashboard = () => {
               <StatCard title="Imagerie en attente" value={stats?.pendingImaging || 0} icon={ImageIcon} variant={(stats?.pendingImaging || 0) > 5 ? 'warning' : 'default'} />
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
             </div>
+            <DashboardPendingImaging />
           </>
         )}
 
@@ -230,6 +231,7 @@ const Dashboard = () => {
               <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="success" />
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
             </div>
+            <DashboardRecentPayments />
           </>
         )}
 
@@ -240,6 +242,10 @@ const Dashboard = () => {
               <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="success" />
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
               <StatCard title="Consultations" value={stats?.consultationsToday || 0} icon={Stethoscope} variant="default" />
+            </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <DashboardRecentInvoices />
+              <DashboardRecentPayments />
             </div>
           </>
         )}
