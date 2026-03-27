@@ -336,6 +336,12 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                     {messages.map(msg => {
                       const isMe = msg.sender_id === user?.id;
                       const senderName = staffMap.get(msg.sender_id) || 'Inconnu';
+                      // Check if other participants have read this message
+                      const isRead = isMe && participants
+                        ? participants
+                            .filter(p => p.user_id !== user?.id)
+                            .some(p => p.last_read_at && new Date(p.last_read_at) >= new Date(msg.created_at))
+                        : false;
                       return (
                         <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[80%] rounded-xl px-3 py-2 ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -343,9 +349,16 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                               <p className="text-[10px] font-medium opacity-70 mb-0.5">{senderName}</p>
                             )}
                             <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                            <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                              {format(new Date(msg.created_at), 'HH:mm')}
-                            </p>
+                            <div className={`flex items-center gap-1 mt-1 ${isMe ? 'justify-end' : ''}`}>
+                              <span className={`text-[10px] ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                                {format(new Date(msg.created_at), 'HH:mm')}
+                              </span>
+                              {isMe && (
+                                isRead
+                                  ? <CheckCheck className="h-3 w-3 text-blue-300" />
+                                  : <Check className="h-3 w-3 text-primary-foreground/50" />
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
