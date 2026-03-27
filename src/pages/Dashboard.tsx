@@ -364,7 +364,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== ADMIN ===== */}
-        {(role === 'admin' || role === 'super_admin') && (
+        {role === 'admin' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
@@ -383,6 +383,124 @@ const Dashboard = () => {
                 </Button>
               </div>
             </div>
+          </>
+        )}
+
+        {/* ===== SUPER ADMIN ===== */}
+        {role === 'super_admin' && (
+          <>
+            {(() => {
+              const totalLicenses = licenses?.length || 0;
+              const activeLicenses = licenses?.filter(l => l.is_active && new Date(l.expiry_date) >= new Date()).length || 0;
+              const expiredLicenses = licenses?.filter(l => new Date(l.expiry_date) < new Date()).length || 0;
+              const totalUsers = licenses?.reduce((s, l) => s + l.current_users, 0) || 0;
+
+              return (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                    <StatCard title="Total licences" value={totalLicenses} icon={KeyRound} variant="primary" />
+                    <StatCard title="Licences actives" value={activeLicenses} icon={CheckCircle2} variant="success" />
+                    <StatCard title="Licences expirées" value={expiredLicenses} icon={XCircle} variant={expiredLicenses > 0 ? 'danger' : 'default'} />
+                    <StatCard title="Utilisateurs totaux" value={totalUsers} icon={Users} variant="default" />
+                  </div>
+
+                  <div className="mb-8">
+                    <h2 className="text-lg font-semibold mb-4">Actions rapides</h2>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                        <Link to="/parametres">
+                          <Shield className="h-6 w-6 text-primary" />
+                          <span className="font-medium">Gestion des licences</span>
+                          <span className="text-xs text-muted-foreground">Créer et gérer les licences</span>
+                        </Link>
+                      </Button>
+                      <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-success/5 hover:border-success/30" asChild>
+                        <Link to="/parametres">
+                          <Building2 className="h-6 w-6 text-success" />
+                          <span className="font-medium">Cliniques</span>
+                          <span className="text-xs text-muted-foreground">Vue d'ensemble des établissements</span>
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* License table */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <KeyRound className="h-5 w-5" />
+                        Licences récentes
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {!licenses || licenses.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-6">Aucune licence créée</p>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Clinique</TableHead>
+                                <TableHead>Clé</TableHead>
+                                <TableHead>Utilisateurs</TableHead>
+                                <TableHead>Expiration</TableHead>
+                                <TableHead>Modules</TableHead>
+                                <TableHead>Statut</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {licenses.slice(0, 10).map(lic => {
+                                const isExpired = new Date(lic.expiry_date) < new Date();
+                                const daysLeft = Math.ceil((new Date(lic.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                                return (
+                                  <TableRow key={lic.id}>
+                                    <TableCell className="font-medium">{lic.clinic_name}</TableCell>
+                                    <TableCell className="font-mono text-xs">{lic.license_key}</TableCell>
+                                    <TableCell>
+                                      <span className={lic.current_users >= lic.max_users ? 'text-destructive font-semibold' : ''}>
+                                        {lic.current_users}/{lic.max_users}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center gap-1.5">
+                                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <span className="text-sm">{new Date(lic.expiry_date).toLocaleDateString('fr-FR')}</span>
+                                        {!isExpired && daysLeft <= 30 && (
+                                          <Badge variant="outline" className="text-warning border-warning/30 text-[10px]">{daysLeft}j</Badge>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex flex-wrap gap-1">
+                                        {lic.enabled_modules.slice(0, 3).map(m => (
+                                          <Badge key={m} variant="outline" className="text-[10px]">{m}</Badge>
+                                        ))}
+                                        {lic.enabled_modules.length > 3 && (
+                                          <Badge variant="outline" className="text-[10px]">+{lic.enabled_modules.length - 3}</Badge>
+                                        )}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {isExpired ? (
+                                        <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Expirée</Badge>
+                                      ) : !lic.is_active ? (
+                                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Suspendue</Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="bg-success/10 text-success border-success/30">Active</Badge>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
           </>
         )}
       </div>
