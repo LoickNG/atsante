@@ -18,6 +18,8 @@ import {
   Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText, BedDouble,
 } from 'lucide-react';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
+import { EditConsultationDialog } from '@/components/consultation/EditConsultationDialog';
+import { Consultation } from '@/hooks/useConsultations';
 import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
 import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
 import { QRCodeSVG } from 'qrcode.react';
@@ -51,6 +53,8 @@ const PatientDetail = () => {
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editConsultation, setEditConsultation] = useState<Consultation | null>(null);
+  const [editConsultationOpen, setEditConsultationOpen] = useState(false);
   const [deceasedDialogOpen, setDeceasedDialogOpen] = useState(false);
   const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
 
