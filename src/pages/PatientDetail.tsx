@@ -368,7 +368,7 @@ const PatientDetail = () => {
           {/* Right Column - Tabs */}
           <div className="lg:col-span-2">
             {/* Medical tabs hidden from non-medical roles (accueil, caissier, admin, daf) */}
-            {(role === 'medecin' || role === 'infirmier' || role === 'pharmacien' || role === 'laborantin' || role === 'imagerie') ? (
+            {(role === 'medecin' || role === 'infirmier' || role === 'pharmacien' || role === 'laborantin' || role === 'imagerie' || role === 'super_admin') ? (
             <Tabs defaultValue="consultations" className="w-full">
               <TabsList className="grid w-full grid-cols-6 no-print">
                 <TabsTrigger value="consultations" className="gap-1.5 text-xs"><Stethoscope className="h-3.5 w-3.5" />Consultations</TabsTrigger>
