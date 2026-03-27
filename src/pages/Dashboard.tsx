@@ -50,6 +50,7 @@ import { MessagingDialog } from '@/components/messaging/MessagingDialog';
 const Dashboard = () => {
   const { user, role } = useAuth();
   const [messagingOpen, setMessagingOpen] = useState(false);
+  const isDemo = user?.email === 'demo@atsante.td';
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: waitingVisits, isLoading: visitsLoading } = useWaitingQueue();
   const { data: pendingLabs, isLoading: labsLoading } = usePendingLabRequests();
