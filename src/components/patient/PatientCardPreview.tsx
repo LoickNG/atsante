@@ -302,20 +302,20 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
               
               {/* Left: Photo + Name underneath */}
               <div className="shrink-0 flex flex-col items-center gap-1">
-                <div className="w-[90px]">
+                <div className="w-[110px]">
                   {patient.photo_url ? (
                     <img
                       src={patient.photo_url}
                       alt=""
-                      className="w-full h-[100px] object-cover rounded-lg border border-border"
+                      className="w-full h-[120px] object-cover rounded-lg border border-border"
                       style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.1)' }}
                     />
                   ) : (
                     <div
-                      className="w-full h-[100px] rounded-lg border border-border flex items-center justify-center"
+                      className="w-full h-[120px] rounded-lg border border-border flex items-center justify-center"
                       style={{ background: 'linear-gradient(135deg, hsl(210 20% 92%), hsl(210 20% 86%))' }}
                     >
-                      <User className="h-10 w-10 text-muted-foreground/60" />
+                      <User className="h-12 w-12 text-muted-foreground/60" />
                     </div>
                   )}
                 </div>
