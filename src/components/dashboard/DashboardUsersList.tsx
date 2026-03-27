@@ -78,7 +78,7 @@ export function DashboardUsersList() {
                   {u.specialty && <p className="text-xs text-muted-foreground">{u.specialty}</p>}
                 </div>
                 <Badge variant="outline" className={roleColors[u.role] || ''}>
-                  {getRoleLabel(u.role)}
+                  {getRoleLabel(u.role as any)}
                 </Badge>
               </div>
             ))}
