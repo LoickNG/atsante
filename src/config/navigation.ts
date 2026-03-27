@@ -165,6 +165,7 @@ export const getRoleLabel = (role: UserRole): string => {
   const labels: Record<UserRole, string> = {
     super_admin: 'Super Admin',
     admin: 'Administrateur',
+    demo: 'Démo (Accès complet)',
     pca: 'PCA',
     dg: 'Directeur Général',
     accueil: 'Accueil',
@@ -183,6 +184,7 @@ export const getRoleColor = (role: UserRole): string => {
   const colors: Record<UserRole, string> = {
     super_admin: 'bg-role-admin',
     admin: 'bg-role-admin',
+    demo: 'bg-role-admin',
     pca: 'bg-role-admin',
     dg: 'bg-role-admin',
     accueil: 'bg-role-accueil',
