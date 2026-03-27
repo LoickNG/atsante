@@ -1,6 +1,7 @@
 import { ReactNode, useState, createContext, useContext } from 'react';
 import { AppSidebar } from './AppSidebar';
 import { cn } from '@/lib/utils';
+import { MessagingPopup } from '@/components/messaging/MessagingPopup';
 
 export const SidebarCollapseContext = createContext<{
   collapsed: boolean;
@@ -26,6 +27,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         <main className={cn('min-h-screen overflow-auto transition-all duration-300', collapsed ? 'ml-[70px]' : 'ml-[260px]', className)}>
           {children}
         </main>
+        <MessagingPopup />
       </div>
     </SidebarCollapseContext.Provider>
   );
