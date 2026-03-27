@@ -26,8 +26,24 @@ export function AppSidebar({
   
   const userRole = role || 'medecin';
   const navigation = getFilteredNavigation(userRole);
+
+  const { data: profileData } = useQuery({
+    queryKey: ['sidebar_profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
   
-  const userName = user?.user_metadata?.full_name || user?.email || 'Utilisateur';
+  const userName = profileData?.full_name || user?.user_metadata?.full_name || user?.email || 'Utilisateur';
+  const avatarUrl = profileData?.avatar_url || undefined;
   
   const handleSignOut = async () => {
     await signOut();
