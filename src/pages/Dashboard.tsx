@@ -65,6 +65,28 @@ const Dashboard = () => {
     enabled: role === 'super_admin',
   });
 
+  // Admin stats: user count, license info
+  const { data: adminUserCount } = useQuery({
+    queryKey: ['admin-user-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: role === 'admin' || role === 'demo',
+  });
+
+  const { data: adminLicense } = useQuery({
+    queryKey: ['admin-license-info'],
+    queryFn: async () => {
+      const { data: cs } = await supabase.from('clinic_settings').select('activated_license_key').limit(1).single();
+      if (!cs?.activated_license_key) return null;
+      const { data: lic } = await supabase.from('licenses').select('*').eq('license_key', cs.activated_license_key).single();
+      return lic;
+    },
+    enabled: role === 'admin' || role === 'demo',
+  });
+
   const lowStockMeds = medications?.filter(m => m.stock_quantity <= m.alert_threshold) || [];
 
   const formatCurrency = (amount: number) =>
@@ -228,11 +250,46 @@ const Dashboard = () => {
         {/* ===== ADMIN ===== */}
         {!isDemo && role === 'admin' && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-              <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+              <StatCard title="Comptes utilisateurs" value={adminUserCount || 0} icon={Users} variant="primary" />
+              <StatCard title="Max utilisateurs" value={adminLicense?.max_users || 0} icon={Shield} variant="default" />
               <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="success" />
-              <StatCard title="Consultations" value={stats?.consultationsToday || 0} icon={Stethoscope} variant="default" />
+              <StatCard title="Licence" value={adminLicense ? (adminLicense.is_active && new Date(adminLicense.expiry_date) >= new Date() ? 'Active' : 'Expirée') : 'N/A'} icon={KeyRound} variant={adminLicense?.is_active && new Date(adminLicense?.expiry_date) >= new Date() ? 'success' : 'danger'} />
             </div>
+            {adminLicense && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <KeyRound className="h-4 w-4" />
+                    Informations licence
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Clinique</p>
+                      <p className="font-medium">{adminLicense.clinic_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Utilisateurs</p>
+                      <p className="font-medium">{adminLicense.current_users} / {adminLicense.max_users}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Expiration</p>
+                      <p className="font-medium">{new Date(adminLicense.expiry_date).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Modules activés</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {adminLicense.enabled_modules.map((m: string) => (
+                          <Badge key={m} variant="outline" className="text-[10px]">{m}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
 
