@@ -11,7 +11,10 @@ export interface Conversation {
   clinic_id: string | null;
   created_at: string;
   updated_at: string;
-  participant_names?: string[]; // populated client-side
+  participant_names?: string[];
+  unread_count?: number;
+  last_message?: string;
+  last_message_at?: string;
 }
 
 export interface ConversationParticipant {
@@ -28,6 +31,7 @@ export interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  read_at?: string | null;
 }
 
 export function useConversations() {
@@ -36,7 +40,6 @@ export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      // Fetch conversations
       const { data: convs, error } = await supabase
         .from('conversations')
         .select('*')
@@ -44,14 +47,15 @@ export function useConversations() {
       if (error) throw error;
       if (!convs || convs.length === 0) return [] as Conversation[];
 
-      // Fetch all participants for these conversations
       const convIds = convs.map(c => c.id);
+
+      // Fetch participants with last_read_at
       const { data: parts } = await supabase
         .from('conversation_participants')
-        .select('conversation_id, user_id')
+        .select('conversation_id, user_id, last_read_at')
         .in('conversation_id', convIds);
 
-      // Fetch profile names for all participant user_ids
+      // Fetch profile names
       const allUserIds = [...new Set((parts || []).map(p => p.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -61,14 +65,46 @@ export function useConversations() {
       const nameMap = new Map<string, string>();
       (profiles || []).forEach(p => nameMap.set(p.user_id, p.full_name));
 
-      // Attach participant names to each conversation
-      return convs.map(conv => {
+      // Fetch last message + unread count per conversation
+      const enriched: Conversation[] = [];
+      for (const conv of convs) {
         const convParts = (parts || []).filter(p => p.conversation_id === conv.id);
         const otherNames = convParts
           .filter(p => p.user_id !== user?.id)
           .map(p => nameMap.get(p.user_id) || 'Inconnu');
-        return { ...conv, participant_names: otherNames } as Conversation;
-      });
+
+        // My last_read_at for this conv
+        const myPart = convParts.find(p => p.user_id === user?.id);
+        const lastReadAt = myPart?.last_read_at;
+
+        // Unread count: messages after my last_read_at, not sent by me
+        let unreadQuery = supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', conv.id)
+          .neq('sender_id', user!.id);
+        if (lastReadAt) {
+          unreadQuery = unreadQuery.gt('created_at', lastReadAt);
+        }
+        const { count: unreadCount } = await unreadQuery;
+
+        // Last message
+        const { data: lastMsgs } = await supabase
+          .from('messages')
+          .select('content, created_at')
+          .eq('conversation_id', conv.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        enriched.push({
+          ...conv,
+          participant_names: otherNames,
+          unread_count: unreadCount || 0,
+          last_message: lastMsgs?.[0]?.content || undefined,
+          last_message_at: lastMsgs?.[0]?.created_at || undefined,
+        });
+      }
+      return enriched;
     },
     enabled: !!user,
   });

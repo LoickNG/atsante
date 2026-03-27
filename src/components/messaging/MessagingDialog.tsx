@@ -17,7 +17,7 @@ import {
   Conversation,
 } from '@/hooks/useMessaging';
 import { useAuth } from '@/hooks/useAuth';
-import { Send, ArrowLeft, Users, MessageCircle, Loader2, Search } from 'lucide-react';
+import { Send, ArrowLeft, Users, MessageCircle, Loader2, Search, Check, CheckCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -215,10 +215,11 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                       <div className="divide-y">
                         {filteredConversations.map(conv => {
                           const displayName = getConversationDisplayName(conv);
+                          const hasUnread = (conv.unread_count ?? 0) > 0;
                           return (
                             <button
                               key={conv.id}
-                              className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
+                              className={`w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3 ${hasUnread ? 'bg-muted/20' : ''}`}
                               onClick={() => { setActiveConversation(conv); setView('chat'); markAsRead(conv.id); }}
                             >
                               <Avatar className="h-9 w-9 shrink-0">
@@ -227,10 +228,26 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{displayName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {format(new Date(conv.updated_at), 'dd MMM HH:mm', { locale: fr })}
-                                </p>
+                                <p className={`text-sm truncate ${hasUnread ? 'font-bold' : 'font-medium'}`}>{displayName}</p>
+                                {conv.last_message ? (
+                                  <p className={`text-xs truncate ${hasUnread ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
+                                    {conv.last_message.length > 40 ? conv.last_message.slice(0, 40) + '…' : conv.last_message}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(conv.updated_at), 'dd MMM HH:mm', { locale: fr })}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <span className="text-[10px] text-muted-foreground">
+                                  {format(new Date(conv.last_message_at || conv.updated_at), 'HH:mm', { locale: fr })}
+                                </span>
+                                {hasUnread && (
+                                  <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                                    {conv.unread_count! > 99 ? '99+' : conv.unread_count}
+                                  </span>
+                                )}
                               </div>
                             </button>
                           );
@@ -319,6 +336,12 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                     {messages.map(msg => {
                       const isMe = msg.sender_id === user?.id;
                       const senderName = staffMap.get(msg.sender_id) || 'Inconnu';
+                      // Check if other participants have read this message
+                      const isRead = isMe && participants
+                        ? participants
+                            .filter(p => p.user_id !== user?.id)
+                            .some(p => p.last_read_at && new Date(p.last_read_at) >= new Date(msg.created_at))
+                        : false;
                       return (
                         <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                           <div className={`max-w-[80%] rounded-xl px-3 py-2 ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -326,9 +349,16 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                               <p className="text-[10px] font-medium opacity-70 mb-0.5">{senderName}</p>
                             )}
                             <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                            <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                              {format(new Date(msg.created_at), 'HH:mm')}
-                            </p>
+                            <div className={`flex items-center gap-1 mt-1 ${isMe ? 'justify-end' : ''}`}>
+                              <span className={`text-[10px] ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                                {format(new Date(msg.created_at), 'HH:mm')}
+                              </span>
+                              {isMe && (
+                                isRead
+                                  ? <CheckCheck className="h-3 w-3 text-blue-300" />
+                                  : <Check className="h-3 w-3 text-primary-foreground/50" />
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
