@@ -53,14 +53,14 @@ serve(async (req) => {
     }
 
     // Get license info for redirect URL
-    const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
-    let redirectUrl = `${origin}/auth`;
+    const appUrl = "https://atsante.lovable.app";
+    let redirectUrl = `${appUrl}/auth`;
     
     if (license_key) {
       // Get license details
       const { data: license } = await adminClient.from("licenses").select("clinic_name").eq("license_key", license_key).single();
       if (license) {
-        redirectUrl = `${origin}/auth?license_key=${encodeURIComponent(license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`;
+        redirectUrl = `${appUrl}/auth?license_key=${encodeURIComponent(license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`;
       }
     }
 
