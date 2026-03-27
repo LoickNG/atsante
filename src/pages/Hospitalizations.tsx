@@ -252,9 +252,11 @@ export default function Hospitalizations() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Rechercher un patient..." className="pl-9 w-[250px]" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
+            {role === 'medecin' && (
             <Button onClick={() => setAdmitDialogOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />Admettre un patient
             </Button>
+            )}
           </div>
         </div>
 
