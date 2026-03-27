@@ -1,5 +1,5 @@
 import { AppLayout, PageHeader } from '@/components/layout';
-import { StatCard } from '@/components/dashboard';
+import { StatCard, DashboardWaitingList, DashboardPendingLabs, DashboardLowStock, DashboardPendingImaging, DashboardRecentPayments, DashboardRecentInvoices, DashboardUsersList } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
