@@ -301,20 +301,20 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
             <div className="flex flex-1 px-3 py-2 gap-3 bg-card relative" style={{ height: 'calc(100% - 56px)' }}>
               
               {/* Photo with rounded corners and border */}
-              <div className="w-[76px] shrink-0 self-start">
+              <div className="w-[90px] shrink-0 self-start">
                 {patient.photo_url ? (
                   <img
                     src={patient.photo_url}
                     alt=""
-                    className="w-full h-[96px] object-cover rounded-lg border border-border"
+                    className="w-full h-[110px] object-cover rounded-lg border border-border"
                     style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.1)' }}
                   />
                 ) : (
                   <div
-                    className="w-full h-[96px] rounded-lg border border-border flex items-center justify-center"
+                    className="w-full h-[110px] rounded-lg border border-border flex items-center justify-center"
                     style={{ background: 'linear-gradient(135deg, hsl(210 20% 92%), hsl(210 20% 86%))' }}
                   >
-                    <User className="h-8 w-8 text-muted-foreground/60" />
+                    <User className="h-10 w-10 text-muted-foreground/60" />
                   </div>
                 )}
               </div>
