@@ -130,10 +130,10 @@ export function UserManagement() {
     try {
       const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', userId).single();
       if (existing) {
-        const { error } = await supabase.from('user_roles').update({ role }).eq('user_id', userId);
+        const { error } = await supabase.from('user_roles').update({ role } as any).eq('user_id', userId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('user_roles').insert({ user_id: userId, role });
+        const { error } = await supabase.from('user_roles').insert({ user_id: userId, role } as any);
         if (error) throw error;
       }
       toast({ title: 'Rôle mis à jour' });
