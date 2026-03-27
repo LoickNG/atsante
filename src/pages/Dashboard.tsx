@@ -105,7 +105,7 @@ const Dashboard = () => {
           )}
         </PageHeader>
 
-        <MessagingDialog open={messagingOpen} onOpenChange={setMessagingOpen} />
+        
 
         {/* ===== DEMO - ALL FEATURES ===== */}
         {isDemo && (
