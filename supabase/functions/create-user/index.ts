@@ -21,7 +21,7 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie", "daf", "super_admin"];
+const VALID_ROLES = ["admin", "pca", "dg", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie", "daf", "super_admin"];
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
