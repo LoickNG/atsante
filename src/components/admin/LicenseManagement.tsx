@@ -7,10 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Key, Building2, Users, Calendar, Shield } from 'lucide-react';
+import { Plus, Edit, Trash2, Key, Building2, Users, Calendar, Shield, UserPlus, Loader2 } from 'lucide-react';
 import { useLicenses, useCreateLicense, useUpdateLicense, useDeleteLicense, ALL_MODULES, License } from '@/hooks/useLicenses';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -32,9 +34,16 @@ export function LicenseManagement() {
   const createLicense = useCreateLicense();
   const updateLicense = useUpdateLicense();
   const deleteLicense = useDeleteLicense();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<License | null>(null);
   const [form, setForm] = useState(defaultForm);
+
+  // Admin creation dialog state
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
+  const [adminForm, setAdminForm] = useState({ full_name: '', email: '', password: '' });
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   const openCreate = () => {
     setEditing(null);
@@ -83,6 +92,48 @@ export function LicenseManagement() {
         ? f.enabled_modules.filter(m => m !== mod)
         : [...f.enabled_modules, mod],
     }));
+  };
+
+  const openAdminDialog = (lic: License) => {
+    setSelectedLicense(lic);
+    setAdminForm({ full_name: '', email: lic.contact_email || '', password: '' });
+    setAdminDialogOpen(true);
+  };
+
+  const handleCreateAdmin = async () => {
+    if (!selectedLicense) return;
+    if (!adminForm.full_name || !adminForm.email || !adminForm.password) {
+      toast({ title: 'Erreur', description: 'Tous les champs sont requis', variant: 'destructive' });
+      return;
+    }
+    if (adminForm.password.length < 6) {
+      toast({ title: 'Erreur', description: 'Mot de passe : 6 caractères minimum', variant: 'destructive' });
+      return;
+    }
+
+    setCreatingAdmin(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: adminForm.email,
+          password: adminForm.password,
+          full_name: adminForm.full_name,
+          role: 'admin',
+          license_id: selectedLicense.id,
+          clinic_name: selectedLicense.clinic_name,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: 'Succès', description: data?.message || 'Administrateur créé avec succès.' });
+      setAdminDialogOpen(false);
+      setAdminForm({ full_name: '', email: '', password: '' });
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message || 'Impossible de créer le compte', variant: 'destructive' });
+    } finally {
+      setCreatingAdmin(false);
+    }
   };
 
   const getExpiryStatus = (lic: License) => {
@@ -260,6 +311,9 @@ export function LicenseManagement() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => openAdminDialog(lic)} title="Créer l'administrateur">
+                            <UserPlus className="h-4 w-4" />
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => openEdit(lic)}>
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -276,6 +330,57 @@ export function LicenseManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialog to create clinic admin */}
+      <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Créer l'administrateur de {selectedLicense?.clinic_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Cet administrateur pourra se connecter, configurer sa clinique et créer ses propres utilisateurs.
+            </p>
+            <div className="space-y-2">
+              <Label>Nom complet *</Label>
+              <Input
+                value={adminForm.full_name}
+                onChange={e => setAdminForm(f => ({ ...f, full_name: e.target.value }))}
+                placeholder="Dr. Jean Dupont"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={adminForm.email}
+                onChange={e => setAdminForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="admin@clinique.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Mot de passe temporaire *</Label>
+              <Input
+                type="password"
+                value={adminForm.password}
+                onChange={e => setAdminForm(f => ({ ...f, password: e.target.value }))}
+                placeholder="••••••••"
+              />
+              <p className="text-xs text-muted-foreground">L'administrateur sera invité à changer son mot de passe à la première connexion.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAdminDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleCreateAdmin} disabled={creatingAdmin}>
+              {creatingAdmin && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Créer l'administrateur
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

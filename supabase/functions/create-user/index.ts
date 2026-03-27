@@ -57,17 +57,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Accès réservé aux administrateurs" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check license user limit
-    const { data: settings } = await adminClient.from("clinic_settings").select("activated_license_key").limit(1).single();
-    if (settings?.activated_license_key) {
-      const { data: license } = await adminClient.from("licenses").select("max_users, current_users").eq("license_key", settings.activated_license_key).single();
-      if (license && license.current_users >= license.max_users) {
-        return new Response(JSON.stringify({ error: `Limite de ${license.max_users} utilisateurs atteinte. Contactez votre fournisseur pour augmenter la licence.` }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-    }
-
     const body = await req.json();
-    const { email, password, full_name, role, specialty, service_id } = body;
+    const { email, password, full_name, role, specialty, service_id, license_id, clinic_name } = body;
 
     // Validation
     if (!email || typeof email !== "string" || email.length > 255) {
@@ -87,6 +78,85 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: `Rôle invalide. Valeurs acceptées: ${VALID_ROLES.join(", ")}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // ===== SUPER ADMIN creating clinic admin with license =====
+    if (callerRole?.role === "super_admin" && role === "admin" && license_id) {
+      // Get the license
+      const { data: license, error: licErr } = await adminClient.from("licenses").select("*").eq("id", license_id).single();
+      if (licErr || !license) {
+        return new Response(JSON.stringify({ error: "Licence introuvable" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Create the user
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email: email.trim(),
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: full_name.trim(), must_change_password: true },
+      });
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Create clinic_settings for this clinic
+      const clinicDisplayName = clinic_name || license.clinic_name;
+      const { data: clinicSettings, error: clinicErr } = await adminClient.from("clinic_settings").insert({
+        name: clinicDisplayName,
+        activated_license_key: license.license_key,
+      }).select().single();
+
+      if (clinicErr) {
+        return new Response(JSON.stringify({ error: "Erreur création clinique: " + clinicErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      const clinicId = clinicSettings.id;
+
+      // Create profile linked to clinic
+      await adminClient.from("profiles").insert({
+        user_id: newUser.user!.id,
+        email: email.trim(),
+        full_name: full_name.trim(),
+        clinic_id: clinicId,
+      });
+
+      // Assign admin role linked to clinic
+      await adminClient.from("user_roles").insert({
+        user_id: newUser.user!.id,
+        role: "admin",
+        clinic_id: clinicId,
+      });
+
+      // Increment current_users on license
+      await adminClient.from("licenses").update({ current_users: license.current_users + 1 }).eq("id", license.id);
+
+      // Send password reset email
+      const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
+      await adminClient.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/auth?change_password=true`,
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        user_id: newUser.user!.id,
+        clinic_id: clinicId,
+        message: `Administrateur ${full_name} créé pour la clinique "${clinicDisplayName}". Un email a été envoyé à ${email}.`,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // ===== Regular admin creating staff =====
+    // Check license user limit
+    const { data: callerProfile } = await adminClient.from("profiles").select("clinic_id").eq("user_id", caller.id).single();
+    const callerClinicId = callerProfile?.clinic_id || null;
+
+    if (callerClinicId) {
+      const { data: settings } = await adminClient.from("clinic_settings").select("activated_license_key").eq("id", callerClinicId).single();
+      if (settings?.activated_license_key) {
+        const { data: license } = await adminClient.from("licenses").select("max_users, current_users").eq("license_key", settings.activated_license_key).single();
+        if (license && license.current_users >= license.max_users) {
+          return new Response(JSON.stringify({ error: `Limite de ${license.max_users} utilisateurs atteinte. Contactez votre fournisseur pour augmenter la licence.` }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+    }
+
     // Validate service_id if provided
     if (service_id) {
       const { data: serviceExists } = await adminClient.from("services").select("id").eq("id", service_id).single();
@@ -100,19 +170,12 @@ serve(async (req) => {
       email: email.trim(),
       password,
       email_confirm: true,
-      user_metadata: {
-        full_name: full_name.trim(),
-        must_change_password: true,
-      },
+      user_metadata: { full_name: full_name.trim(), must_change_password: true },
     });
 
     if (createError) {
       return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    // Get caller's clinic_id
-    const { data: callerProfile } = await adminClient.from("profiles").select("clinic_id").eq("user_id", caller.id).single();
-    const callerClinicId = callerProfile?.clinic_id || null;
 
     // Create profile with service and clinic_id
     await adminClient.from("profiles").insert({
@@ -132,10 +195,13 @@ serve(async (req) => {
     });
 
     // Increment current_users on license
-    if (settings?.activated_license_key) {
-      const { data: lic } = await adminClient.from("licenses").select("id, current_users").eq("license_key", settings.activated_license_key).single();
-      if (lic) {
-        await adminClient.from("licenses").update({ current_users: lic.current_users + 1 }).eq("id", lic.id);
+    if (callerClinicId) {
+      const { data: settings } = await adminClient.from("clinic_settings").select("activated_license_key").eq("id", callerClinicId).single();
+      if (settings?.activated_license_key) {
+        const { data: lic } = await adminClient.from("licenses").select("id, current_users").eq("license_key", settings.activated_license_key).single();
+        if (lic) {
+          await adminClient.from("licenses").update({ current_users: lic.current_users + 1 }).eq("id", lic.id);
+        }
       }
     }
 
