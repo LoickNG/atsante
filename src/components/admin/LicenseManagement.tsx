@@ -36,6 +36,41 @@ export function LicenseManagement() {
   const updateLicense = useUpdateLicense();
   const deleteLicense = useDeleteLicense();
   const { toast } = useToast();
+
+  // Fetch admin info for each license
+  const { data: licenseAdmins = {} } = useQuery({
+    queryKey: ['license-admins', licenses.map(l => l.license_key).join(',')],
+    queryFn: async () => {
+      if (licenses.length === 0) return {};
+      const result: Record<string, { full_name: string; email: string }> = {};
+      for (const lic of licenses) {
+        const { data: clinic } = await supabase
+          .from('clinic_settings')
+          .select('id')
+          .eq('activated_license_key', lic.license_key)
+          .single();
+        if (!clinic) continue;
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('full_name, email, user_id')
+          .eq('clinic_id', clinic.id);
+        if (!profiles || profiles.length === 0) continue;
+        const userIds = profiles.map(p => p.user_id);
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds);
+        const adminUserId = roles?.find(r => r.role === 'admin')?.user_id;
+        const adminProfile = profiles.find(p => p.user_id === adminUserId);
+        if (adminProfile) {
+          result[lic.license_key] = { full_name: adminProfile.full_name, email: adminProfile.email };
+        }
+      }
+      return result;
+    },
+    enabled: licenses.length > 0,
+    staleTime: 60 * 1000,
+  });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<License | null>(null);
   const [form, setForm] = useState(defaultForm);
@@ -350,6 +385,7 @@ export function LicenseManagement() {
                 <TableRow>
                   <TableHead>Clinique</TableHead>
                   <TableHead>Clé</TableHead>
+                  <TableHead>Admin</TableHead>
                   <TableHead>Utilisateurs</TableHead>
                   <TableHead>Modules</TableHead>
                   <TableHead>Expiration</TableHead>
@@ -365,6 +401,17 @@ export function LicenseManagement() {
                       <TableCell className="font-medium">{lic.clinic_name}</TableCell>
                       <TableCell>
                         <code className="text-xs bg-muted px-2 py-1 rounded">{lic.license_key}</code>
+                      </TableCell>
+                      <TableCell>
+                        {licenseAdmins[lic.license_key] ? (
+                          <div>
+                            <p className="text-sm font-medium">{licenseAdmins[lic.license_key].full_name}</p>
+                            <p className="text-xs text-muted-foreground">{licenseAdmins[lic.license_key].email}</p>
+                            <Badge variant="default" className="mt-1 text-xs">Administrateur</Badge>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">Non assigné</span>
+                        )}
                       </TableCell>
                       <TableCell>{lic.current_users} / {lic.max_users}</TableCell>
                       <TableCell>
