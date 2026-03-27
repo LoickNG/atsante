@@ -250,11 +250,46 @@ const Dashboard = () => {
         {/* ===== ADMIN ===== */}
         {!isDemo && role === 'admin' && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-              <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+              <StatCard title="Comptes utilisateurs" value={adminUserCount || 0} icon={Users} variant="primary" />
+              <StatCard title="Max utilisateurs" value={adminLicense?.max_users || 0} icon={Shield} variant="default" />
               <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="success" />
-              <StatCard title="Consultations" value={stats?.consultationsToday || 0} icon={Stethoscope} variant="default" />
+              <StatCard title="Licence" value={adminLicense ? (adminLicense.is_active && new Date(adminLicense.expiry_date) >= new Date() ? 'Active' : 'Expirée') : 'N/A'} icon={KeyRound} variant={adminLicense?.is_active && new Date(adminLicense?.expiry_date) >= new Date() ? 'success' : 'danger'} />
             </div>
+            {adminLicense && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <KeyRound className="h-4 w-4" />
+                    Informations licence
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Clinique</p>
+                      <p className="font-medium">{adminLicense.clinic_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Utilisateurs</p>
+                      <p className="font-medium">{adminLicense.current_users} / {adminLicense.max_users}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Expiration</p>
+                      <p className="font-medium">{new Date(adminLicense.expiry_date).toLocaleDateString('fr-FR')}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Modules activés</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {adminLicense.enabled_modules.map((m: string) => (
+                          <Badge key={m} variant="outline" className="text-[10px]">{m}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
 
