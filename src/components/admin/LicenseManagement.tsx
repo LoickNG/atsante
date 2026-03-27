@@ -402,6 +402,17 @@ export function LicenseManagement() {
                       <TableCell>
                         <code className="text-xs bg-muted px-2 py-1 rounded">{lic.license_key}</code>
                       </TableCell>
+                      <TableCell>
+                        {licenseAdmins[lic.license_key] ? (
+                          <div>
+                            <p className="text-sm font-medium">{licenseAdmins[lic.license_key].full_name}</p>
+                            <p className="text-xs text-muted-foreground">{licenseAdmins[lic.license_key].email}</p>
+                            <Badge variant="default" className="mt-1 text-xs">Administrateur</Badge>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">Non assigné</span>
+                        )}
+                      </TableCell>
                       <TableCell>{lic.current_users} / {lic.max_users}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
