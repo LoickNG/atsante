@@ -113,8 +113,8 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = fal
           </div>
         </>
       ) : (
-        <>
-          <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+      <>
+          <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-destructive/40">
             <Camera className="h-8 w-8 text-muted-foreground" />
           </div>
           {error && <p className="text-xs text-destructive text-center">{error}</p>}
