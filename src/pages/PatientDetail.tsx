@@ -798,6 +798,13 @@ const PatientDetail = () => {
           <DeceasedPatientActions patient={patient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
         </>
       )}
+
+      {/* Edit Consultation Dialog */}
+      <EditConsultationDialog
+        consultation={editConsultation}
+        open={editConsultationOpen}
+        onOpenChange={setEditConsultationOpen}
+      />
     </AppLayout>
   );
 };
