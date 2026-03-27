@@ -357,16 +357,7 @@ export function LicenseManagement() {
                 placeholder="admin@clinique.com"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Mot de passe temporaire *</Label>
-              <Input
-                type="password"
-                value={adminForm.password}
-                onChange={e => setAdminForm(f => ({ ...f, password: e.target.value }))}
-                placeholder="••••••••"
-              />
-              <p className="text-xs text-muted-foreground">L'administrateur sera invité à changer son mot de passe à la première connexion.</p>
-            </div>
+            <p className="text-xs text-muted-foreground">Un email d'invitation sera envoyé à l'administrateur avec un lien pour définir son mot de passe et accéder à sa clinique.</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdminDialogOpen(false)}>Annuler</Button>
