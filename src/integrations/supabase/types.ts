@@ -1429,6 +1429,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          service_id: string | null
           specialty: string | null
           updated_at: string
           user_id: string
@@ -1439,6 +1440,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          service_id?: string | null
           specialty?: string | null
           updated_at?: string
           user_id: string
@@ -1449,11 +1451,20 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          service_id?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rooms: {
         Row: {
@@ -1490,6 +1501,33 @@ export type Database = {
           notes?: string | null
           price_per_night?: number
           room_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
           updated_at?: string
         }
         Relationships: []

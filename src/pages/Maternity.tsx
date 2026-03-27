@@ -60,7 +60,7 @@ const Maternity = () => {
   const [prenatalAdmission, setPrenatalAdmission] = useState<MaternityAdmission | null>(null);
   const [viewPrenatalAdmissionId, setViewPrenatalAdmissionId] = useState<string | null>(null);
 
-  const { user, role } = useAuth();
+  const { user, role, serviceCode } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
   const { data: allAdmissions, isLoading } = useMaternityAdmissions();
@@ -71,6 +71,10 @@ const Maternity = () => {
   const updateAdmission = useUpdateMaternityAdmission();
   const createBirth = useCreateBirth();
   const createPrenatalVisit = useCreatePrenatalVisit();
+
+  // Restrict access: only users assigned to maternité service (or accueil for admissions)
+  const isMaternityStaff = serviceCode === 'maternite';
+  const canAccessMaternity = isMaternityStaff || role === 'accueil' || role === 'admin';
 
   // Admission form
   const [admForm, setAdmForm] = useState({
@@ -125,6 +129,17 @@ const Maternity = () => {
     next_appointment: '',
     notes: '',
   });
+
+  // Access restriction check (after all hooks)
+  if (!canAccessMaternity) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground">Accès réservé au personnel du service maternité.</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const discharged = allAdmissions?.filter(a => a.status === 'sortie') || [];
 
