@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -40,6 +42,18 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
   const { data: clinicStaff } = useClinicStaff();
   const sendMessage = useSendMessage();
   const createConversation = useCreateConversation();
+  const queryClient = useQueryClient();
+
+  // Mark conversation as read when opening it
+  const markAsRead = useCallback(async (conversationId: string) => {
+    if (!user) return;
+    await supabase
+      .from('conversation_participants')
+      .update({ last_read_at: new Date().toISOString() })
+      .eq('conversation_id', conversationId)
+      .eq('user_id', user.id);
+    queryClient.invalidateQueries({ queryKey: ['unread_message_count'] });
+  }, [user, queryClient]);
 
   // Staff name map
   const staffMap = useMemo(() => {
@@ -103,6 +117,7 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
           if (userIds.includes(staffUserId) && userIds.includes(user!.id) && userIds.length === 2) {
             setActiveConversation(conv);
             setView('chat');
+            markAsRead(conv.id);
             setSearchTerm('');
             return;
           }
@@ -120,6 +135,7 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
       participant_names: [staffMap.get(staffUserId) || 'Inconnu'],
     });
     setView('chat');
+    markAsRead(conv.id);
     setSearchTerm('');
   };
 
@@ -203,7 +219,7 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                             <button
                               key={conv.id}
                               className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
-                              onClick={() => { setActiveConversation(conv); setView('chat'); }}
+                              onClick={() => { setActiveConversation(conv); setView('chat'); markAsRead(conv.id); }}
                             >
                               <Avatar className="h-9 w-9 shrink-0">
                                 <AvatarFallback className="text-xs bg-primary/10 text-primary">

@@ -46,11 +46,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
 import { MessagingDialog } from '@/components/messaging/MessagingDialog';
+import { useUnreadMessageCount } from '@/hooks/useMessaging';
 
 const Dashboard = () => {
   const { user, role } = useAuth();
   const [messagingOpen, setMessagingOpen] = useState(false);
   const isDemo = user?.email === 'demo@atsante.td';
+  const { data: unreadCount } = useUnreadMessageCount();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: waitingVisits, isLoading: visitsLoading } = useWaitingQueue();
   const { data: pendingLabs, isLoading: labsLoading } = usePendingLabRequests();
@@ -95,9 +97,14 @@ const Dashboard = () => {
           title={`Bonjour, ${userName} 👋`}
           description={`${role ? getRoleLabel(role) : ''} • ${today}`}
         >
-          <Button variant="outline" size="default" className="gap-2" onClick={() => setMessagingOpen(true)}>
+          <Button variant="outline" size="default" className="gap-2 relative" onClick={() => setMessagingOpen(true)}>
             <MessageCircle className="h-4 w-4" />
             Messagerie
+            {(unreadCount ?? 0) > 0 && (
+              <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                {unreadCount! > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </Button>
           {role === 'accueil' && (
             <>
