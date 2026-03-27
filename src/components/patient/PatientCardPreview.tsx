@@ -362,12 +362,12 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
               </div>
 
               {/* QR Code Section */}
-              <div className="flex flex-col items-center justify-center gap-1.5 shrink-0 rounded-xl p-2 bg-muted/50 border border-border/50">
-                <div className="bg-card rounded-lg p-1.5">
-                  <QRCodeSVG value={patient.code} size={82} level="H" fgColor="#0f172a" />
+              <div className="flex flex-col items-center justify-center gap-1.5 shrink-0 rounded-xl p-2.5 bg-muted/50 border border-border/50">
+                <div className="bg-card rounded-lg p-2">
+                  <QRCodeSVG value={patient.code} size={96} level="H" fgColor="#0f172a" />
                 </div>
                 <div
-                  className="px-2 py-0.5 rounded font-mono text-[9px] font-extrabold tracking-wider border border-border/60 bg-card"
+                  className="px-2.5 py-1 rounded font-mono text-[10px] font-extrabold tracking-widest border border-border/60 bg-card"
                   style={{ color: HOSPITAL.color }}
                 >
                   {patient.code}
