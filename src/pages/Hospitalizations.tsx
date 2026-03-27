@@ -493,9 +493,11 @@ export default function Hospitalizations() {
                      </Button>
 </>
                      )}
+                    {role === 'medecin' && (
                     <Button variant="destructive" className="gap-2 ml-auto" onClick={() => { setDischargeDialogOpen(true); setDischargeNotes(''); }}>
                       <LogOut className="h-4 w-4" />Sortie du patient
                     </Button>
+                    )}
                   </div>
                 )}
 

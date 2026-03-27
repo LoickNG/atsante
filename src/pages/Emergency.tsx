@@ -66,7 +66,7 @@ function getWaitDuration(arrivedAt: string): string {
 }
 
 export default function Emergency() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('board');
@@ -265,10 +265,12 @@ export default function Emergency() {
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-6">
         <PageHeader title="Urgences" description="Gestion des admissions et prises en charge en urgence">
+          {role === 'accueil' && (
           <Button onClick={() => { resetAdmitForm(); setAdmitDialogOpen(true); }} className="gap-2">
             <Plus className="h-4 w-4" />
             Nouvelle admission
           </Button>
+          )}
         </PageHeader>
 
         {/* Stats */}

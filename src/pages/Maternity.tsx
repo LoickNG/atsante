@@ -60,7 +60,7 @@ const Maternity = () => {
   const [prenatalAdmission, setPrenatalAdmission] = useState<MaternityAdmission | null>(null);
   const [viewPrenatalAdmissionId, setViewPrenatalAdmissionId] = useState<string | null>(null);
 
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
   const { data: allAdmissions, isLoading } = useMaternityAdmissions();
@@ -409,10 +409,12 @@ const Maternity = () => {
     <AppLayout>
       <div className="p-6 lg:p-8">
         <PageHeader title="Maternité" description="Gestion des admissions, naissances et suivi maternel">
+          {(role === 'accueil' || role === 'medecin') && (
           <Button className="gap-2" onClick={() => setIsAdmissionDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             Nouvelle admission
           </Button>
+          )}
         </PageHeader>
 
         {/* Stats */}
