@@ -34,6 +34,7 @@ import { useImagingRequests } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospitalizations } from '@/hooks/useHospitalizations';
 import { useStaffProfiles } from '@/hooks/useStaffProfiles';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 import { toast } from 'sonner';
 
 const PatientDetail = () => {
@@ -49,6 +50,7 @@ const PatientDetail = () => {
   const updateConsultation = useUpdateConsultation();
   const updateVisit = useUpdateVisit();
   const { getStaffName } = useStaffProfiles();
+  const { data: clinicSettings } = useClinicSettings();
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
