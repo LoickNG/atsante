@@ -40,7 +40,7 @@ export const navigationConfig: NavSection[] = [
         title: 'Tableau de bord',
         href: '/',
         icon: LayoutDashboard,
-        roles: ['super_admin', 'admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf'],
+        roles: ['super_admin', 'admin', 'pca', 'dg', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf'],
       },
     ],
   },
