@@ -76,16 +76,6 @@ const Maternity = () => {
   const isMaternityStaff = serviceCode === 'maternite';
   const canAccessMaternity = isMaternityStaff || role === 'accueil' || role === 'admin';
 
-  if (!canAccessMaternity) {
-    return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Accès réservé au personnel du service maternité.</p>
-        </div>
-      </AppLayout>
-    );
-  }
-
   // Admission form
   const [admForm, setAdmForm] = useState({
     expected_due_date: '',
@@ -139,6 +129,17 @@ const Maternity = () => {
     next_appointment: '',
     notes: '',
   });
+
+  // Access restriction check (after all hooks)
+  if (!canAccessMaternity) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground">Accès réservé au personnel du service maternité.</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const discharged = allAdmissions?.filter(a => a.status === 'sortie') || [];
 
