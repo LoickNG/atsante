@@ -45,8 +45,6 @@ import { DashboardLowStock } from '@/components/dashboard/DashboardLowStock';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
-import { MessagingDialog } from '@/components/messaging/MessagingDialog';
-import { useUnreadMessageCount } from '@/hooks/useMessaging';
 
 const Dashboard = () => {
   const { user, role } = useAuth();
