@@ -65,6 +65,28 @@ const Dashboard = () => {
     enabled: role === 'super_admin',
   });
 
+  // Admin stats: user count, license info
+  const { data: adminUserCount } = useQuery({
+    queryKey: ['admin-user-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: role === 'admin' || role === 'demo',
+  });
+
+  const { data: adminLicense } = useQuery({
+    queryKey: ['admin-license-info'],
+    queryFn: async () => {
+      const { data: cs } = await supabase.from('clinic_settings').select('activated_license_key').limit(1).single();
+      if (!cs?.activated_license_key) return null;
+      const { data: lic } = await supabase.from('licenses').select('*').eq('license_key', cs.activated_license_key).single();
+      return lic;
+    },
+    enabled: role === 'admin' || role === 'demo',
+  });
+
   const lowStockMeds = medications?.filter(m => m.stock_quantity <= m.alert_threshold) || [];
 
   const formatCurrency = (amount: number) =>
