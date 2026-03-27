@@ -319,12 +319,24 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                 )}
               </div>
 
-              {/* Patient info */}
+              {/* Top info: convention + pills */}
               <div className="flex-1 flex flex-col justify-start gap-1 min-w-0 pt-0.5">
-                <p className="font-black text-[12px] leading-tight uppercase tracking-wide text-foreground truncate">
-                  {patient.last_name} {patient.first_name}
-                </p>
-                
+                {/* Convention badge first */}
+                {companyName && (
+                  <div
+                    className="flex items-center gap-1 rounded-r px-1.5 py-0.5 text-[8px] text-muted-foreground"
+                    style={{
+                      background: `linear-gradient(90deg, ${colorToRgba(HOSPITAL.color, 0.08)}, transparent)`,
+                      borderLeft: `2px solid ${HOSPITAL.color}`,
+                    }}
+                  >
+                    <Building2 className="h-[9px] w-[9px] shrink-0" style={{ color: HOSPITAL.color }} />
+                    <span className="font-bold text-foreground">{companyName}</span>
+                    {conventionName && <span>· {conventionName}</span>}
+                    {employeeId && <span>· Mat: {employeeId}</span>}
+                  </div>
+                )}
+
                 {/* Info pills */}
                 <div className="flex items-center gap-1 flex-wrap">
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-semibold bg-muted text-muted-foreground">
@@ -343,22 +355,6 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                     </span>
                   )}
                 </div>
-
-                {/* Convention badge */}
-                {companyName && (
-                  <div
-                    className="flex items-center gap-1 mt-0.5 rounded-r px-1.5 py-0.5 text-[8px] text-muted-foreground"
-                    style={{
-                      background: `linear-gradient(90deg, ${colorToRgba(HOSPITAL.color, 0.08)}, transparent)`,
-                      borderLeft: `2px solid ${HOSPITAL.color}`,
-                    }}
-                  >
-                    <Building2 className="h-[9px] w-[9px] shrink-0" style={{ color: HOSPITAL.color }} />
-                    <span className="font-bold text-foreground">{companyName}</span>
-                    {conventionName && <span>· {conventionName}</span>}
-                    {employeeId && <span>· Mat: {employeeId}</span>}
-                  </div>
-                )}
               </div>
 
               {/* QR Code Section */}
@@ -373,6 +369,13 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                   {patient.code}
                 </div>
               </div>
+            </div>
+
+            {/* Full name bar - below body, always visible in full */}
+            <div className="px-3 py-1.5 border-t border-border/40 bg-muted/30">
+              <p className="font-black text-[13px] leading-tight uppercase tracking-wide text-foreground text-center">
+                {patient.last_name} {patient.first_name}
+              </p>
             </div>
 
             {/* Footer */}
