@@ -42,6 +42,14 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = fal
     setStreaming(false);
   }, []);
 
+  // Auto-start camera if requested and no photo captured yet
+  useEffect(() => {
+    if (autoStart && !capturedUrl && !streaming && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      startCamera();
+    }
+  }, [autoStart, capturedUrl, streaming, startCamera]);
+
   useEffect(() => () => stopCamera(), [stopCamera]);
 
   const takePhoto = useCallback(() => {
