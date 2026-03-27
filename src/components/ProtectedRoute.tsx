@@ -13,13 +13,16 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
 }
 
+const DEMO_EMAIL = 'demo@atsante.td';
+
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, role, loading, signOut } = useAuth();
   const { isValid, hasLicense, isExpired, isSuspended, isLoading: licenseLoading } = useLicenseStatus();
   const location = useLocation();
   const hasShownToast = useRef(false);
 
-  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role);
+  const isDemo = user?.email === DEMO_EMAIL;
+  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role) && !isDemo;
 
   useEffect(() => {
     if (isUnauthorized && !hasShownToast.current) {
