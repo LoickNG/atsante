@@ -7,14 +7,16 @@ interface WebcamCaptureProps {
   onCapture: (blob: Blob) => void;
   capturedUrl?: string | null;
   onClear?: () => void;
+  autoStart?: boolean;
 }
 
-export function WebcamCapture({ onCapture, capturedUrl, onClear }: WebcamCaptureProps) {
+export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = false }: WebcamCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const hasAutoStarted = useRef(false);
 
   const startCamera = useCallback(async () => {
     try {
