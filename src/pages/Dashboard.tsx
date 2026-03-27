@@ -342,7 +342,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== ADMIN ===== */}
-        {role === 'admin' && (
+        {(role === 'admin' || role === 'super_admin') && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
