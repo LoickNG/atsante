@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/hooks/usePatients';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 interface PatientPDFExportProps {
   patient: Patient;

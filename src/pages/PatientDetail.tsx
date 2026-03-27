@@ -766,8 +766,8 @@ const PatientDetail = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div>
-                <h3 style={{ fontWeight: 'bold', fontSize: '12px', margin: 0, color: 'hsl(var(--primary))' }}>ATSanté</h3>
-                <p style={{ fontSize: '8px', color: '#6b7280', margin: 0 }}>Centre Médical</p>
+                <h3 style={{ fontWeight: 'bold', fontSize: '12px', margin: 0, color: clinicSettings?.primary_color || 'hsl(var(--primary))' }}>{clinicSettings?.name || 'Ma Clinique'}</h3>
+                <p style={{ fontSize: '8px', color: '#6b7280', margin: 0 }}>{clinicSettings?.slogan || ''}</p>
               </div>
               <p style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: 'bold', margin: 0 }}>{patient.code}</p>
             </div>
