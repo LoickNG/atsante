@@ -461,9 +461,49 @@ const Imaging = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="p-4 border-2 border-dashed rounded-lg text-center">
-                <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Télécharger les images (fonctionnalité à venir)</p>
+              <div>
+                <Label>Images / Fichiers</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.dcm"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <div
+                  className="mt-2 p-4 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-8 w-8 mx-auto mb-2 text-muted-foreground animate-spin" />
+                  ) : (
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {isUploading ? 'Téléchargement en cours...' : 'Cliquez pour télécharger des images ou fichiers'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Images, PDF, DICOM</p>
+                </div>
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/30">
+                        {file.url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
+                          <img src={file.url} alt={file.name} className="h-12 w-12 object-cover rounded" />
+                        ) : (
+                          <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline truncate flex-1">
+                          {file.name}
+                        </a>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={() => handleRemoveFile(index)}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <Label>Compte rendu</Label>
