@@ -18,7 +18,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   const clinicName = clinic?.name || 'Ma Clinique';
   const clinicSubtitle = [clinic?.slogan, clinic?.city].filter(Boolean).join(' — ') || 'Clinique Médicale';
   const clinicPhone = clinic?.phone || '';
-  const clinicAddress = clinic?.address || '';
+  const clinicAddress = [clinic?.address, clinic?.city, clinic?.country].filter(Boolean).join(', ');
+  const clinicEmail = clinic?.email || '';
+  const clinicColor = clinic?.primary_color || '#2563eb';
+  const logoHtml = clinic?.logo_url ? `<img src="${clinic.logo_url}" style="height:40px;object-fit:contain;margin-right:10px;" />` : '';
 
   const handlePrint = () => {
     const patient = invoice.patient;
@@ -59,11 +62,11 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #1a1a1a; padding: 15mm; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2563eb; padding-bottom: 15px; margin-bottom: 25px; }
-  .header h1 { font-size: 22px; color: #2563eb; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${clinicColor}; padding-bottom: 15px; margin-bottom: 25px; }
+  .header h1 { font-size: 22px; color: ${clinicColor}; }
   .header .subtitle { font-size: 10px; color: #666; }
   .invoice-info { text-align: right; }
-  .invoice-info .inv-num { font-size: 16px; font-weight: bold; color: #2563eb; }
+  .invoice-info .inv-num { font-size: 16px; font-weight: bold; color: ${clinicColor}; }
   .invoice-info .inv-date { font-size: 11px; color: #666; }
   .patient-box { background: #f0f4ff; padding: 14px; border-radius: 6px; margin-bottom: 20px; }
   .patient-box .name { font-size: 15px; font-weight: bold; margin-bottom: 4px; }
@@ -73,7 +76,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   th, td { padding: 8px 10px; border: 1px solid #e2e8f0; text-align: left; }
   .totals { margin-left: auto; width: 280px; }
   .totals td { border: none; padding: 4px 10px; }
-  .totals .total-row td { font-size: 14px; font-weight: bold; border-top: 2px solid #2563eb; padding-top: 8px; }
+  .totals .total-row td { font-size: 14px; font-weight: bold; border-top: 2px solid ${clinicColor}; padding-top: 8px; }
   .totals .paid td { color: #16a34a; }
   .totals .reste td { color: #ea580c; font-weight: bold; }
   .convention-box { background: #fefce8; border: 1px solid #fde68a; padding: 12px; border-radius: 6px; margin-bottom: 18px; }
@@ -89,11 +92,14 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
 </head>
 <body>
   <div class="header">
-    <div>
-      <h1>${clinicName}</h1>
-      <div class="subtitle">${clinicSubtitle} — ${isProforma ? 'PRO FORMA' : 'Facture'}</div>
-      ${clinicAddress ? `<div class="subtitle">${clinicAddress}</div>` : ''}
-      ${clinicPhone ? `<div class="subtitle">Tél: ${clinicPhone}</div>` : ''}
+    <div style="display:flex;align-items:center">
+      ${logoHtml}
+      <div>
+        <h1>${clinicName}</h1>
+        <div class="subtitle">${clinicSubtitle} — ${isProforma ? 'PRO FORMA' : 'Facture'}</div>
+        ${clinicAddress ? `<div class="subtitle">${clinicAddress}</div>` : ''}
+        ${clinicPhone ? `<div class="subtitle">Tél: ${clinicPhone}${clinicEmail ? ' — ' + clinicEmail : ''}</div>` : ''}
+      </div>
     </div>
     <div class="invoice-info">
       <div class="inv-num">${invoice.invoice_number}</div>
@@ -125,8 +131,8 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     <tbody>
       ${itemRows}
       <tr style="background:#f0f4ff;font-weight:bold">
-        <td colspan="4" style="text-align:right;border-top:2px solid #2563eb">TOTAL</td>
-        <td style="text-align:right;border-top:2px solid #2563eb">${formatCurrency(total)}</td>
+        <td colspan="4" style="text-align:right;border-top:2px solid ${clinicColor}">TOTAL</td>
+        <td style="text-align:right;border-top:2px solid ${clinicColor}">${formatCurrency(total)}</td>
       </tr>
     </tbody>
   </table>
@@ -158,7 +164,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   </table>
 
   ${paymentRows ? `
-  <h3 style="font-size:13px;margin-bottom:8px;color:#2563eb">Historique des paiements</h3>
+  <h3 style="font-size:13px;margin-bottom:8px;color:${clinicColor}">Historique des paiements</h3>
   <table>
     <thead>
       <tr><th>Date</th><th>Mode</th><th>Référence</th><th style="text-align:right">Montant</th></tr>
