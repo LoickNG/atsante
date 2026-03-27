@@ -247,14 +247,20 @@ export default function Billing() {
   return (
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-6">
-        <PageHeader title="Facturation" description="Recherchez un patient pour générer automatiquement sa facture" />
+        <PageHeader title="Facturation" description="Recherchez un patient pour générer automatiquement sa facture">
+          <Button variant="outline" onClick={() => { setIsProforma(true); document.getElementById('billing-generation')?.scrollIntoView({ behavior: 'smooth' }); }}>
+            <FileText className="h-4 w-4 mr-2" />
+            Pro Forma
+          </Button>
+        </PageHeader>
 
         {/* ==================== AUTO-INVOICE SECTION ==================== */}
-        <Card className="border-primary/20">
+        <Card id="billing-generation" className={isProforma ? "border-secondary" : "border-primary/20"}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Receipt className="h-5 w-5 text-primary" />
-              Générer une facture
+              {isProforma ? 'Générer une facture Pro Forma' : 'Générer une facture'}
+              {isProforma && <Badge variant="outline" className="ml-2 bg-secondary/50 text-secondary-foreground">Pro Forma</Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
