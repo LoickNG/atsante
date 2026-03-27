@@ -159,7 +159,7 @@ function buildReportHTML(
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; color: #1a1a1a; padding: 20mm 15mm; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid ${clinicColor}; padding-bottom: 12px; margin-bottom: 20px; }
   .header h1 { font-size: 20px; color: ${clinicColor}; }
   .header .clinic-info { font-size: 10px; color: #666; }
   .header .report-date { text-align: right; font-size: 10px; color: #666; }
