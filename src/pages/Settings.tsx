@@ -100,6 +100,10 @@ export default function Settings() {
         <TabsContent value="licences">
           <LicenseManagement />
         </TabsContent>
+
+        <TabsContent value="services">
+          <ServiceManagement />
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
