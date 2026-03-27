@@ -106,6 +106,11 @@ const NewPatient = () => {
       return;
     }
 
+    if (!photoBlob) {
+      toast.error('La photo du patient est obligatoire. Veuillez prendre une photo avec la webcam.');
+      return;
+    }
+
     try {
       const allergiesArray = formData.allergies 
         ? formData.allergies.split(',').map(a => a.trim()).filter(a => a)
@@ -179,8 +184,9 @@ const NewPatient = () => {
               <CardDescription>Données d'identification du patient</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2 flex justify-center pb-2">
-                <WebcamCapture onCapture={handlePhotoCapture} capturedUrl={photoPreviewUrl} onClear={handlePhotoClear} />
+              <div className="sm:col-span-2 flex flex-col items-center gap-1 pb-2">
+                <WebcamCapture onCapture={handlePhotoCapture} capturedUrl={photoPreviewUrl} onClear={handlePhotoClear} autoStart />
+                <p className="text-xs text-destructive font-medium">Photo obligatoire *</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Nom *</Label>
