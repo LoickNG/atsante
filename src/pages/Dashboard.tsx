@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  MessageCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getRoleLabel } from '@/config/navigation';
@@ -43,9 +44,12 @@ import { DashboardPendingLabs } from '@/components/dashboard/DashboardPendingLab
 import { DashboardLowStock } from '@/components/dashboard/DashboardLowStock';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { MessagingDialog } from '@/components/messaging/MessagingDialog';
 
 const Dashboard = () => {
   const { user, role } = useAuth();
+  const [messagingOpen, setMessagingOpen] = useState(false);
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: waitingVisits, isLoading: visitsLoading } = useWaitingQueue();
   const { data: pendingLabs, isLoading: labsLoading } = usePendingLabRequests();
@@ -90,6 +94,10 @@ const Dashboard = () => {
           title={`Bonjour, ${userName} 👋`}
           description={`${role ? getRoleLabel(role) : ''} • ${today}`}
         >
+          <Button variant="outline" size="default" className="gap-2" onClick={() => setMessagingOpen(true)}>
+            <MessageCircle className="h-4 w-4" />
+            Messagerie
+          </Button>
           {role === 'accueil' && (
             <>
               <Button variant="outline" size="default" className="gap-2" asChild>
@@ -101,6 +109,8 @@ const Dashboard = () => {
             </>
           )}
         </PageHeader>
+
+        <MessagingDialog open={messagingOpen} onOpenChange={setMessagingOpen} />
 
         {/* ===== MÉDECIN ===== */}
         {role === 'medecin' && (
