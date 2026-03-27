@@ -15,6 +15,7 @@ import Pharmacy from "./pages/Pharmacy";
 import Laboratory from "./pages/Laboratory";
 import Imaging from "./pages/Imaging";
 import Billing from "./pages/Billing";
+import ProForma from "./pages/ProForma";
 import Payments from "./pages/Payments";
 import Settings from "./pages/Settings";
 import Extracts from "./pages/Extracts";
@@ -96,6 +97,11 @@ const App = () => (
             <Route path="/facturation" element={
               <ProtectedRoute allowedRoles={['daf']}>
                 <Billing />
+              </ProtectedRoute>
+            } />
+            <Route path="/facturation/pro-forma" element={
+              <ProtectedRoute allowedRoles={['daf']}>
+                <ProForma />
               </ProtectedRoute>
             } />
             <Route path="/paiements" element={
