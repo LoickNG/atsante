@@ -11,6 +11,7 @@ export interface Conversation {
   clinic_id: string | null;
   created_at: string;
   updated_at: string;
+  participant_names?: string[]; // populated client-side
 }
 
 export interface ConversationParticipant {
@@ -35,12 +36,39 @@ export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch conversations
+      const { data: convs, error } = await supabase
         .from('conversations')
         .select('*')
         .order('updated_at', { ascending: false });
       if (error) throw error;
-      return data as Conversation[];
+      if (!convs || convs.length === 0) return [] as Conversation[];
+
+      // Fetch all participants for these conversations
+      const convIds = convs.map(c => c.id);
+      const { data: parts } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, user_id')
+        .in('conversation_id', convIds);
+
+      // Fetch profile names for all participant user_ids
+      const allUserIds = [...new Set((parts || []).map(p => p.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', allUserIds);
+
+      const nameMap = new Map<string, string>();
+      (profiles || []).forEach(p => nameMap.set(p.user_id, p.full_name));
+
+      // Attach participant names to each conversation
+      return convs.map(conv => {
+        const convParts = (parts || []).filter(p => p.conversation_id === conv.id);
+        const otherNames = convParts
+          .filter(p => p.user_id !== user?.id)
+          .map(p => nameMap.get(p.user_id) || 'Inconnu');
+        return { ...conv, participant_names: otherNames } as Conversation;
+      });
     },
     enabled: !!user,
   });
