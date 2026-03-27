@@ -86,6 +86,13 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "Licence introuvable" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      // Check if user already exists
+      const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+      const existingUser = existingUsers?.users?.find(u => u.email === email.trim());
+      if (existingUser) {
+        return new Response(JSON.stringify({ error: `Un compte avec l'email ${email} existe déjà. Veuillez utiliser une autre adresse email.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       // Create the user
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email: email.trim(),
@@ -163,6 +170,13 @@ serve(async (req) => {
       if (!serviceExists) {
         return new Response(JSON.stringify({ error: "Service invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+    }
+
+    // Check if user already exists
+    const { data: existingUsers2 } = await adminClient.auth.admin.listUsers();
+    const existingUser2 = existingUsers2?.users?.find(u => u.email === email.trim());
+    if (existingUser2) {
+      return new Response(JSON.stringify({ error: `Un compte avec l'email ${email} existe déjà. Veuillez utiliser une autre adresse email.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // Create user
