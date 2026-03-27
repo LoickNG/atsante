@@ -59,7 +59,7 @@ const Dashboard = () => {
   const { data: licenses } = useQuery({
     queryKey: ['licenses-dashboard'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('licenses').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('licenses').select('*').neq('license_key', 'DEMO-ATSANTE-UNLIMITED').order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
