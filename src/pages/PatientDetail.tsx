@@ -704,6 +704,15 @@ const PatientDetail = () => {
                 </Card>
               </TabsContent>
             </Tabs>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <Stethoscope className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                  <p className="text-lg font-medium">Accès restreint</p>
+                  <p className="text-sm mt-1">Les données médicales ne sont pas accessibles pour votre rôle.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
