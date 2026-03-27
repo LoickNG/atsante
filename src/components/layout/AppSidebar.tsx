@@ -3,7 +3,7 @@ import { useSidebarCollapse } from './AppLayout';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, Activity, Type } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
@@ -11,6 +11,7 @@ import { getFilteredNavigation, getRoleLabel, getRoleColor } from '@/config/navi
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface AppSidebarProps {
   className?: string;
@@ -25,8 +26,24 @@ export function AppSidebar({
   
   const userRole = role || 'medecin';
   const navigation = getFilteredNavigation(userRole);
+
+  const { data: profileData } = useQuery({
+    queryKey: ['sidebar_profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  });
   
-  const userName = user?.user_metadata?.full_name || user?.email || 'Utilisateur';
+  const userName = profileData?.full_name || user?.user_metadata?.full_name || user?.email || 'Utilisateur';
+  const avatarUrl = profileData?.avatar_url || undefined;
   
   const handleSignOut = async () => {
     await signOut();
@@ -98,19 +115,27 @@ export function AppSidebar({
       {/* User Section */}
       <div className="border-t border-sidebar-border p-3">
         <div className={cn('flex items-center gap-3 rounded-lg p-2', collapsed && 'justify-center')}>
-          <Avatar className="h-9 w-9 border-2 border-sidebar-accent">
-            <AvatarFallback className={cn(getRoleColor(userRole), 'text-white text-xs')}>
-              {userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && <div className="flex-1 overflow-hidden">
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button onClick={() => navigate('/profil')} className="focus:outline-none cursor-pointer">
+                <Avatar className="h-9 w-9 border-2 border-sidebar-accent hover:ring-2 hover:ring-sidebar-primary transition-all">
+                  <AvatarImage src={avatarUrl} />
+                  <AvatarFallback className={cn(getRoleColor(userRole), 'text-white text-xs')}>
+                    {userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side={collapsed ? 'right' : 'top'}>Mon profil</TooltipContent>
+          </Tooltip>
+          {!collapsed && <button onClick={() => navigate('/profil')} className="flex-1 overflow-hidden text-left cursor-pointer hover:opacity-80 transition-opacity">
               <p className="truncate text-sm font-medium text-sidebar-foreground">
                 {userName}
               </p>
               <p className="truncate text-[11px] text-sidebar-foreground/60">
                 {getRoleLabel(userRole)}
               </p>
-            </div>}
+            </button>}
           {!collapsed && <div className="flex gap-1">
               <NotificationBell />
               <Tooltip>
