@@ -304,7 +304,7 @@ export default function Surgery() {
             <TabsTrigger value="blocs">Blocs opératoires</TabsTrigger>
           </TabsList>
           <div className="flex gap-2">
-            {role === 'admin' && (
+            {(role === 'admin' || role === 'demo') && (
               <Dialog open={roomDialogOpen} onOpenChange={setRoomDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline"><Plus className="h-4 w-4 mr-2" />Ajouter un bloc</Button>
