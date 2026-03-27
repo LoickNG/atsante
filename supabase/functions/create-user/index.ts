@@ -127,10 +127,10 @@ serve(async (req) => {
 
     // Increment current_users on license
     if (settings?.activated_license_key) {
-      await adminClient.rpc('increment_license_users' as any, { _license_key: settings.activated_license_key }).catch(() => {
-        // Non-blocking: just increment if the function exists
-        adminClient.from("licenses").update({ current_users: adminClient.rpc ? undefined : undefined } as any).eq("license_key", settings.activated_license_key);
-      });
+      const { data: lic } = await adminClient.from("licenses").select("id, current_users").eq("license_key", settings.activated_license_key).single();
+      if (lic) {
+        await adminClient.from("licenses").update({ current_users: lic.current_users + 1 }).eq("id", lic.id);
+      }
     }
 
     // Send password reset email
