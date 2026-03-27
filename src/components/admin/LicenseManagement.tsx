@@ -350,6 +350,7 @@ export function LicenseManagement() {
                 <TableRow>
                   <TableHead>Clinique</TableHead>
                   <TableHead>Clé</TableHead>
+                  <TableHead>Admin</TableHead>
                   <TableHead>Utilisateurs</TableHead>
                   <TableHead>Modules</TableHead>
                   <TableHead>Expiration</TableHead>
