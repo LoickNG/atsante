@@ -201,10 +201,11 @@ export const DEMO_EMAIL = 'demo@atsante.td';
 
 export const getFilteredNavigation = (userRole: UserRole, email?: string | null): NavSection[] => {
   const isDemo = email === DEMO_EMAIL;
+  const isSuperAdmin = userRole === 'super_admin';
   return navigationConfig
     .map(section => ({
       ...section,
-      items: section.items.filter(item => isDemo || item.roles.includes(userRole)),
+      items: section.items.filter(item => isDemo || isSuperAdmin || item.roles.includes(userRole)),
     }))
     .filter(section => section.items.length > 0);
 };

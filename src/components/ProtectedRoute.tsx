@@ -22,7 +22,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const hasShownToast = useRef(false);
 
   const isDemo = user?.email === DEMO_EMAIL;
-  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role) && !isDemo;
+  const isSuperAdmin = role === 'super_admin';
+  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role) && !isDemo && !isSuperAdmin;
 
   useEffect(() => {
     if (isUnauthorized && !hasShownToast.current) {
