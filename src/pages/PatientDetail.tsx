@@ -361,13 +361,23 @@ const PatientDetail = () => {
 
           {/* Right Column - Tabs */}
           <div className="lg:col-span-2">
+            {/* Medical tabs hidden from non-medical roles (accueil, caissier, admin, daf) */}
+            {(role === 'medecin' || role === 'infirmier' || role === 'pharmacien' || role === 'laborantin' || role === 'imagerie') ? (
             <Tabs defaultValue="consultations" className="w-full">
               <TabsList className="grid w-full grid-cols-6 no-print">
                 <TabsTrigger value="consultations" className="gap-1.5 text-xs"><Stethoscope className="h-3.5 w-3.5" />Consultations</TabsTrigger>
-                <TabsTrigger value="prescriptions" className="gap-1.5 text-xs"><Pill className="h-3.5 w-3.5" />Ordonnances</TabsTrigger>
-                <TabsTrigger value="analyses" className="gap-1.5 text-xs"><FlaskConical className="h-3.5 w-3.5" />Analyses</TabsTrigger>
-                <TabsTrigger value="imagerie" className="gap-1.5 text-xs"><ImageIcon className="h-3.5 w-3.5" />Imagerie</TabsTrigger>
-                <TabsTrigger value="hospitalisation" className="gap-1.5 text-xs"><BedDouble className="h-3.5 w-3.5" />Hospit.</TabsTrigger>
+                {(role === 'medecin' || role === 'infirmier' || role === 'pharmacien') && (
+                  <TabsTrigger value="prescriptions" className="gap-1.5 text-xs"><Pill className="h-3.5 w-3.5" />Ordonnances</TabsTrigger>
+                )}
+                {(role === 'medecin' || role === 'infirmier' || role === 'laborantin') && (
+                  <TabsTrigger value="analyses" className="gap-1.5 text-xs"><FlaskConical className="h-3.5 w-3.5" />Analyses</TabsTrigger>
+                )}
+                {(role === 'medecin' || role === 'infirmier' || role === 'imagerie') && (
+                  <TabsTrigger value="imagerie" className="gap-1.5 text-xs"><ImageIcon className="h-3.5 w-3.5" />Imagerie</TabsTrigger>
+                )}
+                {(role === 'medecin' || role === 'infirmier') && (
+                  <TabsTrigger value="hospitalisation" className="gap-1.5 text-xs"><BedDouble className="h-3.5 w-3.5" />Hospit.</TabsTrigger>
+                )}
                 <TabsTrigger value="historique" className="gap-1.5 text-xs"><Clock className="h-3.5 w-3.5" />Visites</TabsTrigger>
               </TabsList>
 
