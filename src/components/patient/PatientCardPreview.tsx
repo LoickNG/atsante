@@ -344,22 +344,45 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                 </div>
               </div>
 
-              {/* Middle: Convention info */}
-              <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
-                {companyName && (
-                  <div
-                    className="flex items-center gap-1 rounded-r px-1.5 py-0.5 text-[8px] text-muted-foreground"
-                    style={{
-                      background: `linear-gradient(90deg, ${colorToRgba(HOSPITAL.color, 0.08)}, transparent)`,
-                      borderLeft: `2px solid ${HOSPITAL.color}`,
-                    }}
-                  >
-                    <Building2 className="h-[9px] w-[9px] shrink-0" style={{ color: HOSPITAL.color }} />
-                    <span className="font-bold text-foreground">{companyName}</span>
-                    {conventionName && <span>· {conventionName}</span>}
-                    {employeeId && <span>· Mat: {employeeId}</span>}
-                  </div>
-                )}
+              {/* Middle: Convention + Allergies */}
+              <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-0">
+                {/* Convention - blue zone */}
+                <div
+                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[8px]"
+                  style={{
+                    background: 'hsl(210 80% 95%)',
+                    border: '1px solid hsl(210 60% 85%)',
+                  }}
+                >
+                  <Building2 className="h-[10px] w-[10px] shrink-0 text-[hsl(210,60%,45%)]" />
+                  {companyName ? (
+                    <span className="text-[hsl(210,60%,30%)]">
+                      <span className="font-bold">{companyName}</span>
+                      {conventionName && <span> · {conventionName}</span>}
+                      {employeeId && <span> · Mat: {employeeId}</span>}
+                    </span>
+                  ) : (
+                    <span className="text-[hsl(210,30%,60%)] italic">Aucune convention</span>
+                  )}
+                </div>
+
+                {/* Allergies - green zone */}
+                <div
+                  className="flex items-start gap-1 rounded-lg px-2 py-1.5 text-[8px]"
+                  style={{
+                    background: 'hsl(152 40% 94%)',
+                    border: '1px solid hsl(152 40% 82%)',
+                  }}
+                >
+                  <span className="text-[10px] shrink-0">⚠️</span>
+                  {patient.allergies && patient.allergies.length > 0 ? (
+                    <span className="text-[hsl(152,50%,25%)] font-semibold leading-tight">
+                      {patient.allergies.join(', ')}
+                    </span>
+                  ) : (
+                    <span className="text-[hsl(152,30%,55%)] italic">Aucune allergie connue</span>
+                  )}
+                </div>
               </div>
 
               {/* QR Code Section */}
