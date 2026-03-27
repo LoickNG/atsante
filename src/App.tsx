@@ -41,7 +41,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/installer" element={<Install />} />
             <Route path="/" element={
-              <ProtectedRoute allowedRoles={['admin', 'pca', 'dg', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'pca', 'dg', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf']}>
                 <Dashboard />
               </ProtectedRoute>
             } />
@@ -116,7 +116,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/parametres" element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin']}>
                 <Settings />
               </ProtectedRoute>
             } />
@@ -132,7 +132,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/profil" element={
-              <ProtectedRoute allowedRoles={['admin', 'pca', 'dg', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'admin', 'pca', 'dg', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf']}>
                 <Profile />
               </ProtectedRoute>
             } />
