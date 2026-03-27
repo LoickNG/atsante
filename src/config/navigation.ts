@@ -202,12 +202,22 @@ export const getRoleColor = (role: UserRole): string => {
 export const DEMO_EMAIL = 'demo@atsante.td';
 
 export const getFilteredNavigation = (userRole: UserRole, email?: string | null): NavSection[] => {
-  const isSuperAdmin = userRole === 'super_admin';
   const isDemoRole = userRole === 'demo';
+
+  // Super admin only sees Dashboard + Settings
+  if (userRole === 'super_admin') {
+    return navigationConfig
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item => item.roles.includes('super_admin')),
+      }))
+      .filter(section => section.items.length > 0);
+  }
+
   return navigationConfig
     .map(section => ({
       ...section,
-      items: section.items.filter(item => isSuperAdmin || isDemoRole || item.roles.includes(userRole)),
+      items: section.items.filter(item => isDemoRole || item.roles.includes(userRole)),
     }))
     .filter(section => section.items.length > 0);
 };
