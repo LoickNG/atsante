@@ -252,9 +252,11 @@ export default function Hospitalizations() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Rechercher un patient..." className="pl-9 w-[250px]" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
+            {role === 'medecin' && (
             <Button onClick={() => setAdmitDialogOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />Admettre un patient
             </Button>
+            )}
           </div>
         </div>
 
@@ -481,12 +483,16 @@ export default function Hospitalizations() {
                     <Button variant="outline" className="gap-2" onClick={() => { setRoomDialogOpen(true); setNewRoomId(''); }}>
                       <BedDouble className="h-4 w-4" />{selectedHosp.room_id ? 'Changer chambre' : 'Attribuer chambre'}
                     </Button>
+                     {role === 'medecin' && (
+<>
                      <Button variant="outline" className="gap-2" onClick={() => { setCareDialogOpen(true); setCareType(''); setCareDescription(''); setCareNotes(''); setCareQuantity('1'); setCareMedicationId(''); setCareMedSearch(''); }}>
-                      <Stethoscope className="h-4 w-4" />Ajouter un soin
-                    </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => { setExamDialogOpen(true); setExamCategory('laboratoire'); setExamTestType(''); setExamBodyPart(''); setExamPriority('normale'); }}>
-                      <FlaskConical className="h-4 w-4" />Demander un examen
-                    </Button>
+                       <Stethoscope className="h-4 w-4" />Ajouter un soin
+                     </Button>
+                     <Button variant="outline" className="gap-2" onClick={() => { setExamDialogOpen(true); setExamCategory('laboratoire'); setExamTestType(''); setExamBodyPart(''); setExamPriority('normale'); }}>
+                       <FlaskConical className="h-4 w-4" />Demander un examen
+                     </Button>
+</>
+                     )}
                     <Button variant="destructive" className="gap-2 ml-auto" onClick={() => { setDischargeDialogOpen(true); setDischargeNotes(''); }}>
                       <LogOut className="h-4 w-4" />Sortie du patient
                     </Button>

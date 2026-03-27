@@ -44,7 +44,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/patients" element={
-              <ProtectedRoute allowedRoles={['accueil', 'medecin', 'infirmier', 'caissier']}>
+              <ProtectedRoute allowedRoles={['accueil', 'medecin', 'infirmier']}>
                 <PatientsList />
               </ProtectedRoute>
             } />
@@ -64,7 +64,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/consultations" element={
-              <ProtectedRoute allowedRoles={['medecin', 'infirmier']}>
+              <ProtectedRoute allowedRoles={['medecin']}>
                 <Consultations />
               </ProtectedRoute>
             } />
@@ -79,22 +79,22 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/pharmacie" element={
-              <ProtectedRoute allowedRoles={['pharmacien', 'medecin']}>
+              <ProtectedRoute allowedRoles={['pharmacien']}>
                 <Pharmacy />
               </ProtectedRoute>
             } />
             <Route path="/laboratoire" element={
-              <ProtectedRoute allowedRoles={['laborantin', 'medecin']}>
+              <ProtectedRoute allowedRoles={['laborantin']}>
                 <Laboratory />
               </ProtectedRoute>
             } />
             <Route path="/imagerie" element={
-              <ProtectedRoute allowedRoles={['imagerie', 'medecin']}>
+              <ProtectedRoute allowedRoles={['imagerie']}>
                 <Imaging />
               </ProtectedRoute>
             } />
             <Route path="/facturation" element={
-              <ProtectedRoute allowedRoles={['caissier', 'daf']}>
+              <ProtectedRoute allowedRoles={['daf']}>
                 <Billing />
               </ProtectedRoute>
             } />
@@ -104,7 +104,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/extraits" element={
-              <ProtectedRoute allowedRoles={['caissier', 'daf']}>
+              <ProtectedRoute allowedRoles={['daf']}>
                 <Extracts />
               </ProtectedRoute>
             } />
