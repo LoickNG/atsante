@@ -33,6 +33,7 @@ import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospitalizations } from '@/hooks/useHospitalizations';
+import { useStaffProfiles } from '@/hooks/useStaffProfiles';
 import { toast } from 'sonner';
 
 const PatientDetail = () => {
@@ -47,6 +48,7 @@ const PatientDetail = () => {
   const { data: allHospitalizations } = useHospitalizations();
   const updateConsultation = useUpdateConsultation();
   const updateVisit = useUpdateVisit();
+  const { getStaffName } = useStaffProfiles();
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
@@ -407,7 +409,9 @@ const PatientDetail = () => {
                               <div className="flex items-center justify-between mb-3">
                                 <div>
                                   <p className="font-semibold text-base">{c.diagnosis || 'Diagnostic non renseigné'}</p>
-                                  <p className="text-xs text-muted-foreground">{formatDateTime(c.date)}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatDateTime(c.date)} — <span className="font-medium">{getStaffName(c.doctor_id) || 'Médecin'}</span>
+                                  </p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {c.status === 'termine' && role === 'medecin' && (
@@ -478,7 +482,7 @@ const PatientDetail = () => {
                                           <span className="text-muted-foreground ml-2">{p.dosage} • {p.frequency} • {p.duration}</span>
                                         </div>
                                         <Badge variant={p.dispensed ? 'default' : 'outline'} className="text-[10px]">
-                                          {p.dispensed ? 'Délivré' : p.medication_id ? 'En attente' : 'Externe'}
+                                          {p.dispensed ? `Délivré${p.dispensed_by ? ' par ' + getStaffName(p.dispensed_by) : ''}` : p.medication_id ? 'En attente' : 'Externe'}
                                         </Badge>
                                       </div>
                                     ))}
@@ -585,9 +589,10 @@ const PatientDetail = () => {
                                 <p className="whitespace-pre-wrap">{lab.results}</p>
                               </div>
                             )}
-                            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-2">
                               <span>Demandé le {formatDateTime(lab.requested_at)}</span>
                               {lab.completed_at && <span>• Terminé le {formatDateTime(lab.completed_at)}</span>}
+                              {lab.validated_by && <span>• Validé par <span className="font-medium">{getStaffName(lab.validated_by)}</span></span>}
                             </div>
                           </div>
                         ))}
@@ -628,9 +633,10 @@ const PatientDetail = () => {
                                 <p className="whitespace-pre-wrap">{img.report}</p>
                               </div>
                             )}
-                            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-2">
                               <span>Demandé le {formatDateTime(img.requested_at)}</span>
                               {img.completed_at && <span>• Réalisé le {formatDateTime(img.completed_at)}</span>}
+                              {img.performed_by && <span>• Par <span className="font-medium">{getStaffName(img.performed_by)}</span></span>}
                             </div>
                           </div>
                         ))}
@@ -668,8 +674,9 @@ const PatientDetail = () => {
                                 Chambre {h.rooms.room_number} — {h.rooms.category.replace('_', ' ')} — {h.rooms.comfort === 'climatise' ? 'Climatisé' : 'Ventilé'}
                               </p>
                             )}
-                            <div className="flex gap-4 text-xs text-muted-foreground mt-2">
+                            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-2">
                               <span>Admis le {new Date(h.admission_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                              <span>• Médecin: <span className="font-medium">{getStaffName(h.doctor_id)}</span></span>
                               {h.discharge_date && <span>• Sorti le {new Date(h.discharge_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>}
                             </div>
                             {h.discharge_notes && (
@@ -704,7 +711,10 @@ const PatientDetail = () => {
                             </div>
                             <div className="flex-1">
                               <p className="font-medium capitalize">{visit.type}</p>
-                              <p className="text-sm text-muted-foreground">{formatDateTime(visit.date)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {formatDateTime(visit.date)}
+                                {visit.assigned_doctor_id && <> — <span className="font-medium">{getStaffName(visit.assigned_doctor_id)}</span></>}
+                              </p>
                               {visit.notes && <p className="text-xs text-muted-foreground mt-1">{visit.notes}</p>}
                             </div>
                             <Badge variant={visit.status === 'termine' ? 'default' : visit.status === 'en_cours' ? 'secondary' : 'outline'}>

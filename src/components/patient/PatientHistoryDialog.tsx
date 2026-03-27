@@ -12,6 +12,7 @@ import { useConsultations } from '@/hooks/useConsultations';
 import { useLabRequests } from '@/hooks/useLabRequests';
 import { useImagingRequests } from '@/hooks/useImagingRequests';
 import { useMaternityAdmissions, useBirths, usePrenatalVisits } from '@/hooks/useMaternity';
+import { useStaffProfiles } from '@/hooks/useStaffProfiles';
 
 interface PatientHistoryDialogProps {
   patient: Patient | null;
@@ -27,6 +28,7 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
   const { data: allAdmissions } = useMaternityAdmissions();
   const { data: allBirths } = useBirths();
   const { data: allPrenatalVisits } = usePrenatalVisits();
+  const { getStaffName } = useStaffProfiles();
 
   if (!patient) return null;
 
@@ -113,7 +115,9 @@ export function PatientHistoryDialog({ patient, open, onOpenChange }: PatientHis
                     {(consultations || []).map(c => (
                       <div key={c.id} className="p-3 rounded-lg border bg-muted/20">
                         <p className="font-medium text-sm">{c.diagnosis || 'Diagnostic non renseigné'}</p>
-                        <p className="text-xs text-muted-foreground">{formatDateTime(c.date)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDateTime(c.date)} — {getStaffName(c.doctor_id) || 'Médecin'}
+                        </p>
                         {c.symptoms && <p className="text-xs mt-1">Symptômes: {c.symptoms}</p>}
                       </div>
                     ))}
