@@ -18,6 +18,8 @@ import {
   Stethoscope, Pill, FlaskConical, Clock, Loader2, ImageIcon, FileDown, MessageSquarePlus, Send, RotateCcw, Pencil, Camera, Skull, FileText, BedDouble,
 } from 'lucide-react';
 import { EditPatientDialog } from '@/components/patient/EditPatientDialog';
+import { EditConsultationDialog } from '@/components/consultation/EditConsultationDialog';
+import { Consultation } from '@/hooks/useConsultations';
 import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialog';
 import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
 import { QRCodeSVG } from 'qrcode.react';
@@ -51,6 +53,8 @@ const PatientDetail = () => {
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editConsultation, setEditConsultation] = useState<Consultation | null>(null);
+  const [editConsultationOpen, setEditConsultationOpen] = useState(false);
   const [deceasedDialogOpen, setDeceasedDialogOpen] = useState(false);
   const [deceasedActionsOpen, setDeceasedActionsOpen] = useState(false);
 
@@ -407,9 +411,19 @@ const PatientDetail = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {c.status === 'termine' && role === 'medecin' && (
-                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleReopenConsultation(c.id, c.visit_id)} disabled={isReopening}>
-                                      {isReopening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
-                                      Rouvrir
+                                    <>
+                                      <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditConsultation(c as unknown as Consultation); setEditConsultationOpen(true); }}>
+                                        <Pencil className="h-3.5 w-3.5" />Modifier
+                                      </Button>
+                                      <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleReopenConsultation(c.id, c.visit_id)} disabled={isReopening}>
+                                        {isReopening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                                        Rouvrir
+                                      </Button>
+                                    </>
+                                  )}
+                                  {c.status === 'en_cours' && role === 'medecin' && (
+                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditConsultation(c as unknown as Consultation); setEditConsultationOpen(true); }}>
+                                      <Pencil className="h-3.5 w-3.5" />Modifier
                                     </Button>
                                   )}
                                   <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleOpenFollowUp(c.id)}>
@@ -784,6 +798,13 @@ const PatientDetail = () => {
           <DeceasedPatientActions patient={patient} open={deceasedActionsOpen} onOpenChange={setDeceasedActionsOpen} />
         </>
       )}
+
+      {/* Edit Consultation Dialog */}
+      <EditConsultationDialog
+        consultation={editConsultation}
+        open={editConsultationOpen}
+        onOpenChange={setEditConsultationOpen}
+      />
     </AppLayout>
   );
 };
