@@ -406,7 +406,7 @@ const PatientDetail = () => {
                                   <p className="text-xs text-muted-foreground">{formatDateTime(c.date)}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  {c.status === 'termine' && (role === 'medecin' || role === 'admin') && (
+                                  {c.status === 'termine' && role === 'medecin' && (
                                     <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleReopenConsultation(c.id, c.visit_id)} disabled={isReopening}>
                                       {isReopening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
                                       Rouvrir
