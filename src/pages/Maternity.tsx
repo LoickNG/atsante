@@ -60,8 +60,22 @@ const Maternity = () => {
   const [prenatalAdmission, setPrenatalAdmission] = useState<MaternityAdmission | null>(null);
   const [viewPrenatalAdmissionId, setViewPrenatalAdmissionId] = useState<string | null>(null);
 
-  const { user, role } = useAuth();
+  const { user, role, serviceCode } = useAuth();
   const { data: clinicData } = useClinicSettings();
+
+  // Restrict access: only users assigned to maternité service (or accueil for admissions)
+  const isMaternityStaff = serviceCode === 'maternite';
+  const canAccessMaternity = isMaternityStaff || role === 'accueil' || role === 'admin';
+
+  if (!canAccessMaternity) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground">Accès réservé au personnel du service maternité.</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const { data: allAdmissions, isLoading } = useMaternityAdmissions();
   const { data: activeAdmissions } = useActiveMaternityAdmissions();
