@@ -386,6 +386,21 @@ export function LicenseManagement() {
                           <Button size="sm" variant="outline" onClick={() => openDetailDialog(lic)} title="Voir les utilisateurs">
                             <Eye className="h-4 w-4" />
                           </Button>
+                          {lic.contact_email && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResendInvite(lic.contact_email!, lic.license_key)}
+                              disabled={resendingEmail === lic.contact_email}
+                              title="Renvoyer l'invitation"
+                            >
+                              {resendingEmail === lic.contact_email ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Mail className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline" onClick={() => openAdminDialog(lic)} title="Créer l'administrateur">
                             <UserPlus className="h-4 w-4" />
                           </Button>
