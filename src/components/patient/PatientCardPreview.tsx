@@ -346,25 +346,23 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
 
               {/* Middle: Convention + Allergies */}
               <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-0">
-                {/* Convention - blue zone */}
-                <div
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[8px]"
-                  style={{
-                    background: 'hsl(210 80% 95%)',
-                    border: '1px solid hsl(210 60% 85%)',
-                  }}
-                >
-                  <Building2 className="h-[10px] w-[10px] shrink-0 text-[hsl(210,60%,45%)]" />
-                  {companyName ? (
+                {/* Convention - blue zone (only if exists) */}
+                {companyName && (
+                  <div
+                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[8px]"
+                    style={{
+                      background: 'hsl(210 80% 95%)',
+                      border: '1px solid hsl(210 60% 85%)',
+                    }}
+                  >
+                    <Building2 className="h-[10px] w-[10px] shrink-0 text-[hsl(210,60%,45%)]" />
                     <span className="text-[hsl(210,60%,30%)]">
                       <span className="font-bold">{companyName}</span>
                       {conventionName && <span> · {conventionName}</span>}
                       {employeeId && <span> · Mat: {employeeId}</span>}
                     </span>
-                  ) : (
-                    <span className="text-[hsl(210,30%,60%)] italic">Aucune convention</span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Allergies - green zone */}
                 <div
