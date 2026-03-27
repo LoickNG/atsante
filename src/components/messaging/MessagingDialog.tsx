@@ -1,11 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   useConversations,
   useMessages,
@@ -16,7 +15,7 @@ import {
   Conversation,
 } from '@/hooks/useMessaging';
 import { useAuth } from '@/hooks/useAuth';
-import { Send, Plus, ArrowLeft, Users, MessageCircle, Loader2, Search } from 'lucide-react';
+import { Send, ArrowLeft, Users, MessageCircle, Loader2, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -25,15 +24,13 @@ interface MessagingDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type View = 'list' | 'chat' | 'new';
+type View = 'list' | 'chat';
 
 export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
   const [view, setView] = useState<View>('list');
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messageText, setMessageText] = useState('');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [groupTitle, setGroupTitle] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { user } = useAuth();
@@ -45,10 +42,12 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
   const createConversation = useCreateConversation();
 
   // Staff name map
-  const staffMap = new Map<string, string>();
-  clinicStaff?.forEach(s => staffMap.set(s.user_id, s.full_name));
-  // Add current user
-  if (user) staffMap.set(user.id, 'Moi');
+  const staffMap = useMemo(() => {
+    const map = new Map<string, string>();
+    clinicStaff?.forEach(s => map.set(s.user_id, s.full_name));
+    if (user) map.set(user.id, 'Moi');
+    return map;
+  }, [clinicStaff, user]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -58,19 +57,18 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
     if (!open) {
       setView('list');
       setActiveConversation(null);
-      setSelectedUsers([]);
       setSearchTerm('');
-      setGroupTitle('');
     }
   }, [open]);
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
+  const getInitials = (name: string) =>
+    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-  const getConversationName = (conv: Conversation) => {
+  const getConversationDisplayName = (conv: Conversation) => {
     if (conv.title) return conv.title;
-    // For non-group: find the other participant name from clinic staff
+    if (conv.participant_names && conv.participant_names.length > 0) {
+      return conv.participant_names.join(', ');
+    }
     return 'Conversation';
   };
 
@@ -81,30 +79,69 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
     await sendMessage.mutateAsync({ conversationId: activeConversation.id, content: text });
   };
 
-  const handleCreateConversation = async () => {
-    if (selectedUsers.length === 0) return;
-    const isGroup = selectedUsers.length > 1;
-    const title = isGroup ? (groupTitle || selectedUsers.map(id => staffMap.get(id) || '').join(', ')) : undefined;
-    const conv = await createConversation.mutateAsync({
-      participantIds: selectedUsers,
-      title,
-      isGroup,
-    });
-    setActiveConversation(conv);
-    setView('chat');
-    setSelectedUsers([]);
-    setGroupTitle('');
-  };
-
-  const toggleUser = (userId: string) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+  const handleStartConversation = async (staffUserId: string) => {
+    // Check if a 1:1 conversation already exists
+    const existing = conversations?.find(c =>
+      !c.is_group &&
+      c.participant_names?.length === 1 &&
+      c.participant_names.some(() => {
+        // Check participants include this staff member
+        return true; // We'll match by checking conversation participants
+      })
     );
+
+    // Try to find existing 1:1 with this person
+    if (conversations) {
+      for (const conv of conversations) {
+        if (!conv.is_group) {
+          // Check if this conversation has this staff as participant
+          const { data: parts } = await (await import('@/integrations/supabase/client')).supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', conv.id);
+          const userIds = (parts || []).map(p => p.user_id);
+          if (userIds.includes(staffUserId) && userIds.includes(user!.id) && userIds.length === 2) {
+            setActiveConversation(conv);
+            setView('chat');
+            setSearchTerm('');
+            return;
+          }
+        }
+      }
+    }
+
+    // Create new conversation
+    const conv = await createConversation.mutateAsync({
+      participantIds: [staffUserId],
+      isGroup: false,
+    });
+    setActiveConversation({
+      ...conv,
+      participant_names: [staffMap.get(staffUserId) || 'Inconnu'],
+    });
+    setView('chat');
+    setSearchTerm('');
   };
 
-  const filteredStaff = clinicStaff?.filter(s =>
-    s.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Unified search: filter conversations + show staff to start new chats
+  const filteredConversations = useMemo(() => {
+    if (!searchTerm.trim()) return conversations || [];
+    return (conversations || []).filter(c =>
+      getConversationDisplayName(c).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [conversations, searchTerm]);
+
+  const staffSuggestions = useMemo(() => {
+    if (!searchTerm.trim() || !clinicStaff) return [];
+    // Show staff that match the search but don't have an existing conversation shown
+    const existingParticipantNames = new Set(
+      (conversations || []).flatMap(c => c.participant_names || [])
+    );
+    return clinicStaff.filter(s =>
+      s.full_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !existingParticipantNames.has(s.full_name)
+    );
+  }, [searchTerm, clinicStaff, conversations]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -112,82 +149,137 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
         {/* Header */}
         <DialogHeader className="p-4 pb-3 border-b shrink-0">
           <div className="flex items-center gap-2">
-            {view !== 'list' && (
+            {view === 'chat' && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => { setView('list'); setActiveConversation(null); setSelectedUsers([]); }}
+                onClick={() => { setView('list'); setActiveConversation(null); }}
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             )}
             <DialogTitle className="text-base">
               {view === 'list' && 'Messagerie'}
-              {view === 'chat' && (activeConversation ? getConversationName(activeConversation) : 'Chat')}
-              {view === 'new' && 'Nouvelle conversation'}
+              {view === 'chat' && activeConversation && getConversationDisplayName(activeConversation)}
             </DialogTitle>
-            {view === 'list' && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-auto h-8 w-8"
-                onClick={() => setView('new')}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
           </div>
+          <DialogDescription className="sr-only">
+            Messagerie interne de la clinique
+          </DialogDescription>
         </DialogHeader>
 
         {/* Content */}
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 flex flex-col">
           {/* Conversation List */}
           {view === 'list' && (
-            <ScrollArea className="h-full">
-              {convsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <>
+              {/* Search bar */}
+              <div className="p-3 border-b shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher ou démarrer une discussion..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
                 </div>
-              ) : !conversations || conversations.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
-                  <MessageCircle className="h-10 w-10" />
-                  <p className="text-sm">Aucune conversation</p>
-                  <Button variant="outline" size="sm" onClick={() => setView('new')}>
-                    <Plus className="h-4 w-4 mr-1" /> Commencer
-                  </Button>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {conversations.map(conv => (
-                    <button
-                      key={conv.id}
-                      className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
-                      onClick={() => { setActiveConversation(conv); setView('chat'); }}
-                    >
-                      <Avatar className="h-9 w-9 shrink-0">
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                          {conv.is_group ? <Users className="h-4 w-4" /> : getInitials(getConversationName(conv))}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{getConversationName(conv)}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(conv.updated_at), 'dd MMM HH:mm', { locale: fr })}
-                        </p>
+              </div>
+
+              <ScrollArea className="flex-1">
+                {convsLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <>
+                    {/* Existing conversations */}
+                    {filteredConversations.length > 0 && (
+                      <div className="divide-y">
+                        {filteredConversations.map(conv => {
+                          const displayName = getConversationDisplayName(conv);
+                          return (
+                            <button
+                              key={conv.id}
+                              className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
+                              onClick={() => { setActiveConversation(conv); setView('chat'); }}
+                            >
+                              <Avatar className="h-9 w-9 shrink-0">
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  {conv.is_group ? <Users className="h-4 w-4" /> : getInitials(displayName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium truncate">{displayName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(new Date(conv.updated_at), 'dd MMM HH:mm', { locale: fr })}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+                    )}
+
+                    {/* Staff suggestions for new conversations */}
+                    {staffSuggestions.length > 0 && (
+                      <div>
+                        <p className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Nouvelle conversation
+                        </p>
+                        <div className="divide-y">
+                          {staffSuggestions.map(staff => (
+                            <button
+                              key={staff.user_id}
+                              className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
+                              onClick={() => handleStartConversation(staff.user_id)}
+                            >
+                              <Avatar className="h-9 w-9 shrink-0">
+                                <AvatarFallback className="text-xs bg-accent text-accent-foreground">
+                                  {getInitials(staff.full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium">{staff.full_name}</p>
+                                {staff.specialty && (
+                                  <p className="text-xs text-muted-foreground">{staff.specialty}</p>
+                                )}
+                              </div>
+                              <MessageCircle className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show all staff when searching and no conversations match */}
+                    {searchTerm.trim() && filteredConversations.length === 0 && staffSuggestions.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                        <Search className="h-8 w-8" />
+                        <p className="text-sm">Aucun résultat pour "{searchTerm}"</p>
+                      </div>
+                    )}
+
+                    {/* Empty state */}
+                    {!searchTerm.trim() && filteredConversations.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
+                        <MessageCircle className="h-10 w-10" />
+                        <p className="text-sm">Aucune conversation</p>
+                        <p className="text-xs">Tapez un nom pour démarrer une discussion</p>
+                      </div>
+                    )}
+                  </>
+                )}
+              </ScrollArea>
+            </>
           )}
 
           {/* Chat View */}
           {view === 'chat' && activeConversation && (
             <div className="flex flex-col h-full">
               {/* Participants bar */}
-              {participants && participants.length > 0 && (
+              {participants && participants.length > 2 && (
                 <div className="px-4 py-2 border-b bg-muted/30 flex gap-1.5 flex-wrap shrink-0">
                   {participants.map(p => (
                     <Badge key={p.id} variant="outline" className="text-[10px]">
@@ -245,79 +337,6 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                   disabled={!messageText.trim() || sendMessage.isPending}
                 >
                   <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* New Conversation */}
-          {view === 'new' && (
-            <div className="flex flex-col h-full">
-              <div className="p-4 space-y-3 shrink-0">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Rechercher un collègue..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                {selectedUsers.length > 1 && (
-                  <Input
-                    placeholder="Nom du groupe (optionnel)"
-                    value={groupTitle}
-                    onChange={e => setGroupTitle(e.target.value)}
-                  />
-                )}
-                {selectedUsers.length > 0 && (
-                  <div className="flex gap-1.5 flex-wrap">
-                    {selectedUsers.map(uid => (
-                      <Badge key={uid} variant="secondary" className="text-xs cursor-pointer" onClick={() => toggleUser(uid)}>
-                        {staffMap.get(uid) || uid.slice(0, 8)} ×
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <ScrollArea className="flex-1 px-4">
-                {filteredStaff?.map(staff => (
-                  <label
-                    key={staff.user_id}
-                    className="flex items-center gap-3 py-2.5 px-2 rounded-md hover:bg-muted/50 cursor-pointer"
-                  >
-                    <Checkbox
-                      checked={selectedUsers.includes(staff.user_id)}
-                      onCheckedChange={() => toggleUser(staff.user_id)}
-                    />
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                        {getInitials(staff.full_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{staff.full_name}</p>
-                      {staff.specialty && (
-                        <p className="text-xs text-muted-foreground">{staff.specialty}</p>
-                      )}
-                    </div>
-                  </label>
-                ))}
-              </ScrollArea>
-
-              <div className="p-4 border-t shrink-0">
-                <Button
-                  className="w-full"
-                  disabled={selectedUsers.length === 0 || createConversation.isPending}
-                  onClick={handleCreateConversation}
-                >
-                  {createConversation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                  )}
-                  Démarrer la conversation
                 </Button>
               </div>
             </div>
