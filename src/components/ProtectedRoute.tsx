@@ -49,8 +49,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Super admin bypasses license check
-  if (role === 'super_admin') {
+  // Super admin and demo account bypass license check
+  if (role === 'super_admin' || isDemo) {
     return <>{children}</>;
   }
 
