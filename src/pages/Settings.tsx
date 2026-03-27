@@ -1,7 +1,7 @@
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import { AdminOverview } from '@/components/admin/AdminOverview';
+
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ConventionManagement } from '@/components/admin/ConventionManagement';
 import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement';
@@ -10,7 +10,7 @@ import { ClinicSettingsManagement } from '@/components/admin/ClinicSettingsManag
 import { LicenseManagement } from '@/components/admin/LicenseManagement';
 import { LicenseActivation } from '@/components/admin/LicenseActivation';
 import { ServiceManagement } from '@/components/admin/ServiceManagement';
-import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2, Key } from 'lucide-react';
+import { Users, Handshake, Receipt, BedDouble, Stethoscope, Building2, Key } from 'lucide-react';
 import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 
 export default function Settings() {
@@ -46,10 +46,6 @@ export default function Settings() {
             <Building2 className="h-4 w-4" />
             Clinique
           </TabsTrigger>
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Vue d'ensemble
-          </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Utilisateurs
@@ -84,9 +80,6 @@ export default function Settings() {
           <ClinicSettingsManagement />
         </TabsContent>
 
-        <TabsContent value="overview">
-          <AdminOverview />
-        </TabsContent>
 
         <TabsContent value="users">
           <UserManagement />
