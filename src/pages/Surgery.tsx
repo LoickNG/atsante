@@ -335,9 +335,11 @@ export default function Surgery() {
               </Dialog>
             )}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              {role === 'medecin' && (
               <DialogTrigger asChild>
                 <Button><Scissors className="h-4 w-4 mr-2" />Programmer une intervention</Button>
               </DialogTrigger>
+              )}
               <DialogContent className="max-w-lg">
                 <DialogHeader><DialogTitle>Programmer une intervention</DialogTitle></DialogHeader>
                 <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
