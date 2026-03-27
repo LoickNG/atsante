@@ -113,8 +113,78 @@ const Dashboard = () => {
 
         <MessagingDialog open={messagingOpen} onOpenChange={setMessagingOpen} />
 
+        {/* ===== DEMO - ALL FEATURES ===== */}
+        {isDemo && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+              <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
+              <StatCard title="Consultations" value={stats?.consultationsToday || 0} icon={Stethoscope} variant="success" />
+              <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="default" />
+              <StatCard title="Stock faible" value={stats?.lowStockMedications || 0} icon={AlertTriangle} variant={(stats?.lowStockMedications || 0) > 0 ? 'danger' : 'default'} />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+              <StatCard title="Analyses en attente" value={stats?.pendingLabs || 0} icon={FlaskConical} variant={(stats?.pendingLabs || 0) > 5 ? 'warning' : 'default'} />
+              <StatCard title="Imagerie en attente" value={stats?.pendingImaging || 0} icon={ImageIcon} variant="default" />
+              <StatCard title="Médicaments" value={medications?.length || 0} icon={Pill} variant="primary" />
+              <StatCard title="En attente" value={waitingVisits?.length || 0} icon={Calendar} variant="warning" />
+            </div>
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4">Accès rapide — Tous les modules</h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                  <Link to="/patients/nouveau"><UserPlus className="h-6 w-6 text-primary" /><span className="font-medium">Nouveau patient</span><span className="text-xs text-muted-foreground">Accueil — Créer une carte QR</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-info/5 hover:border-info/30" asChild>
+                  <Link to="/file-attente"><Calendar className="h-6 w-6 text-info" /><span className="font-medium">File d'attente</span><span className="text-xs text-muted-foreground">Gérer les patients en attente</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-success/5 hover:border-success/30" asChild>
+                  <Link to="/consultations"><Stethoscope className="h-6 w-6 text-success" /><span className="font-medium">Consultations</span><span className="text-xs text-muted-foreground">Médecin — Examens</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-destructive/5 hover:border-destructive/30" asChild>
+                  <Link to="/urgences"><Ambulance className="h-6 w-6 text-destructive" /><span className="font-medium">Urgences</span><span className="text-xs text-muted-foreground">Prise en charge urgente</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                  <Link to="/hospitalisations"><BedDouble className="h-6 w-6 text-primary" /><span className="font-medium">Hospitalisations</span><span className="text-xs text-muted-foreground">Patients hospitalisés</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-warning/5 hover:border-warning/30" asChild>
+                  <Link to="/bloc-operatoire"><Scissors className="h-6 w-6 text-warning" /><span className="font-medium">Bloc Opératoire</span><span className="text-xs text-muted-foreground">Interventions planifiées</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-accent/50 hover:border-accent" asChild>
+                  <Link to="/maternite"><Baby className="h-6 w-6 text-pink-500" /><span className="font-medium">Maternité</span><span className="text-xs text-muted-foreground">Suivi grossesses</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                  <Link to="/pharmacie"><Pill className="h-6 w-6 text-primary" /><span className="font-medium">Pharmacie</span><span className="text-xs text-muted-foreground">Stocks & dispensation</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                  <Link to="/laboratoire"><FlaskConical className="h-6 w-6 text-primary" /><span className="font-medium">Laboratoire</span><span className="text-xs text-muted-foreground">Résultats d'analyses</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                  <Link to="/imagerie"><ImageIcon className="h-6 w-6 text-primary" /><span className="font-medium">Imagerie</span><span className="text-xs text-muted-foreground">Examens à réaliser</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-success/5 hover:border-success/30" asChild>
+                  <Link to="/facturation"><FileText className="h-6 w-6 text-success" /><span className="font-medium">Facturation</span><span className="text-xs text-muted-foreground">Gérer les factures</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-success/5 hover:border-success/30" asChild>
+                  <Link to="/paiements"><Receipt className="h-6 w-6 text-success" /><span className="font-medium">Paiements</span><span className="text-xs text-muted-foreground">Encaissements</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-warning/5 hover:border-warning/30" asChild>
+                  <Link to="/extraits"><FileText className="h-6 w-6 text-warning" /><span className="font-medium">Extraits</span><span className="text-xs text-muted-foreground">Rapports financiers</span></Link>
+                </Button>
+                <Button variant="outline" className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30" asChild>
+                  <Link to="/parametres"><Settings className="h-6 w-6 text-primary" /><span className="font-medium">Paramètres</span><span className="text-xs text-muted-foreground">Administration</span></Link>
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <DashboardWaitingList visits={waitingVisits || []} isLoading={visitsLoading} />
+              <DashboardPendingLabs requests={pendingLabs || []} isLoading={labsLoading} />
+              <DashboardLowStock medications={lowStockMeds} isLoading={medsLoading} />
+            </div>
+          </>
+        )}
+
         {/* ===== MÉDECIN ===== */}
-        {role === 'medecin' && (
+        {!isDemo && role === 'medecin' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
