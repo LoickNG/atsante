@@ -16,7 +16,7 @@ import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 export default function Settings() {
   const { role } = useAuth();
 
-  if (role !== 'admin' && role !== 'super_admin') {
+  if (role !== 'admin' && role !== 'super_admin' && role !== 'demo') {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-full">

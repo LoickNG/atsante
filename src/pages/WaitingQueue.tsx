@@ -226,9 +226,9 @@ const WaitingQueue = () => {
     );
   }).slice(0, 10);
 
-  const canAddToQueue = role === 'accueil' || role === 'admin' || role === 'infirmier';
-  const canManageVitals = role === 'infirmier' || role === 'admin' || role === 'medecin';
-  const canCallPatient = role === 'medecin' || role === 'admin';
+  const canAddToQueue = role === 'accueil' || role === 'admin' || role === 'infirmier' || role === 'demo';
+  const canManageVitals = role === 'infirmier' || role === 'admin' || role === 'medecin' || role === 'demo';
+  const canCallPatient = role === 'medecin' || role === 'admin' || role === 'demo';
 
   if (queueLoading || todayLoading) {
     return (

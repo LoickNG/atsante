@@ -13,17 +13,15 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
 }
 
-const DEMO_EMAIL = 'demo@atsante.td';
-
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, role, loading, signOut } = useAuth();
   const { isValid, hasLicense, isExpired, isSuspended, isLoading: licenseLoading } = useLicenseStatus();
   const location = useLocation();
   const hasShownToast = useRef(false);
 
-  const isDemo = user?.email === DEMO_EMAIL;
   const isSuperAdmin = role === 'super_admin';
-  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role) && !isDemo && !isSuperAdmin;
+  const isDemoRole = role === 'demo';
+  const isUnauthorized = allowedRoles && role && !allowedRoles.includes(role) && !isDemoRole && !isSuperAdmin;
 
   useEffect(() => {
     if (isUnauthorized && !hasShownToast.current) {
@@ -49,8 +47,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Super admin and demo account bypass license check
-  if (role === 'super_admin' || isDemo) {
+  // Super admin and demo role bypass license check
+  if (role === 'super_admin' || isDemoRole) {
     return <>{children}</>;
   }
 

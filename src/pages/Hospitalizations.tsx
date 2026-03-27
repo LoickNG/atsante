@@ -283,7 +283,7 @@ export default function Hospitalizations() {
               {filteredActive.map(hosp => {
                 const p = hosp.patients;
                 const days = calculateStayDays(hosp.admission_date, hosp.discharge_date);
-                const canSeeCosts = role === 'admin' || role === 'caissier';
+                const canSeeCosts = role === 'admin' || role === 'caissier' || role === 'demo';
                 const rate = canSeeCosts ? getRoomRate(hosp.rooms) : 0;
                 if (!p) return null;
                 return (
@@ -463,7 +463,7 @@ export default function Hospitalizations() {
                       ) : <span className="text-destructive text-sm">Non attribuée</span>}
                     </CardContent>
                   </Card>
-                  {(role === 'admin' || role === 'caissier') && (
+                  {(role === 'admin' || role === 'caissier' || role === 'demo') && (
                     <Card>
                       <CardContent className="p-3">
                         <p className="text-xs text-muted-foreground mb-1">Coût estimé</p>

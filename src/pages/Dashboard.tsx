@@ -51,7 +51,7 @@ import { useUnreadMessageCount } from '@/hooks/useMessaging';
 const Dashboard = () => {
   const { user, role } = useAuth();
   const [messagingOpen, setMessagingOpen] = useState(false);
-  const isDemo = user?.email === 'demo@atsante.td';
+  const isDemo = role === 'demo';
   const { data: unreadCount } = useUnreadMessageCount();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: waitingVisits, isLoading: visitsLoading } = useWaitingQueue();

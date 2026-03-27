@@ -165,6 +165,7 @@ export const getRoleLabel = (role: UserRole): string => {
   const labels: Record<UserRole, string> = {
     super_admin: 'Super Admin',
     admin: 'Administrateur',
+    demo: 'Démo (Accès complet)',
     pca: 'PCA',
     dg: 'Directeur Général',
     accueil: 'Accueil',
@@ -183,6 +184,7 @@ export const getRoleColor = (role: UserRole): string => {
   const colors: Record<UserRole, string> = {
     super_admin: 'bg-role-admin',
     admin: 'bg-role-admin',
+    demo: 'bg-role-admin',
     pca: 'bg-role-admin',
     dg: 'bg-role-admin',
     accueil: 'bg-role-accueil',
@@ -200,12 +202,12 @@ export const getRoleColor = (role: UserRole): string => {
 export const DEMO_EMAIL = 'demo@atsante.td';
 
 export const getFilteredNavigation = (userRole: UserRole, email?: string | null): NavSection[] => {
-  const isDemo = email === DEMO_EMAIL;
   const isSuperAdmin = userRole === 'super_admin';
+  const isDemoRole = userRole === 'demo';
   return navigationConfig
     .map(section => ({
       ...section,
-      items: section.items.filter(item => isDemo || isSuperAdmin || item.roles.includes(userRole)),
+      items: section.items.filter(item => isSuperAdmin || isDemoRole || item.roles.includes(userRole)),
     }))
     .filter(section => section.items.length > 0);
 };
