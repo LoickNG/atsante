@@ -8,3 +8,6 @@ leaked_password_protection = "warn_user"
 
 [functions.diagnostic-assistant]
 verify_jwt = false
+
+[functions.process-email-queue]
+verify_jwt = true
