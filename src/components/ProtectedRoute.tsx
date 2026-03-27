@@ -82,7 +82,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            {(role === 'admin' || role === 'demo') && (
+            {role === 'admin' && (
               <Button asChild>
                 <Link to="/parametres">Gérer la licence</Link>
               </Button>
