@@ -275,12 +275,21 @@ const Consultations = () => {
       for (const examId of selectedImagingExams) {
         const act = (imagingActs || []).find(a => a.id === examId);
         if (act) {
+          // Map act name to valid exam_type code for DB check constraint
+          const nameToExamType = (name: string): string => {
+            const lower = name.toLowerCase();
+            if (lower.includes('radio')) return 'radio';
+            if (lower.includes('écho') || lower.includes('echo')) return 'echo';
+            if (lower.includes('scanner')) return 'scanner';
+            if (lower.includes('irm')) return 'irm';
+            return 'autre';
+          };
           try {
             await createImagingRequest.mutateAsync({
               consultation_id: consultation.id,
               patient_id: selectedPatient.id,
-              exam_type: act.name,
-              body_part: imagingBodyPart || 'Non précisé',
+              exam_type: nameToExamType(act.name),
+              body_part: imagingBodyPart || act.name,
               priority: 'normale',
             });
             imagingCreated++;

@@ -198,11 +198,20 @@ export default function Hospitalizations() {
           status: 'demande',
         } as any);
       } else {
+        // Map act name to valid exam_type code for DB check constraint
+        const nameToExamType = (name: string): string => {
+          const lower = name.toLowerCase();
+          if (lower.includes('radio')) return 'radio';
+          if (lower.includes('écho') || lower.includes('echo')) return 'echo';
+          if (lower.includes('scanner')) return 'scanner';
+          if (lower.includes('irm')) return 'irm';
+          return 'autre';
+        };
         await createImagingRequest.mutateAsync({
           patient_id: selectedHosp.patient_id,
           consultation_id: selectedHosp.consultation_id || undefined,
-          exam_type: examTestType,
-          body_part: examBodyPart,
+          exam_type: nameToExamType(examTestType),
+          body_part: examBodyPart || examTestType,
           priority: examPriority,
           status: 'demande',
         } as any);
