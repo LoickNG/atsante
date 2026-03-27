@@ -41,6 +41,9 @@ const Imaging = () => {
   const [selectedRequest, setSelectedRequest] = useState<ImagingRequestWithPatient | null>(null);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [reportText, setReportText] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
