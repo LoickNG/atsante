@@ -364,23 +364,21 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                   </div>
                 )}
 
-                {/* Allergies - green zone */}
-                <div
-                  className="flex items-start gap-1 rounded-lg px-2 py-1.5 text-[8px]"
-                  style={{
-                    background: 'hsl(152 40% 94%)',
-                    border: '1px solid hsl(152 40% 82%)',
-                  }}
-                >
-                  <span className="text-[10px] shrink-0">⚠️</span>
-                  {patient.allergies && patient.allergies.length > 0 ? (
+                {/* Allergies - green zone (only if exists) */}
+                {patient.allergies && patient.allergies.length > 0 && (
+                  <div
+                    className="flex items-start gap-1 rounded-lg px-2 py-1.5 text-[8px]"
+                    style={{
+                      background: 'hsl(152 40% 94%)',
+                      border: '1px solid hsl(152 40% 82%)',
+                    }}
+                  >
+                    <span className="text-[10px] shrink-0">⚠️</span>
                     <span className="text-[hsl(152,50%,25%)] font-semibold leading-tight">
                       {patient.allergies.join(', ')}
                     </span>
-                  ) : (
-                    <span className="text-[hsl(152,30%,55%)] italic">Aucune allergie connue</span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* QR Code Section */}
