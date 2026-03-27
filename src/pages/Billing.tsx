@@ -255,11 +255,12 @@ export default function Billing() {
         </PageHeader>
 
         {/* ==================== AUTO-INVOICE SECTION ==================== */}
-        <Card className="border-primary/20">
+        <Card id="billing-generation" className={isProforma ? "border-secondary" : "border-primary/20"}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Receipt className="h-5 w-5 text-primary" />
-              Générer une facture
+              {isProforma ? 'Générer une facture Pro Forma' : 'Générer une facture'}
+              {isProforma && <Badge variant="outline" className="ml-2 bg-secondary/50 text-secondary-foreground">Pro Forma</Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
