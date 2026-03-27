@@ -85,7 +85,47 @@ const Imaging = () => {
   const handleOpenReportDialog = (request: ImagingRequestWithPatient) => {
     setSelectedRequest(request);
     setReportText(request.report || '');
+    // Load existing files from image_url (stored as JSON array or single URL)
+    if (request.image_url) {
+      try {
+        const parsed = JSON.parse(request.image_url);
+        setUploadedFiles(Array.isArray(parsed) ? parsed : [{ name: 'image', url: request.image_url }]);
+      } catch {
+        setUploadedFiles(request.image_url ? [{ name: 'image', url: request.image_url }] : []);
+      }
+    } else {
+      setUploadedFiles([]);
+    }
     setIsReportDialogOpen(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedRequest) return;
+    setIsUploading(true);
+    try {
+      const newFiles: { name: string; url: string }[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop();
+        const path = `${selectedRequest.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from('imaging-files').upload(path, file);
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('imaging-files').getPublicUrl(path);
+        newFiles.push({ name: file.name, url: urlData.publicUrl });
+      }
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast.success(`${newFiles.length} fichier(s) téléchargé(s)`);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error("Erreur lors du téléchargement");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveReport = async () => {
@@ -94,10 +134,12 @@ const Imaging = () => {
       await updateImagingRequest.mutateAsync({
         id: selectedRequest.id, status: 'termine', report: reportText,
         performed_by: user?.id, completed_at: new Date().toISOString(),
+        image_url: uploadedFiles.length > 0 ? JSON.stringify(uploadedFiles) : null,
       });
       setIsReportDialogOpen(false);
       setSelectedRequest(null);
       setReportText('');
+      setUploadedFiles([]);
       toast.success('Compte rendu enregistré');
     } catch { toast.error("Erreur lors de l'enregistrement"); }
   };
