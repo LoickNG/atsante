@@ -2255,6 +2255,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_conversation: {
+        Args: { _conversation_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_add_conversation_participant: {
+        Args: {
+          _actor_id: string
+          _conversation_id: string
+          _participant_id: string
+        }
+        Returns: boolean
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
