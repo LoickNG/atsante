@@ -293,6 +293,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             )}
+            <DashboardUsersList />
           </>
         )}
 
