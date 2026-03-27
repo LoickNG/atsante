@@ -128,6 +128,7 @@ serve(async (req) => {
     await adminClient.from("user_roles").insert({
       user_id: newUser.user!.id,
       role,
+      clinic_id: callerClinicId,
     });
 
     // Increment current_users on license
