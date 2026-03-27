@@ -23,18 +23,6 @@ function getCorsHeaders(req: Request) {
 
 const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie", "daf"];
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Administrateur",
-  accueil: "Accueil",
-  medecin: "Médecin",
-  infirmier: "Infirmier(e)",
-  caissier: "Caissier(e)",
-  pharmacien: "Pharmacien(ne)",
-  laborantin: "Laborantin(e)",
-  imagerie: "Imagerie",
-  daf: "DAF",
-};
-
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
@@ -70,9 +58,9 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { email, password, full_name, role, specialty } = body;
+    const { email, password, full_name, role, specialty, service_id } = body;
 
-    // Server-side input validation
+    // Validation
     if (!email || typeof email !== "string" || email.length > 255) {
       return new Response(JSON.stringify({ error: "Email invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -80,25 +68,30 @@ serve(async (req) => {
     if (!emailRegex.test(email)) {
       return new Response(JSON.stringify({ error: "Format d'email invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
     if (!password || typeof password !== "string" || password.length < 6 || password.length > 128) {
       return new Response(JSON.stringify({ error: "Mot de passe requis (6-128 caractères)" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
     if (!full_name || typeof full_name !== "string" || full_name.trim().length === 0 || full_name.length > 255) {
       return new Response(JSON.stringify({ error: "Nom complet requis (max 255 caractères)" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
     if (!role || !VALID_ROLES.includes(role)) {
       return new Response(JSON.stringify({ error: `Rôle invalide. Valeurs acceptées: ${VALID_ROLES.join(", ")}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create user with must_change_password flag
+    // Validate service_id if provided
+    if (service_id) {
+      const { data: serviceExists } = await adminClient.from("services").select("id").eq("id", service_id).single();
+      if (!serviceExists) {
+        return new Response(JSON.stringify({ error: "Service invalide" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    // Create user
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email: email.trim(),
       password,
       email_confirm: true,
-      user_metadata: { 
+      user_metadata: {
         full_name: full_name.trim(),
         must_change_password: true,
       },
@@ -108,12 +101,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Create profile
+    // Create profile with service
     await adminClient.from("profiles").insert({
       user_id: newUser.user!.id,
       email: email.trim(),
       full_name: full_name.trim(),
       specialty: role === "medecin" && specialty ? specialty : null,
+      service_id: service_id || null,
     });
 
     // Assign role
@@ -122,17 +116,16 @@ serve(async (req) => {
       role,
     });
 
-    // Send password reset email so user can set their own password
-    // This serves as the "welcome email" with a link to change password
+    // Send password reset email
     const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
     await adminClient.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${origin}/auth?change_password=true`,
     });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
+    return new Response(JSON.stringify({
+      success: true,
       user_id: newUser.user!.id,
-      message: `Un email a été envoyé à ${email} pour définir son mot de passe.`
+      message: `Compte créé pour ${full_name}. Un email a été envoyé à ${email}.`
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: UserRole | null;
+  serviceCode: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [serviceCode, setServiceCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,10 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (session?.user) {
         setTimeout(() => {
-          fetchUserRole(session.user.id);
+          fetchUserRoleAndService(session.user.id);
         }, 0);
       } else {
         setRole(null);
+        setServiceCode(null);
         setLoading(false);
       }
     });
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        fetchUserRoleAndService(session.user.id);
       } else {
         setLoading(false);
       }
@@ -48,23 +51,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRoleAndService = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+      const [{ data: roleData, error: roleError }, { data: profileData }] = await Promise.all([
+        supabase.from('user_roles').select('role').eq('user_id', userId).single(),
+        supabase.from('profiles').select('service_id').eq('user_id', userId).single(),
+      ]);
 
-      if (error) {
-        console.error('Error fetching role:', error);
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
         setRole(null);
       } else {
-        setRole(data?.role as UserRole);
+        setRole(roleData?.role as UserRole);
+      }
+
+      // Fetch service code if service_id exists
+      if (profileData?.service_id) {
+        const { data: serviceData } = await supabase
+          .from('services')
+          .select('code')
+          .eq('id', profileData.service_id)
+          .single();
+        setServiceCode(serviceData?.code || null);
+      } else {
+        setServiceCode(null);
       }
     } catch (error) {
-      console.error('Error fetching role:', error);
+      console.error('Error fetching role/service:', error);
       setRole(null);
+      setServiceCode(null);
     } finally {
       setLoading(false);
     }
@@ -75,10 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setRole(null);
+    setServiceCode(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, role, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, role, serviceCode, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

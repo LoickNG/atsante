@@ -11,8 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getRoleLabel, getRoleColor } from '@/config/navigation';
 import { useSpecialties, getSpecialtyLabel } from '@/config/specialties';
+import { useServices } from '@/hooks/useServices';
 import { UserRole } from '@/types';
-import { UserPlus, Shield, Loader2, Search } from 'lucide-react';
+import { UserPlus, Shield, Loader2, Search, Building2 } from 'lucide-react';
 import { z } from 'zod';
 
 interface UserWithRole {
@@ -21,6 +22,8 @@ interface UserWithRole {
   full_name: string;
   role: UserRole | null;
   specialty: string | null;
+  service_id: string | null;
+  service_name: string | null;
   created_at: string;
 }
 
@@ -38,24 +41,32 @@ export function UserManagement() {
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('accueil');
   const [newSpecialty, setNewSpecialty] = useState('');
+  const [newServiceId, setNewServiceId] = useState('');
   const specialtiesList = useSpecialties();
+  const { data: services } = useServices();
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
-        supabase.from('profiles').select('user_id, email, full_name, specialty, created_at'),
+      const [{ data: profiles, error: pErr }, { data: roles, error: rErr }, { data: servicesList }] = await Promise.all([
+        supabase.from('profiles').select('user_id, email, full_name, specialty, service_id, created_at'),
         supabase.from('user_roles').select('user_id, role'),
+        supabase.from('services').select('id, name'),
       ]);
       if (pErr) throw pErr;
       if (rErr) throw rErr;
 
       const rolesMap = new Map(roles?.map(r => [r.user_id, r.role as UserRole]));
+      const servicesMap = new Map(servicesList?.map(s => [s.id, s.name]));
+      
       setUsers((profiles || []).map(p => ({
         user_id: p.user_id,
         email: p.email,
         full_name: p.full_name,
         role: rolesMap.get(p.user_id) || null,
         specialty: (p as any).specialty || null,
+        service_id: (p as any).service_id || null,
+        service_name: (p as any).service_id ? servicesMap.get((p as any).service_id) || null : null,
         created_at: p.created_at,
       })));
     } catch (error) {
@@ -78,18 +89,28 @@ export function UserManagement() {
     if (newPassword.length < 6) {
       toast({ title: 'Erreur', description: 'Mot de passe : 6 caractères minimum', variant: 'destructive' }); return;
     }
+    if (!newServiceId) {
+      toast({ title: 'Erreur', description: 'Veuillez sélectionner un service', variant: 'destructive' }); return;
+    }
 
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
-        body: { email: newEmail, password: newPassword, full_name: newFullName, role: newRole, specialty: newRole === 'medecin' ? newSpecialty : undefined },
+        body: {
+          email: newEmail,
+          password: newPassword,
+          full_name: newFullName,
+          role: newRole,
+          specialty: newRole === 'medecin' ? newSpecialty : undefined,
+          service_id: newServiceId,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Succès', description: data?.message || `Compte créé pour ${newFullName}. Un email de réinitialisation du mot de passe a été envoyé.` });
+      toast({ title: 'Succès', description: data?.message || `Compte créé pour ${newFullName}.` });
       setDialogOpen(false);
-      setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil'); setNewSpecialty('');
+      setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil'); setNewSpecialty(''); setNewServiceId('');
       fetchUsers();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Impossible de créer le compte', variant: 'destructive' });
@@ -109,6 +130,17 @@ export function UserManagement() {
         if (error) throw error;
       }
       toast({ title: 'Rôle mis à jour' });
+      fetchUsers();
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleChangeService = async (userId: string, serviceId: string) => {
+    try {
+      const { error } = await supabase.from('profiles').update({ service_id: serviceId } as any).eq('user_id', userId);
+      if (error) throw error;
+      toast({ title: 'Service mis à jour' });
       fetchUsers();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -141,7 +173,7 @@ export function UserManagement() {
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Créer un compte</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Créer un nouveau compte</DialogTitle>
               </DialogHeader>
@@ -158,16 +190,29 @@ export function UserManagement() {
                   <Label>Mot de passe</Label>
                   <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" />
                 </div>
-                <div className="space-y-2">
-                  <Label>Rôle</Label>
-                  <Select value={newRole} onValueChange={v => setNewRole(v as UserRole)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {ROLES.map(r => (
-                        <SelectItem key={r} value={r}>{getRoleLabel(r)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Rôle</Label>
+                    <Select value={newRole} onValueChange={v => setNewRole(v as UserRole)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ROLES.map(r => (
+                          <SelectItem key={r} value={r}>{getRoleLabel(r)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Service</Label>
+                    <Select value={newServiceId} onValueChange={setNewServiceId}>
+                      <SelectTrigger><SelectValue placeholder="Choisir un service" /></SelectTrigger>
+                      <SelectContent>
+                        {services?.map(s => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 {newRole === 'medecin' && (
                   <div className="space-y-2">
@@ -203,25 +248,27 @@ export function UserManagement() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                 <TableRow>
+                <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Rôle actuel</TableHead>
+                  <TableHead>Rôle</TableHead>
+                  <TableHead>Service</TableHead>
                   <TableHead>Spécialité</TableHead>
-                  <TableHead>Changer le rôle</TableHead>
+                  <TableHead>Changer rôle</TableHead>
+                  <TableHead>Changer service</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       Aucun utilisateur trouvé
                     </TableCell>
                   </TableRow>
                 ) : filtered.map(u => (
                   <TableRow key={u.user_id}>
                     <TableCell className="font-medium">{u.full_name}</TableCell>
-                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{u.email}</TableCell>
                     <TableCell>
                       {u.role ? (
                         <Badge className={`${getRoleColor(u.role)} text-white`}>
@@ -229,6 +276,16 @@ export function UserManagement() {
                         </Badge>
                       ) : (
                         <Badge variant="outline">Aucun rôle</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {u.service_name ? (
+                        <Badge variant="outline" className="gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {u.service_name}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Non assigné</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -240,12 +297,24 @@ export function UserManagement() {
                     </TableCell>
                     <TableCell>
                       <Select value={u.role || ''} onValueChange={v => handleChangeRole(u.user_id, v as UserRole)}>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Assigner un rôle" />
+                        <SelectTrigger className="w-[150px]">
+                          <SelectValue placeholder="Assigner" />
                         </SelectTrigger>
                         <SelectContent>
                           {ROLES.map(r => (
                             <SelectItem key={r} value={r}>{getRoleLabel(r)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select value={u.service_id || ''} onValueChange={v => handleChangeService(u.user_id, v)}>
+                        <SelectTrigger className="w-[150px]">
+                          <SelectValue placeholder="Assigner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {services?.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

@@ -8,6 +8,7 @@ import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement'
 import { RoomManagement } from '@/components/admin/RoomManagement';
 import { ClinicSettingsManagement } from '@/components/admin/ClinicSettingsManagement';
 import { LicenseManagement } from '@/components/admin/LicenseManagement';
+import { ServiceManagement } from '@/components/admin/ServiceManagement';
 import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2, Key } from 'lucide-react';
 import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 
@@ -57,6 +58,10 @@ export default function Settings() {
           <TabsTrigger value="chambres" className="flex items-center gap-2">
             <BedDouble className="h-4 w-4" />
             Chambres
+          </TabsTrigger>
+          <TabsTrigger value="services" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Services
           </TabsTrigger>
           <TabsTrigger value="licences" className="flex items-center gap-2">
             <Key className="h-4 w-4" />
