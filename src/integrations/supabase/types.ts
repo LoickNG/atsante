@@ -2211,6 +2211,8 @@ export type Database = {
         | "imagerie"
         | "daf"
         | "super_admin"
+        | "pca"
+        | "dg"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2349,6 +2351,8 @@ export const Constants = {
         "imagerie",
         "daf",
         "super_admin",
+        "pca",
+        "dg",
       ],
     },
   },
