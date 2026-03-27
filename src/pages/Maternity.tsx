@@ -63,6 +63,15 @@ const Maternity = () => {
   const { user, role, serviceCode } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
+  const { data: allAdmissions, isLoading } = useMaternityAdmissions();
+  const { data: activeAdmissions } = useActiveMaternityAdmissions();
+  const { data: allBirths } = useBirths();
+  const { data: allPrenatalVisits } = usePrenatalVisits();
+  const createAdmission = useCreateMaternityAdmission();
+  const updateAdmission = useUpdateMaternityAdmission();
+  const createBirth = useCreateBirth();
+  const createPrenatalVisit = useCreatePrenatalVisit();
+
   // Restrict access: only users assigned to maternité service (or accueil for admissions)
   const isMaternityStaff = serviceCode === 'maternite';
   const canAccessMaternity = isMaternityStaff || role === 'accueil' || role === 'admin';
@@ -76,15 +85,6 @@ const Maternity = () => {
       </AppLayout>
     );
   }
-
-  const { data: allAdmissions, isLoading } = useMaternityAdmissions();
-  const { data: activeAdmissions } = useActiveMaternityAdmissions();
-  const { data: allBirths } = useBirths();
-  const { data: allPrenatalVisits } = usePrenatalVisits();
-  const createAdmission = useCreateMaternityAdmission();
-  const updateAdmission = useUpdateMaternityAdmission();
-  const createBirth = useCreateBirth();
-  const createPrenatalVisit = useCreatePrenatalVisit();
 
   // Admission form
   const [admForm, setAdmForm] = useState({
