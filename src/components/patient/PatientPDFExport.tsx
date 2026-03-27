@@ -160,7 +160,7 @@ function buildReportHTML(
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; color: #1a1a1a; padding: 20mm 15mm; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
-  .header h1 { font-size: 20px; color: #2563eb; }
+  .header h1 { font-size: 20px; color: ${clinicColor}; }
   .header .clinic-info { font-size: 10px; color: #666; }
   .header .report-date { text-align: right; font-size: 10px; color: #666; }
   .patient-info { background: #f0f4ff; padding: 14px; border-radius: 6px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -168,7 +168,7 @@ function buildReportHTML(
   .patient-info .info-item { font-size: 11px; }
   .patient-info .info-label { color: #666; font-weight: 600; }
   .section { margin-bottom: 18px; page-break-inside: avoid; }
-  .section h2 { font-size: 14px; color: #2563eb; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 10px; }
+  .section h2 { font-size: 14px; color: ${clinicColor}; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 10px; }
   .section-item { border: 1px solid #e5e7eb; border-radius: 4px; padding: 10px; margin-bottom: 8px; }
   .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   .vitals { font-size: 10px; color: #555; background: #fafafa; padding: 4px 8px; border-radius: 3px; margin-bottom: 6px; }
@@ -184,16 +184,21 @@ function buildReportHTML(
   .footer { margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; text-align: center; font-size: 9px; color: #999; }
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 18px; }
   .stat { text-align: center; background: #f9fafb; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb; }
-  .stat-value { font-size: 18px; font-weight: bold; color: #2563eb; }
+  .stat-value { font-size: 18px; font-weight: bold; color: ${clinicColor}; }
   .stat-label { font-size: 9px; color: #666; }
   @media print { body { padding: 10mm; } }
 </style>
 </head>
 <body>
   <div class="header">
-    <div>
-      <h1>SantéPro</h1>
-      <div class="clinic-info">Clinique Médicale — Rapport Médical Complet</div>
+    <div style="display:flex;align-items:center">
+      ${logoHtml}
+      <div>
+        <h1>${clinicName}</h1>
+        <div class="clinic-info">${clinicSubtitle ? clinicSubtitle + ' — ' : ''}Rapport Médical Complet</div>
+        ${clinicAddress ? `<div class="clinic-info">${clinicAddress}</div>` : ''}
+        ${clinicPhone ? `<div class="clinic-info">Tél: ${clinicPhone}${clinicEmail ? ' — ' + clinicEmail : ''}</div>` : ''}
+      </div>
     </div>
     <div class="report-date">Généré le ${today}</div>
   </div>
@@ -245,7 +250,7 @@ function buildReportHTML(
 
   <div class="footer">
     <p>Document confidentiel — Rapport médical de ${patient.first_name} ${patient.last_name} (${patient.code})</p>
-    <p>SantéPro — Clinique Médicale — Généré le ${today}</p>
+    <p>${clinicName}${clinicSubtitle ? ' — ' + clinicSubtitle : ''}${clinicAddress ? ' — ' + clinicAddress : ''} — Généré le ${today}</p>
   </div>
 </body>
 </html>`;
