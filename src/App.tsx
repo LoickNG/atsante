@@ -26,6 +26,7 @@ import Emergency from "./pages/Emergency";
 import Auth from "./pages/Auth";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +129,11 @@ const App = () => (
             <Route path="/urgences" element={
               <ProtectedRoute allowedRoles={['medecin', 'infirmier', 'accueil']}>
                 <Emergency />
+              </ProtectedRoute>
+            } />
+            <Route path="/profil" element={
+              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf']}>
+                <Profile />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />
