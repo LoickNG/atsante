@@ -247,7 +247,12 @@ export default function Billing() {
   return (
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-6">
-        <PageHeader title="Facturation" description="Recherchez un patient pour générer automatiquement sa facture" />
+        <PageHeader title="Facturation" description="Recherchez un patient pour générer automatiquement sa facture">
+          <Button variant="outline" onClick={() => { setIsProforma(true); setDialogOpen(true); }}>
+            <FileText className="h-4 w-4 mr-2" />
+            Pro Forma
+          </Button>
+        </PageHeader>
 
         {/* ==================== AUTO-INVOICE SECTION ==================== */}
         <Card className="border-primary/20">
