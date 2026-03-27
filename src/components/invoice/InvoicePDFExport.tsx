@@ -164,7 +164,7 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   </table>
 
   ${paymentRows ? `
-  <h3 style="font-size:13px;margin-bottom:8px;color:#2563eb">Historique des paiements</h3>
+  <h3 style="font-size:13px;margin-bottom:8px;color:${clinicColor}">Historique des paiements</h3>
   <table>
     <thead>
       <tr><th>Date</th><th>Mode</th><th>Référence</th><th style="text-align:right">Montant</th></tr>
