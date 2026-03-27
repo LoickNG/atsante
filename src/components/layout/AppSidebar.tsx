@@ -25,7 +25,7 @@ export function AppSidebar({
   const { user, role, signOut } = useAuth();
   
   const userRole = role || 'medecin';
-  const navigation = getFilteredNavigation(userRole);
+  const navigation = getFilteredNavigation(userRole, user?.email);
 
   const { data: profileData } = useQuery({
     queryKey: ['sidebar_profile', user?.id],
