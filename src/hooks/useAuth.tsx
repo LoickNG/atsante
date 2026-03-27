@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRole(null);
       } else {
         // Priority: super_admin > admin > medecin > others
-        const rolePriority: Record<string, number> = { super_admin: 100, admin: 90, dg: 85, pca: 84, daf: 80, medecin: 70, infirmier: 60, pharmacien: 50, laborantin: 40, imagerie: 30, caissier: 20, accueil: 10 };
+        const rolePriority: Record<string, number> = { super_admin: 100, demo: 95, admin: 90, dg: 85, pca: 84, daf: 80, medecin: 70, infirmier: 60, pharmacien: 50, laborantin: 40, imagerie: 30, caissier: 20, accueil: 10 };
         const sorted = roleData.sort((a, b) => (rolePriority[b.role] || 0) - (rolePriority[a.role] || 0));
         setRole(sorted[0].role as UserRole);
       }
