@@ -6,7 +6,8 @@ export type UserRole =
   | 'caissier'
   | 'pharmacien'
   | 'laborantin'
-  | 'imagerie';
+  | 'imagerie'
+  | 'daf';
 
 export interface User {
   id: string;
