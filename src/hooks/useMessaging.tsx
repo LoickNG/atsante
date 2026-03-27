@@ -169,16 +169,34 @@ export function useCreateConversation() {
 }
 
 export function useClinicStaff() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isSuperAdmin = role === 'super_admin';
 
   return useQuery({
-    queryKey: ['clinic_staff'],
+    queryKey: ['clinic_staff', isSuperAdmin],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, specialty');
-      if (error) throw error;
-      return (data || []).filter(p => p.user_id !== user?.id);
+      if (isSuperAdmin) {
+        // Super admin can only chat with admins
+        const { data: adminRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+        if (rolesError) throw rolesError;
+        const adminIds = (adminRoles || []).map(r => r.user_id);
+        if (adminIds.length === 0) return [];
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, specialty')
+          .in('user_id', adminIds);
+        if (error) throw error;
+        return (data || []).filter(p => p.user_id !== user?.id);
+      } else {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, specialty');
+        if (error) throw error;
+        return (data || []).filter(p => p.user_id !== user?.id);
+      }
     },
     enabled: !!user,
   });
