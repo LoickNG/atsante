@@ -29,7 +29,8 @@ export default function Auth() {
   const clinicName = searchParams.get('clinic_name');
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event);
       if (event === 'PASSWORD_RECOVERY') {
         setShowChangePassword(true);
         return;
@@ -39,11 +40,32 @@ export default function Auth() {
         if (mustChange) {
           setShowChangePassword(true);
         } else if (!showChangePassword) {
-          // Show welcome toast if coming from license invitation
-          if (licenseKey && clinicName) {
+          // If coming from license invitation, ensure license is activated
+          if (licenseKey) {
+            try {
+              // Check if the user's clinic already has this license
+              const { data: clinicId } = await supabase.rpc('get_my_clinic_id');
+              if (clinicId) {
+                const { data: settings } = await supabase
+                  .from('clinic_settings')
+                  .select('activated_license_key')
+                  .eq('id', clinicId)
+                  .single();
+                
+                if (!settings?.activated_license_key || settings.activated_license_key !== licenseKey) {
+                  await supabase
+                    .from('clinic_settings')
+                    .update({ activated_license_key: licenseKey })
+                    .eq('id', clinicId);
+                }
+              }
+            } catch (e) {
+              console.error('License activation error:', e);
+            }
+            
             toast({
               title: `Bienvenue sur ATSanté`,
-              description: `Votre clinique "${decodeURIComponent(clinicName)}" est prête. La licence a été activée automatiquement.`,
+              description: `Votre clinique "${decodeURIComponent(clinicName || '')}" est prête. La licence a été activée automatiquement.`,
             });
           }
           navigate('/');
