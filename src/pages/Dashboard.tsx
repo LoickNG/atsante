@@ -1,6 +1,9 @@
 import { AppLayout, PageHeader } from '@/components/layout';
 import { StatCard } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Users, 
   Stethoscope, 
@@ -21,6 +24,12 @@ import {
   Ambulance,
   Baby,
   FileText,
+  Shield,
+  KeyRound,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  Clock,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getRoleLabel } from '@/config/navigation';
@@ -32,6 +41,8 @@ import { useMedications } from '@/hooks/useMedications';
 import { DashboardWaitingList } from '@/components/dashboard/DashboardWaitingList';
 import { DashboardPendingLabs } from '@/components/dashboard/DashboardPendingLabs';
 import { DashboardLowStock } from '@/components/dashboard/DashboardLowStock';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const { user, role } = useAuth();
