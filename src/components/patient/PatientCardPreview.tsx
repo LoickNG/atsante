@@ -320,8 +320,8 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                   )}
                 </div>
                 {/* Name + details under photo */}
-                <div className="w-[90px] text-center">
-                  <p className="font-black text-[11px] leading-tight uppercase tracking-wide text-foreground break-words">
+                <div className="w-[130px] text-center">
+                  <p className="font-black text-[13px] leading-tight uppercase tracking-wide text-foreground whitespace-nowrap">
                     {patient.last_name} {patient.first_name}
                   </p>
                   <div className="flex items-center justify-center gap-1 flex-wrap mt-1">
