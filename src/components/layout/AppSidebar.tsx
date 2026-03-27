@@ -115,19 +115,27 @@ export function AppSidebar({
       {/* User Section */}
       <div className="border-t border-sidebar-border p-3">
         <div className={cn('flex items-center gap-3 rounded-lg p-2', collapsed && 'justify-center')}>
-          <Avatar className="h-9 w-9 border-2 border-sidebar-accent">
-            <AvatarFallback className={cn(getRoleColor(userRole), 'text-white text-xs')}>
-              {userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && <div className="flex-1 overflow-hidden">
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button onClick={() => navigate('/profil')} className="focus:outline-none cursor-pointer">
+                <Avatar className="h-9 w-9 border-2 border-sidebar-accent hover:ring-2 hover:ring-sidebar-primary transition-all">
+                  <AvatarImage src={avatarUrl} />
+                  <AvatarFallback className={cn(getRoleColor(userRole), 'text-white text-xs')}>
+                    {userName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side={collapsed ? 'right' : 'top'}>Mon profil</TooltipContent>
+          </Tooltip>
+          {!collapsed && <button onClick={() => navigate('/profil')} className="flex-1 overflow-hidden text-left cursor-pointer hover:opacity-80 transition-opacity">
               <p className="truncate text-sm font-medium text-sidebar-foreground">
                 {userName}
               </p>
               <p className="truncate text-[11px] text-sidebar-foreground/60">
                 {getRoleLabel(userRole)}
               </p>
-            </div>}
+            </button>}
           {!collapsed && <div className="flex gap-1">
               <NotificationBell />
               <Tooltip>
