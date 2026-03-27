@@ -215,10 +215,11 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                       <div className="divide-y">
                         {filteredConversations.map(conv => {
                           const displayName = getConversationDisplayName(conv);
+                          const hasUnread = (conv.unread_count ?? 0) > 0;
                           return (
                             <button
                               key={conv.id}
-                              className="w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3"
+                              className={`w-full px-4 py-3 text-left hover:bg-muted/50 transition-colors flex items-center gap-3 ${hasUnread ? 'bg-muted/20' : ''}`}
                               onClick={() => { setActiveConversation(conv); setView('chat'); markAsRead(conv.id); }}
                             >
                               <Avatar className="h-9 w-9 shrink-0">
@@ -227,10 +228,26 @@ export function MessagingDialog({ open, onOpenChange }: MessagingDialogProps) {
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium truncate">{displayName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {format(new Date(conv.updated_at), 'dd MMM HH:mm', { locale: fr })}
-                                </p>
+                                <p className={`text-sm truncate ${hasUnread ? 'font-bold' : 'font-medium'}`}>{displayName}</p>
+                                {conv.last_message ? (
+                                  <p className={`text-xs truncate ${hasUnread ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
+                                    {conv.last_message.length > 40 ? conv.last_message.slice(0, 40) + '…' : conv.last_message}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">
+                                    {format(new Date(conv.updated_at), 'dd MMM HH:mm', { locale: fr })}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex flex-col items-end gap-1 shrink-0">
+                                <span className="text-[10px] text-muted-foreground">
+                                  {format(new Date(conv.last_message_at || conv.updated_at), 'HH:mm', { locale: fr })}
+                                </span>
+                                {hasUnread && (
+                                  <span className="bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                                    {conv.unread_count! > 99 ? '99+' : conv.unread_count}
+                                  </span>
+                                )}
                               </div>
                             </button>
                           );
