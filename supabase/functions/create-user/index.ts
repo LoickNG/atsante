@@ -127,40 +127,74 @@ serve(async (req) => {
         userId = newUser.user!.id;
       }
 
-      // Create clinic_settings for this clinic
+      // Check if clinic_settings already exists for this license
       const clinicDisplayName = clinic_name || license.clinic_name;
-      const { data: clinicSettings, error: clinicErr } = await adminClient.from("clinic_settings").insert({
-        name: clinicDisplayName,
-        activated_license_key: license.license_key,
-      }).select().single();
+      let clinicId: string;
+      
+      const { data: existingClinic } = await adminClient.from("clinic_settings")
+        .select("id")
+        .eq("activated_license_key", license.license_key)
+        .single();
+      
+      if (existingClinic) {
+        clinicId = existingClinic.id;
+      } else {
+        const { data: clinicSettings, error: clinicErr } = await adminClient.from("clinic_settings").insert({
+          name: clinicDisplayName,
+          activated_license_key: license.license_key,
+        }).select().single();
 
-      if (clinicErr) {
-        return new Response(JSON.stringify({ error: "Erreur création clinique: " + clinicErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (clinicErr) {
+          return new Response(JSON.stringify({ error: "Erreur création clinique: " + clinicErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        clinicId = clinicSettings.id;
       }
 
-      const clinicId = clinicSettings.id;
+      // Create or update profile linked to clinic
+      const { data: existingProfile } = await adminClient.from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+      
+      if (existingProfile) {
+        await adminClient.from("profiles").update({
+          clinic_id: clinicId,
+          full_name: full_name.trim(),
+        }).eq("user_id", userId);
+      } else {
+        await adminClient.from("profiles").insert({
+          user_id: userId,
+          email: email.trim(),
+          full_name: full_name.trim(),
+          clinic_id: clinicId,
+        });
+      }
 
-      // Create profile linked to clinic
-      await adminClient.from("profiles").insert({
-        user_id: newUser.user!.id,
-        email: email.trim(),
-        full_name: full_name.trim(),
-        clinic_id: clinicId,
-      });
-
-      // Assign admin role linked to clinic
-      await adminClient.from("user_roles").insert({
-        user_id: newUser.user!.id,
-        role: "admin",
-        clinic_id: clinicId,
-      });
+      // Create or update admin role linked to clinic
+      const { data: existingRole } = await adminClient.from("user_roles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+      
+      if (existingRole) {
+        await adminClient.from("user_roles").update({
+          role: "admin",
+          clinic_id: clinicId,
+        }).eq("user_id", userId);
+      } else {
+        await adminClient.from("user_roles").insert({
+          user_id: userId,
+          role: "admin",
+          clinic_id: clinicId,
+        });
+      }
 
       // Increment current_users on license
       await adminClient.from("licenses").update({ current_users: license.current_users + 1 }).eq("id", license.id);
 
       return new Response(JSON.stringify({
         success: true,
-        user_id: newUser.user!.id,
+        user_id: userId,
         clinic_id: clinicId,
         message: `Administrateur ${full_name} créé pour la clinique "${clinicDisplayName}". Un email d'invitation a été envoyé à ${email} avec le lien d'accès à la plateforme.`,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
