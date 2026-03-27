@@ -3,7 +3,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { QRCodeSVG } from 'qrcode.react';
-import { Printer, User, Cross } from 'lucide-react';
+import { Printer, User, Phone, MapPin, Building2, Shield } from 'lucide-react';
 import { Patient } from '@/hooks/usePatients';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,7 +26,7 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
     address: [clinicSettings?.city, clinicSettings?.country].filter(Boolean).join(', ') || '',
     phone: clinicSettings?.phone || '',
     logo_url: clinicSettings?.logo_url || '',
-    color: clinicSettings?.primary_color || '#7fb3c8',
+    color: clinicSettings?.primary_color || '#2a9d8f',
   };
 
   const { data: company } = useQuery({
@@ -68,9 +68,18 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
 
   const age = calculateAge(patient.date_of_birth);
   const genderLabel = patient.gender === 'F' ? 'Féminin' : 'Masculin';
+  const genderShort = patient.gender === 'F' ? 'F' : 'M';
   const companyName = company?.name || null;
   const conventionName = convention?.name || null;
   const employeeId = patient.employee_id || null;
+
+  // Lighter version of the primary color for accents
+  const colorToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -78,72 +87,119 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
 
     const photoHtml = patient.photo_url
       ? `<img src="${patient.photo_url}" style="width:100%;height:100%;object-fit:cover;" />`
-      : `<div style="width:100%;height:100%;background:#e5c6c6;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:#6b7280;">${patient.first_name[0]}${patient.last_name[0]}</div>`;
+      : `<div style="width:100%;height:100%;background:linear-gradient(135deg, #e0e7ee, #c5d5e0);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#64748b;letter-spacing:1px;">${patient.first_name[0]}${patient.last_name[0]}</div>`;
 
     const conventionHtml = companyName
-      ? `<p class="convention"><strong>${companyName}</strong>${conventionName ? ` — ${conventionName}` : ''}${employeeId ? `<br/>Mat: ${employeeId}` : ''}</p>`
+      ? `<div class="convention-badge"><span class="conv-icon">🏢</span><span><strong>${companyName}</strong>${conventionName ? ` · ${conventionName}` : ''}${employeeId ? ` · Mat: ${employeeId}` : ''}</span></div>`
       : '';
 
     printWindow.document.write(`<!DOCTYPE html><html><head><title>Carte Patient</title>
       <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         @page { size: 85.6mm 54mm; margin: 0; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; }
+        body { font-family: 'Inter', system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .card {
           width: 85.6mm; height: 54mm;
           display: flex; flex-direction: column;
           background: white; overflow: hidden;
+          position: relative;
+        }
+        .card::before {
+          content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+          background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+          opacity: 0.5; z-index: 0; pointer-events: none;
         }
         .header {
-          background: ${HOSPITAL.color};
-          color: white; padding: 2mm 3mm;
+          background: linear-gradient(135deg, ${HOSPITAL.color}, ${HOSPITAL.color}dd);
+          color: white; padding: 2.5mm 3mm 2mm;
           display: flex; align-items: center; gap: 2mm;
-          border-bottom: 0.8mm solid #c0392b;
+          position: relative; z-index: 1;
+        }
+        .header::after {
+          content: ''; position: absolute; bottom: -2mm; left: 0; right: 0;
+          height: 4mm;
+          background: linear-gradient(to bottom, ${colorToRgba(HOSPITAL.color, 0.15)}, transparent);
         }
         .logo {
-          width: 8mm; height: 8mm;
-          background: #1a1a1a; border-radius: 50%;
+          width: 9mm; height: 9mm; border-radius: 2mm;
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
+          flex-shrink: 0; overflow: hidden;
+          background: rgba(255,255,255,0.2); backdrop-filter: blur(4px);
         }
+        .logo img { width: 100%; height: 100%; object-fit: contain; }
         .logo svg { width: 5mm; height: 5mm; }
-        .hospital-name { font-weight: 900; font-size: 11px; letter-spacing: 0.5px; }
-        .hospital-addr { font-size: 7px; font-weight: 600; }
-        .hospital-phone { font-size: 6px; opacity: 0.9; }
+        .hospital-name { font-weight: 900; font-size: 11px; letter-spacing: 0.3px; line-height: 1.2; }
+        .hospital-addr { font-size: 6.5px; font-weight: 500; opacity: 0.92; margin-top: 0.5mm; }
+        .hospital-phone { font-size: 6px; opacity: 0.8; margin-top: 0.3mm; }
         .body {
-          flex: 1; display: flex; padding: 2mm; gap: 2mm;
+          flex: 1; display: flex; padding: 2.5mm 3mm 1.5mm; gap: 2.5mm;
+          position: relative; z-index: 1;
         }
         .photo {
-          width: 18mm; height: 22mm; flex-shrink: 0;
-          overflow: hidden; background: #e5c6c6;
+          width: 19mm; height: 24mm; flex-shrink: 0;
+          overflow: hidden; border-radius: 1.5mm;
+          border: 0.4mm solid #e2e8f0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         .info {
-          flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 1mm;
-          padding: 0 1mm;
+          flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 0.8mm;
+          padding: 0.5mm 0;
         }
-        .name { font-weight: 800; font-size: 10px; color: #1a1a1a; text-transform: uppercase; }
-        .details { font-size: 8px; color: #444; }
-        .convention { font-weight: 700; font-size: 8px; color: #1a1a1a; margin-top: 1mm; }
+        .name { font-weight: 900; font-size: 10.5px; color: #0f172a; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.3; }
+        .info-row { display: flex; align-items: center; gap: 1mm; }
+        .info-pill {
+          display: inline-flex; align-items: center; gap: 0.5mm;
+          background: #f1f5f9; border-radius: 1mm; padding: 0.5mm 1.5mm;
+          font-size: 7px; color: #475569; font-weight: 600;
+        }
+        .info-pill.gender-f { background: #fce7f3; color: #9d174d; }
+        .info-pill.gender-m { background: #dbeafe; color: #1e40af; }
+        .info-pill.blood { background: #fee2e2; color: #991b1b; font-weight: 800; }
+        .convention-badge {
+          display: flex; align-items: center; gap: 1mm;
+          background: linear-gradient(90deg, ${colorToRgba(HOSPITAL.color, 0.08)}, transparent);
+          border-left: 0.5mm solid ${HOSPITAL.color};
+          border-radius: 0 1mm 1mm 0;
+          padding: 0.8mm 1.5mm;
+          font-size: 6.5px; color: #334155;
+          margin-top: 0.5mm;
+        }
+        .conv-icon { font-size: 7px; }
         .qr-section {
           width: 22mm; flex-shrink: 0;
           display: flex; flex-direction: column;
-          align-items: center; justify-content: center; gap: 1mm;
+          align-items: center; justify-content: center; gap: 0.8mm;
+          background: #f8fafc;
+          border-radius: 1.5mm;
+          padding: 1mm;
+          border: 0.3mm solid #e2e8f0;
         }
-        .code { font-size: 6.5px; font-family: monospace; font-weight: 800; color: #1a1a1a; text-align: center; }
+        .code {
+          font-size: 6px; font-family: 'Courier New', monospace;
+          font-weight: 800; color: ${HOSPITAL.color};
+          text-align: center; letter-spacing: 0.3px;
+          background: white; padding: 0.3mm 1mm;
+          border-radius: 0.5mm; border: 0.2mm solid #e2e8f0;
+        }
         .footer {
-          font-size: 5px; color: #888; padding: 0.5mm 3mm 1mm;
-          border-top: 0.3px solid #ddd;
-          line-height: 1.3;
+          font-size: 5px; color: #94a3b8; padding: 0.8mm 3mm 1.2mm;
+          position: relative; z-index: 1;
+          display: flex; justify-content: space-between; align-items: center;
+          border-top: 0.3mm solid #f1f5f9;
         }
+        .footer-left { flex: 1; }
+        .footer-brand { font-weight: 700; color: ${HOSPITAL.color}; opacity: 0.6; font-size: 5px; }
       </style>
     </head><body>
       <div class="card">
         <div class="header">
-          ${HOSPITAL.logo_url ? `<img src="${HOSPITAL.logo_url}" style="width:8mm;height:8mm;object-fit:contain;border-radius:4px;flex-shrink:0;" />` : `<div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></div>`}
-          <div>
+          <div class="logo">
+            ${HOSPITAL.logo_url ? `<img src="${HOSPITAL.logo_url}" />` : `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>`}
+          </div>
           <div>
             <p class="hospital-name">${HOSPITAL.name}</p>
-            <p class="hospital-addr">${HOSPITAL.subtitle} — ${HOSPITAL.address}</p>
+            <p class="hospital-addr">${HOSPITAL.subtitle}${HOSPITAL.subtitle && HOSPITAL.address ? ' · ' : ''}${HOSPITAL.address}</p>
             <p class="hospital-phone">${HOSPITAL.phone}</p>
           </div>
         </div>
@@ -151,21 +207,26 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
           <div class="photo">${photoHtml}</div>
           <div class="info">
             <p class="name">${patient.last_name} ${patient.first_name}</p>
-            <p class="details">${age} ans — ${genderLabel} — ${patient.blood_type || 'N/R'}</p>
+            <div class="info-row">
+              <span class="info-pill">${age} ans</span>
+              <span class="info-pill gender-${patient.gender === 'F' ? 'f' : 'm'}">${genderShort}</span>
+              ${patient.blood_type ? `<span class="info-pill blood">${patient.blood_type}</span>` : ''}
+            </div>
             ${conventionHtml}
           </div>
           <div class="qr-section">
             <div id="qr"></div>
-            <p class="code">Code: ${patient.code}</p>
+            <p class="code">${patient.code}</p>
           </div>
         </div>
         <div class="footer">
-          Carte d'identification patient — ${HOSPITAL.name} — En cas de perte, merci de retourner à l'accueil.
+          <span class="footer-left">Carte d'identification patient · En cas de perte, retourner à l'accueil</span>
+          <span class="footer-brand">${HOSPITAL.name}</span>
         </div>
       </div>
       <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
       <script>
-        QRCode.toCanvas(document.createElement('canvas'), '${patient.code}', { width: 90, margin: 0 }, function(err, canvas) {
+        QRCode.toCanvas(document.createElement('canvas'), '${patient.code}', { width: 88, margin: 0, color: { dark: '#0f172a' } }, function(err, canvas) {
           if (!err) document.getElementById('qr').appendChild(canvas);
           setTimeout(function() { window.print(); window.close(); }, 500);
         });
@@ -176,76 +237,151 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Carte Patient PVC</DialogTitle>
-          <DialogDescription>Prévisualisation de la carte à imprimer</DialogDescription>
+          <DialogTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Carte Patient PVC
+          </DialogTitle>
+          <DialogDescription>Prévisualisation haute fidélité de la carte à imprimer</DialogDescription>
         </DialogHeader>
 
-        <div className="flex justify-center py-4">
-          {/* Card preview - ratio 85.6:54 */}
-          <div className="w-full max-w-[380px] rounded-xl border-2 border-dashed overflow-hidden bg-card" style={{ aspectRatio: '85.6/54' }}>
-            
-            {/* Header - Blue band with logo */}
-            <div className="text-white px-3 py-2 flex items-center gap-2 border-b-[3px] border-destructive" style={{ backgroundColor: HOSPITAL.color }}>
+        <div className="flex justify-center py-6">
+          {/* Card preview with shadow and 3D effect */}
+          <div
+            className="w-full max-w-[420px] rounded-2xl overflow-hidden relative"
+            style={{
+              aspectRatio: '85.6/54',
+              boxShadow: `0 20px 60px -12px ${colorToRgba(HOSPITAL.color, 0.25)}, 0 8px 20px -8px rgba(0,0,0,0.12)`,
+            }}
+          >
+            {/* Subtle pattern background */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000' fill-opacity='1'%3E%3Cpath d='M20 18v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4z'/%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
+
+            {/* Header - Gradient band */}
+            <div
+              className="text-white px-4 py-2.5 flex items-center gap-2.5 relative"
+              style={{
+                background: `linear-gradient(135deg, ${HOSPITAL.color}, ${HOSPITAL.color}dd)`,
+              }}
+            >
+              {/* Decorative glow */}
+              <div className="absolute -bottom-3 left-0 right-0 h-6" style={{
+                background: `linear-gradient(to bottom, ${colorToRgba(HOSPITAL.color, 0.12)}, transparent)`
+              }} />
+
               {HOSPITAL.logo_url ? (
-                <img src={HOSPITAL.logo_url} alt="" className="h-8 w-8 object-contain rounded shrink-0" />
+                <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <img src={HOSPITAL.logo_url} alt="" className="h-full w-full object-contain" />
+                </div>
               ) : (
-                <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center shrink-0">
-                  <Cross className="h-4 w-4 text-white" fill="white" />
+                <div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" className="h-5 w-5">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
                 </div>
               )}
-              <div className="min-w-0">
-                <p className="font-black text-[12px] leading-tight tracking-wide">{HOSPITAL.name}</p>
-                <p className="text-[8px] font-semibold leading-tight">{HOSPITAL.subtitle} — {HOSPITAL.address}</p>
-                <p className="text-[7px] opacity-90 leading-tight">{HOSPITAL.phone}</p>
+              <div className="min-w-0 relative z-10">
+                <p className="font-black text-[13px] leading-tight tracking-wide drop-shadow-sm">{HOSPITAL.name}</p>
+                <p className="text-[7.5px] font-medium leading-tight mt-0.5 opacity-95">
+                  {HOSPITAL.subtitle}{HOSPITAL.subtitle && HOSPITAL.address ? ' · ' : ''}{HOSPITAL.address}
+                </p>
+                {HOSPITAL.phone && (
+                  <p className="text-[6.5px] opacity-80 leading-tight mt-0.5 flex items-center gap-0.5">
+                    <Phone className="h-[7px] w-[7px] inline" />
+                    {HOSPITAL.phone}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Body - Photo + Info + QR */}
-            <div className="flex flex-1 px-2 py-1.5 gap-2" style={{ height: 'calc(100% - 52px)' }}>
+            {/* Body */}
+            <div className="flex flex-1 px-3 py-2 gap-3 bg-card relative" style={{ height: 'calc(100% - 56px)' }}>
               
-              {/* Photo */}
-              <div className="w-[72px] shrink-0 self-start">
+              {/* Photo with rounded corners and border */}
+              <div className="w-[76px] shrink-0 self-start">
                 {patient.photo_url ? (
-                  <img src={patient.photo_url} alt="" className="w-full h-[88px] object-cover" />
+                  <img
+                    src={patient.photo_url}
+                    alt=""
+                    className="w-full h-[96px] object-cover rounded-lg border border-border"
+                    style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.1)' }}
+                  />
                 ) : (
-                  <div className="w-full h-[88px] bg-[hsl(0,30%,85%)] flex items-center justify-center">
-                    <User className="h-8 w-8 text-muted-foreground" />
+                  <div
+                    className="w-full h-[96px] rounded-lg border border-border flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, hsl(210 20% 92%), hsl(210 20% 86%))' }}
+                  >
+                    <User className="h-8 w-8 text-muted-foreground/60" />
                   </div>
                 )}
               </div>
 
               {/* Patient info */}
-              <div className="flex-1 flex flex-col justify-center gap-0.5 min-w-0">
-                <p className="font-extrabold text-[11px] leading-tight uppercase truncate">
+              <div className="flex-1 flex flex-col justify-start gap-1 min-w-0 pt-0.5">
+                <p className="font-black text-[12px] leading-tight uppercase tracking-wide text-foreground truncate">
                   {patient.last_name} {patient.first_name}
                 </p>
-                <p className="text-[9px] text-muted-foreground">
-                  {age} ans — {genderLabel} — {patient.blood_type || 'N/R'}
-                </p>
+                
+                {/* Info pills */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-semibold bg-muted text-muted-foreground">
+                    {age} ans
+                  </span>
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold ${
+                    patient.gender === 'F'
+                      ? 'bg-[hsl(330,80%,95%)] text-[hsl(330,60%,35%)]'
+                      : 'bg-[hsl(210,80%,95%)] text-[hsl(210,60%,35%)]'
+                  }`}>
+                    {genderShort}
+                  </span>
+                  {patient.blood_type && (
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-destructive/10 text-destructive">
+                      {patient.blood_type}
+                    </span>
+                  )}
+                </div>
+
+                {/* Convention badge */}
                 {companyName && (
-                  <p className="font-bold text-[9px] mt-1">
-                    {companyName}
-                    {conventionName && <span className="font-normal text-muted-foreground"> — {conventionName}</span>}
-                  </p>
-                )}
-                {employeeId && (
-                  <p className="text-[7px] text-muted-foreground">Mat: {employeeId}</p>
+                  <div
+                    className="flex items-center gap-1 mt-0.5 rounded-r px-1.5 py-0.5 text-[8px] text-muted-foreground"
+                    style={{
+                      background: `linear-gradient(90deg, ${colorToRgba(HOSPITAL.color, 0.08)}, transparent)`,
+                      borderLeft: `2px solid ${HOSPITAL.color}`,
+                    }}
+                  >
+                    <Building2 className="h-[9px] w-[9px] shrink-0" style={{ color: HOSPITAL.color }} />
+                    <span className="font-bold text-foreground">{companyName}</span>
+                    {conventionName && <span>· {conventionName}</span>}
+                    {employeeId && <span>· Mat: {employeeId}</span>}
+                  </div>
                 )}
               </div>
 
-              {/* QR Code */}
-              <div className="flex flex-col items-center justify-center gap-0.5 shrink-0">
-                <QRCodeSVG value={patient.code} size={70} level="H" />
-                <p className="font-mono text-[7px] font-extrabold text-foreground">Code: {patient.code}</p>
+              {/* QR Code Section */}
+              <div className="flex flex-col items-center justify-center gap-1 shrink-0 rounded-xl p-1.5 bg-muted/50 border border-border/50">
+                <div className="bg-card rounded-lg p-1">
+                  <QRCodeSVG value={patient.code} size={68} level="H" fgColor="#0f172a" />
+                </div>
+                <div
+                  className="px-1.5 py-0.5 rounded font-mono text-[7px] font-extrabold tracking-wide border border-border/60 bg-card"
+                  style={{ color: HOSPITAL.color }}
+                >
+                  {patient.code}
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-2 pb-1">
-              <p className="text-[6px] text-muted-foreground border-t border-border pt-0.5 leading-snug">
-                Carte d'identification patient — {HOSPITAL.name} — En cas de perte, merci de retourner à l'accueil.
+            <div className="absolute bottom-0 left-0 right-0 px-3 py-1 flex items-center justify-between border-t border-border/50 bg-card/80 backdrop-blur-sm">
+              <p className="text-[5.5px] text-muted-foreground">
+                Carte d'identification patient · En cas de perte, retourner à l'accueil
+              </p>
+              <p className="text-[5.5px] font-bold opacity-40" style={{ color: HOSPITAL.color }}>
+                {HOSPITAL.name}
               </p>
             </div>
           </div>
@@ -253,8 +389,8 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
 
         <div className="flex gap-2 justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fermer</Button>
-          <Button onClick={handlePrint} className="gap-1.5">
-            <Printer className="h-4 w-4" />Imprimer
+          <Button onClick={handlePrint} className="gap-1.5" style={{ background: HOSPITAL.color }}>
+            <Printer className="h-4 w-4" />Imprimer la carte
           </Button>
         </div>
       </DialogContent>
