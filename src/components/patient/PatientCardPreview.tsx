@@ -300,28 +300,52 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
             {/* Body */}
             <div className="flex flex-1 px-3 py-2 gap-3 bg-card relative" style={{ height: 'calc(100% - 56px)' }}>
               
-              {/* Photo with rounded corners and border */}
-              <div className="w-[90px] shrink-0 self-start">
-                {patient.photo_url ? (
-                  <img
-                    src={patient.photo_url}
-                    alt=""
-                    className="w-full h-[110px] object-cover rounded-lg border border-border"
-                    style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.1)' }}
-                  />
-                ) : (
-                  <div
-                    className="w-full h-[110px] rounded-lg border border-border flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, hsl(210 20% 92%), hsl(210 20% 86%))' }}
-                  >
-                    <User className="h-10 w-10 text-muted-foreground/60" />
+              {/* Left: Photo + Name underneath */}
+              <div className="shrink-0 flex flex-col items-center gap-1">
+                <div className="w-[90px]">
+                  {patient.photo_url ? (
+                    <img
+                      src={patient.photo_url}
+                      alt=""
+                      className="w-full h-[100px] object-cover rounded-lg border border-border"
+                      style={{ boxShadow: '0 2px 8px -2px rgba(0,0,0,0.1)' }}
+                    />
+                  ) : (
+                    <div
+                      className="w-full h-[100px] rounded-lg border border-border flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, hsl(210 20% 92%), hsl(210 20% 86%))' }}
+                    >
+                      <User className="h-10 w-10 text-muted-foreground/60" />
+                    </div>
+                  )}
+                </div>
+                {/* Name + details under photo */}
+                <div className="w-[90px] text-center">
+                  <p className="font-black text-[11px] leading-tight uppercase tracking-wide text-foreground break-words">
+                    {patient.last_name} {patient.first_name}
+                  </p>
+                  <div className="flex items-center justify-center gap-1 flex-wrap mt-1">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[7px] font-semibold bg-muted text-muted-foreground">
+                      {age} ans
+                    </span>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[7px] font-bold ${
+                      patient.gender === 'F'
+                        ? 'bg-[hsl(330,80%,95%)] text-[hsl(330,60%,35%)]'
+                        : 'bg-[hsl(210,80%,95%)] text-[hsl(210,60%,35%)]'
+                    }`}>
+                      {genderShort}
+                    </span>
+                    {patient.blood_type && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[7px] font-extrabold bg-destructive/10 text-destructive">
+                        {patient.blood_type}
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Top info: convention + pills */}
-              <div className="flex-1 flex flex-col justify-start gap-1 min-w-0 pt-0.5">
-                {/* Convention badge first */}
+              {/* Middle: Convention info */}
+              <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
                 {companyName && (
                   <div
                     className="flex items-center gap-1 rounded-r px-1.5 py-0.5 text-[8px] text-muted-foreground"
@@ -336,25 +360,6 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                     {employeeId && <span>· Mat: {employeeId}</span>}
                   </div>
                 )}
-
-                {/* Info pills */}
-                <div className="flex items-center gap-1 flex-wrap">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-semibold bg-muted text-muted-foreground">
-                    {age} ans
-                  </span>
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                    patient.gender === 'F'
-                      ? 'bg-[hsl(330,80%,95%)] text-[hsl(330,60%,35%)]'
-                      : 'bg-[hsl(210,80%,95%)] text-[hsl(210,60%,35%)]'
-                  }`}>
-                    {genderShort}
-                  </span>
-                  {patient.blood_type && (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-destructive/10 text-destructive">
-                      {patient.blood_type}
-                    </span>
-                  )}
-                </div>
               </div>
 
               {/* QR Code Section */}
@@ -369,13 +374,6 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
                   {patient.code}
                 </div>
               </div>
-            </div>
-
-            {/* Full name bar - below body, always visible in full */}
-            <div className="px-3 py-1.5 border-t border-border/40 bg-muted/30">
-              <p className="font-black text-[13px] leading-tight uppercase tracking-wide text-foreground text-center">
-                {patient.last_name} {patient.first_name}
-              </p>
             </div>
 
             {/* Footer */}
