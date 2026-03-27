@@ -16,11 +16,45 @@ export function useActiveLicense() {
   return useQuery({
     queryKey: ['active_license'],
     queryFn: async () => {
-      // Get the activated license key from clinic settings
+      // First get the current user's clinic_id via the RPC
+      const { data: clinicId } = await supabase.rpc('get_my_clinic_id');
+
+      if (!clinicId) {
+        // Fallback: try to get from profile directly
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('clinic_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!profile?.clinic_id) return null;
+
+        const { data: settings } = await supabase
+          .from('clinic_settings')
+          .select('activated_license_key')
+          .eq('id', profile.clinic_id)
+          .single();
+
+        if (!settings?.activated_license_key) return null;
+
+        const { data: license, error } = await supabase
+          .from('licenses')
+          .select('*')
+          .eq('license_key', settings.activated_license_key)
+          .single();
+
+        if (error || !license) return null;
+        return license as ActiveLicense;
+      }
+
+      // Get the activated license key from the user's own clinic settings
       const { data: settings } = await supabase
         .from('clinic_settings')
         .select('activated_license_key')
-        .limit(1)
+        .eq('id', clinicId)
         .single();
 
       if (!settings?.activated_license_key) return null;
