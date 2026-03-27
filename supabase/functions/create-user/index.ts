@@ -89,19 +89,42 @@ serve(async (req) => {
       // Check if user already exists
       const { data: existingUsers } = await adminClient.auth.admin.listUsers();
       const existingUser = existingUsers?.users?.find(u => u.email === email.trim());
-      if (existingUser) {
-        return new Response(JSON.stringify({ error: `Un compte avec l'email ${email} existe déjà. Veuillez utiliser une autre adresse email.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      }
-
-      // Create the user via invite (sends invitation email automatically)
-      const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
+      
+      let userId: string;
       const appUrl = "https://atsante.lovable.app";
-      const { data: newUser, error: createError } = await adminClient.auth.admin.inviteUserByEmail(email.trim(), {
-        data: { full_name: full_name.trim(), must_change_password: true },
-        redirectTo: `${appUrl}/auth?license_key=${encodeURIComponent(license.license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`,
-      });
-      if (createError) {
-        return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+      if (existingUser) {
+        // User already exists - reuse their account
+        userId = existingUser.id;
+        
+        // Update their metadata
+        await adminClient.auth.admin.updateUserById(userId, {
+          user_metadata: { full_name: full_name.trim(), must_change_password: true },
+        });
+
+        // Send password recovery so they can set their password
+        await adminClient.auth.admin.generateLink({
+          type: 'recovery',
+          email: email.trim(),
+          options: {
+            redirectTo: `${appUrl}/auth?license_key=${encodeURIComponent(license.license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`,
+          },
+        });
+        
+        // Also send a regular recovery email
+        await adminClient.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${appUrl}/auth?license_key=${encodeURIComponent(license.license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`,
+        });
+      } else {
+        // Create the user via invite (sends invitation email automatically)
+        const { data: newUser, error: createError } = await adminClient.auth.admin.inviteUserByEmail(email.trim(), {
+          data: { full_name: full_name.trim(), must_change_password: true },
+          redirectTo: `${appUrl}/auth?license_key=${encodeURIComponent(license.license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`,
+        });
+        if (createError) {
+          return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        userId = newUser.user!.id;
       }
 
       // Create clinic_settings for this clinic
