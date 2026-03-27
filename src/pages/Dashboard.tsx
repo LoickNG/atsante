@@ -94,6 +94,10 @@ const Dashboard = () => {
           title={`Bonjour, ${userName} 👋`}
           description={`${role ? getRoleLabel(role) : ''} • ${today}`}
         >
+          <Button variant="outline" size="default" className="gap-2" onClick={() => setMessagingOpen(true)}>
+            <MessageCircle className="h-4 w-4" />
+            Messagerie
+          </Button>
           {role === 'accueil' && (
             <>
               <Button variant="outline" size="default" className="gap-2" asChild>
@@ -105,6 +109,8 @@ const Dashboard = () => {
             </>
           )}
         </PageHeader>
+
+        <MessagingDialog open={messagingOpen} onOpenChange={setMessagingOpen} />
 
         {/* ===== MÉDECIN ===== */}
         {role === 'medecin' && (
