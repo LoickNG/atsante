@@ -233,7 +233,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== INFIRMIER ===== */}
-        {role === 'infirmier' && (
+        {!isDemo && role === 'infirmier' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
@@ -318,7 +318,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== PHARMACIEN ===== */}
-        {role === 'pharmacien' && (
+        {!isDemo && role === 'pharmacien' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 mb-8">
               <StatCard title="Stock faible" value={stats?.lowStockMedications || 0} icon={AlertTriangle} variant={(stats?.lowStockMedications || 0) > 0 ? 'danger' : 'default'} />
@@ -341,7 +341,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== LABORANTIN ===== */}
-        {role === 'laborantin' && (
+        {!isDemo && role === 'laborantin' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 mb-8">
               <StatCard title="Analyses en attente" value={stats?.pendingLabs || 0} icon={FlaskConical} variant={(stats?.pendingLabs || 0) > 5 ? 'warning' : 'default'} />
@@ -364,7 +364,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== IMAGERIE ===== */}
-        {role === 'imagerie' && (
+        {!isDemo && role === 'imagerie' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 mb-8">
               <StatCard title="Imagerie en attente" value={stats?.pendingImaging || 0} icon={ImageIcon} variant={(stats?.pendingImaging || 0) > 5 ? 'warning' : 'default'} />
@@ -386,7 +386,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== CAISSIER ===== */}
-        {role === 'caissier' && (
+        {!isDemo && role === 'caissier' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 mb-8">
               <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="success" />
@@ -408,7 +408,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== DAF ===== */}
-        {role === 'daf' && (
+        {!isDemo && role === 'daf' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
               <StatCard title="Recettes du jour" value={formatCurrency(stats?.revenueToday || 0)} icon={Banknote} variant="success" />
@@ -445,7 +445,7 @@ const Dashboard = () => {
         )}
 
         {/* ===== ADMIN ===== */}
-        {role === 'admin' && (
+        {!isDemo && role === 'admin' && (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
               <StatCard title="Patients aujourd'hui" value={stats?.patientsToday || 0} icon={Users} variant="primary" />
