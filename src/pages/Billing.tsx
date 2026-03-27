@@ -248,7 +248,7 @@ export default function Billing() {
     <AppLayout>
       <div className="p-6 lg:p-8 space-y-6">
         <PageHeader title="Facturation" description="Recherchez un patient pour générer automatiquement sa facture">
-          <Button variant="outline" onClick={() => { setIsProforma(true); document.getElementById('billing-generation')?.scrollIntoView({ behavior: 'smooth' }); }}>
+          <Button variant="outline" onClick={() => navigate('/facturation/pro-forma')}>
             <FileText className="h-4 w-4 mr-2" />
             Pro Forma
           </Button>
