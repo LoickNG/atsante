@@ -97,6 +97,7 @@ export type Database = {
       }
       clinic_settings: {
         Row: {
+          activated_license_key: string | null
           address: string | null
           city: string | null
           country: string | null
@@ -115,6 +116,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          activated_license_key?: string | null
           address?: string | null
           city?: string | null
           country?: string | null
@@ -133,6 +135,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          activated_license_key?: string | null
           address?: string | null
           city?: string | null
           country?: string | null
@@ -1792,6 +1795,7 @@ export type Database = {
         | "laborantin"
         | "imagerie"
         | "daf"
+        | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1929,6 +1933,7 @@ export const Constants = {
         "laborantin",
         "imagerie",
         "daf",
+        "super_admin",
       ],
     },
   },

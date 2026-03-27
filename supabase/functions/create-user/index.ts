@@ -21,7 +21,7 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie", "daf"];
+const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie", "daf", "super_admin"];
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -53,8 +53,17 @@ serve(async (req) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: callerRole } = await adminClient.from("user_roles").select("role").eq("user_id", caller.id).single();
-    if (callerRole?.role !== "admin") {
+    if (callerRole?.role !== "admin" && callerRole?.role !== "super_admin") {
       return new Response(JSON.stringify({ error: "Accès réservé aux administrateurs" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Check license user limit
+    const { data: settings } = await adminClient.from("clinic_settings").select("activated_license_key").limit(1).single();
+    if (settings?.activated_license_key) {
+      const { data: license } = await adminClient.from("licenses").select("max_users, current_users").eq("license_key", settings.activated_license_key).single();
+      if (license && license.current_users >= license.max_users) {
+        return new Response(JSON.stringify({ error: `Limite de ${license.max_users} utilisateurs atteinte. Contactez votre fournisseur pour augmenter la licence.` }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
     const body = await req.json();
@@ -115,6 +124,14 @@ serve(async (req) => {
       user_id: newUser.user!.id,
       role,
     });
+
+    // Increment current_users on license
+    if (settings?.activated_license_key) {
+      const { data: lic } = await adminClient.from("licenses").select("id, current_users").eq("license_key", settings.activated_license_key).single();
+      if (lic) {
+        await adminClient.from("licenses").update({ current_users: lic.current_users + 1 }).eq("id", lic.id);
+      }
+    }
 
     // Send password reset email
     const origin = req.headers.get("Origin") || "https://atsante.lovable.app";

@@ -40,7 +40,7 @@ export const navigationConfig: NavSection[] = [
         title: 'Tableau de bord',
         href: '/',
         icon: LayoutDashboard,
-        roles: ['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf'],
+        roles: ['super_admin', 'admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf'],
       },
     ],
   },
@@ -155,7 +155,7 @@ export const navigationConfig: NavSection[] = [
         title: 'Paramètres',
         href: '/parametres',
         icon: Settings,
-        roles: ['admin'],
+        roles: ['admin', 'super_admin'],
       },
     ],
   },
@@ -163,6 +163,7 @@ export const navigationConfig: NavSection[] = [
 
 export const getRoleLabel = (role: UserRole): string => {
   const labels: Record<UserRole, string> = {
+    super_admin: 'Super Admin',
     admin: 'Administrateur',
     accueil: 'Accueil',
     medecin: 'Médecin',
@@ -178,6 +179,7 @@ export const getRoleLabel = (role: UserRole): string => {
 
 export const getRoleColor = (role: UserRole): string => {
   const colors: Record<UserRole, string> = {
+    super_admin: 'bg-role-admin',
     admin: 'bg-role-admin',
     accueil: 'bg-role-accueil',
     medecin: 'bg-role-medecin',

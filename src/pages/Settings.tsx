@@ -8,6 +8,7 @@ import { MedicalActsManagement } from '@/components/admin/MedicalActsManagement'
 import { RoomManagement } from '@/components/admin/RoomManagement';
 import { ClinicSettingsManagement } from '@/components/admin/ClinicSettingsManagement';
 import { LicenseManagement } from '@/components/admin/LicenseManagement';
+import { LicenseActivation } from '@/components/admin/LicenseActivation';
 import { ServiceManagement } from '@/components/admin/ServiceManagement';
 import { BarChart3, Users, Handshake, Receipt, BedDouble, Stethoscope, Building2, Key } from 'lucide-react';
 import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
@@ -15,12 +16,22 @@ import { SpecialtyManagement } from '@/components/admin/SpecialtyManagement';
 export default function Settings() {
   const { role } = useAuth();
 
-  if (role !== 'admin') {
+  if (role !== 'admin' && role !== 'super_admin') {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-full">
           <p className="text-muted-foreground">Accès réservé aux administrateurs.</p>
         </div>
+      </AppLayout>
+    );
+  }
+
+  // Super admin sees only the license management panel
+  if (role === 'super_admin') {
+    return (
+      <AppLayout>
+        <PageHeader title="Administration Super Admin" description="Gestion des licences multi-cliniques" />
+        <LicenseManagement />
       </AppLayout>
     );
   }
@@ -63,9 +74,9 @@ export default function Settings() {
             <Building2 className="h-4 w-4" />
             Services
           </TabsTrigger>
-          <TabsTrigger value="licences" className="flex items-center gap-2">
+          <TabsTrigger value="licence" className="flex items-center gap-2">
             <Key className="h-4 w-4" />
-            Licences
+            Licence
           </TabsTrigger>
         </TabsList>
 
@@ -97,8 +108,8 @@ export default function Settings() {
           <RoomManagement />
         </TabsContent>
 
-        <TabsContent value="licences">
-          <LicenseManagement />
+        <TabsContent value="licence">
+          <LicenseActivation />
         </TabsContent>
 
         <TabsContent value="services">
