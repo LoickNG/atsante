@@ -209,12 +209,35 @@ export function ClinicSettingsManagement() {
         </div>
 
         {/* Color */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label>Couleur principale (en-têtes)</Label>
-          <div className="flex items-center gap-3">
-            <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="h-10 w-14 rounded border cursor-pointer" />
-            <Input value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="w-32" />
+          <div className="grid grid-cols-8 sm:grid-cols-12 gap-2">
+            {[
+              '#1e40af', '#1d4ed8', '#2563eb', '#3b82f6',
+              '#0f766e', '#0d9488', '#14b8a6', '#2dd4bf',
+              '#15803d', '#16a34a', '#22c55e', '#4ade80',
+              '#b91c1c', '#dc2626', '#ef4444', '#f87171',
+              '#c2410c', '#ea580c', '#f97316', '#fb923c',
+              '#a16207', '#ca8a04', '#eab308', '#facc15',
+              '#7e22ce', '#9333ea', '#a855f7', '#c084fc',
+              '#be185d', '#db2777', '#ec4899', '#f472b6',
+              '#334155', '#475569', '#64748b', '#94a3b8',
+              '#18181b', '#27272a', '#3f3f46', '#71717a',
+            ].map(color => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setPrimaryColor(color)}
+                className={`h-8 w-full rounded-md border-2 transition-all hover:scale-110 ${primaryColor === color ? 'border-foreground ring-2 ring-primary ring-offset-2' : 'border-transparent'}`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            ))}
+          </div>
+          <div className="flex items-center gap-3 mt-2">
+            <input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="h-10 w-14 rounded border cursor-pointer" title="Couleur personnalisée" />
             <div className="h-10 flex-1 rounded" style={{ backgroundColor: primaryColor }} />
+            <span className="text-sm text-muted-foreground font-mono">{primaryColor}</span>
           </div>
         </div>
 
