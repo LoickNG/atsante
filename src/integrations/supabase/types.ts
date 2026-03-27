@@ -2316,6 +2316,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      user_belongs_to_clinic: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
