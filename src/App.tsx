@@ -39,72 +39,72 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/installer" element={<Install />} />
             <Route path="/" element={
-              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
+              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf']}>
                 <Dashboard />
               </ProtectedRoute>
             } />
             <Route path="/patients" element={
-              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier']}>
+              <ProtectedRoute allowedRoles={['accueil', 'medecin', 'infirmier', 'caissier']}>
                 <PatientsList />
               </ProtectedRoute>
             } />
             <Route path="/patients/nouveau" element={
-              <ProtectedRoute allowedRoles={['admin', 'accueil']}>
+              <ProtectedRoute allowedRoles={['accueil']}>
                 <NewPatient />
               </ProtectedRoute>
             } />
             <Route path="/patients/:id" element={
-              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
+              <ProtectedRoute allowedRoles={['accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie']}>
                 <PatientDetail />
               </ProtectedRoute>
             } />
             <Route path="/file-attente" element={
-              <ProtectedRoute allowedRoles={['admin', 'accueil', 'medecin', 'infirmier']}>
+              <ProtectedRoute allowedRoles={['accueil', 'medecin', 'infirmier']}>
                 <WaitingQueue />
               </ProtectedRoute>
             } />
             <Route path="/consultations" element={
-              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+              <ProtectedRoute allowedRoles={['medecin', 'infirmier']}>
                 <Consultations />
               </ProtectedRoute>
             } />
             <Route path="/hospitalisations" element={
-              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+              <ProtectedRoute allowedRoles={['medecin', 'infirmier']}>
                 <Hospitalizations />
               </ProtectedRoute>
             } />
             <Route path="/bloc-operatoire" element={
-              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+              <ProtectedRoute allowedRoles={['medecin', 'infirmier']}>
                 <SurgeryPage />
               </ProtectedRoute>
             } />
             <Route path="/pharmacie" element={
-              <ProtectedRoute allowedRoles={['admin', 'pharmacien', 'medecin']}>
+              <ProtectedRoute allowedRoles={['pharmacien', 'medecin']}>
                 <Pharmacy />
               </ProtectedRoute>
             } />
             <Route path="/laboratoire" element={
-              <ProtectedRoute allowedRoles={['admin', 'laborantin', 'medecin']}>
+              <ProtectedRoute allowedRoles={['laborantin', 'medecin']}>
                 <Laboratory />
               </ProtectedRoute>
             } />
             <Route path="/imagerie" element={
-              <ProtectedRoute allowedRoles={['admin', 'imagerie', 'medecin']}>
+              <ProtectedRoute allowedRoles={['imagerie', 'medecin']}>
                 <Imaging />
               </ProtectedRoute>
             } />
             <Route path="/facturation" element={
-              <ProtectedRoute allowedRoles={['admin', 'caissier']}>
+              <ProtectedRoute allowedRoles={['caissier', 'daf']}>
                 <Billing />
               </ProtectedRoute>
             } />
             <Route path="/paiements" element={
-              <ProtectedRoute allowedRoles={['admin', 'caissier']}>
+              <ProtectedRoute allowedRoles={['caissier', 'daf']}>
                 <Payments />
               </ProtectedRoute>
             } />
             <Route path="/extraits" element={
-              <ProtectedRoute allowedRoles={['admin', 'caissier']}>
+              <ProtectedRoute allowedRoles={['caissier', 'daf']}>
                 <Extracts />
               </ProtectedRoute>
             } />
@@ -115,12 +115,12 @@ const App = () => (
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/maternite" element={
-              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier']}>
+              <ProtectedRoute allowedRoles={['medecin', 'infirmier']}>
                 <Maternity />
               </ProtectedRoute>
             } />
             <Route path="/urgences" element={
-              <ProtectedRoute allowedRoles={['admin', 'medecin', 'infirmier', 'accueil']}>
+              <ProtectedRoute allowedRoles={['medecin', 'infirmier', 'accueil']}>
                 <Emergency />
               </ProtectedRoute>
             } />
