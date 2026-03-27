@@ -59,6 +59,27 @@ const Dashboard = () => {
     );
   }
 
+  // Role-based visibility helpers
+  const isMedical = role === 'medecin' || role === 'infirmier';
+  const isFinancial = role === 'caissier' || role === 'daf';
+  const isAccueil = role === 'accueil';
+  const isAdmin = role === 'admin';
+  const isPharmacien = role === 'pharmacien';
+  const isLaborantin = role === 'laborantin';
+  const isImaging = role === 'imagerie';
+
+  // Admin sees only system stats (users, settings), no medical data
+  // DAF sees only financial stats
+  // Medical sees clinical stats
+  // Accueil sees patient + waiting queue
+  const canSeePatientStats = isMedical || isAccueil || isFinancial;
+  const canSeeConsultationStats = isMedical;
+  const canSeeRevenue = isFinancial || isAdmin;
+  const canSeePendingLabs = isMedical || isLaborantin;
+  const canSeePendingImaging = isMedical || isImaging;
+  const canSeeLowStock = isMedical || isPharmacien;
+  const canSeeWaitingList = isMedical || isAccueil;
+
   return (
     <AppLayout>
       <div className="p-6 lg:p-8">
@@ -67,123 +88,174 @@ const Dashboard = () => {
           title={`Bonjour, ${userName} 👋`}
           description={`${role ? getRoleLabel(role) : ''} • ${today}`}
         >
-          <Button variant="outline" size="default" className="gap-2" asChild>
-            <Link to="/patients">
-              <QrCode className="h-4 w-4" />
-              Scanner QR
-            </Link>
-          </Button>
-          <Button size="default" className="gap-2 bg-primary hover:bg-primary/90" asChild>
-            <Link to="/patients/nouveau">
-              <UserPlus className="h-4 w-4" />
-              Nouveau Patient
-            </Link>
-          </Button>
+          {(isAccueil || isMedical) && (
+            <>
+              <Button variant="outline" size="default" className="gap-2" asChild>
+                <Link to="/patients">
+                  <QrCode className="h-4 w-4" />
+                  Scanner QR
+                </Link>
+              </Button>
+              <Button size="default" className="gap-2 bg-primary hover:bg-primary/90" asChild>
+                <Link to="/patients/nouveau">
+                  <UserPlus className="h-4 w-4" />
+                  Nouveau Patient
+                </Link>
+              </Button>
+            </>
+          )}
         </PageHeader>
 
         {/* Stats Grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
-          <StatCard
-            title="Patients aujourd'hui"
-            value={stats?.patientsToday || 0}
-            icon={Users}
-            variant="primary"
-          />
-          <StatCard
-            title="Consultations"
-            value={stats?.consultationsToday || 0}
-            icon={Stethoscope}
-            variant="success"
-          />
-          <StatCard
-            title="Recettes du jour"
-            value={formatCurrency(stats?.revenueToday || 0)}
-            icon={Banknote}
-            variant="default"
-          />
-          <StatCard
-            title="Analyses en attente"
-            value={stats?.pendingLabs || 0}
-            icon={FlaskConical}
-            variant={(stats?.pendingLabs || 0) > 5 ? 'warning' : 'default'}
-          />
-          <StatCard
-            title="Imagerie en attente"
-            value={stats?.pendingImaging || 0}
-            icon={ImageIcon}
-            variant="default"
-          />
-          <StatCard
-            title="Stock faible"
-            value={stats?.lowStockMedications || 0}
-            icon={AlertTriangle}
-            variant={(stats?.lowStockMedications || 0) > 0 ? 'danger' : 'default'}
-          />
+          {canSeePatientStats && (
+            <StatCard
+              title="Patients aujourd'hui"
+              value={stats?.patientsToday || 0}
+              icon={Users}
+              variant="primary"
+            />
+          )}
+          {canSeeConsultationStats && (
+            <StatCard
+              title="Consultations"
+              value={stats?.consultationsToday || 0}
+              icon={Stethoscope}
+              variant="success"
+            />
+          )}
+          {canSeeRevenue && (
+            <StatCard
+              title="Recettes du jour"
+              value={formatCurrency(stats?.revenueToday || 0)}
+              icon={Banknote}
+              variant="default"
+            />
+          )}
+          {canSeePendingLabs && (
+            <StatCard
+              title="Analyses en attente"
+              value={stats?.pendingLabs || 0}
+              icon={FlaskConical}
+              variant={(stats?.pendingLabs || 0) > 5 ? 'warning' : 'default'}
+            />
+          )}
+          {canSeePendingImaging && (
+            <StatCard
+              title="Imagerie en attente"
+              value={stats?.pendingImaging || 0}
+              icon={ImageIcon}
+              variant="default"
+            />
+          )}
+          {canSeeLowStock && (
+            <StatCard
+              title="Stock faible"
+              value={stats?.lowStockMedications || 0}
+              icon={AlertTriangle}
+              variant={(stats?.lowStockMedications || 0) > 0 ? 'danger' : 'default'}
+            />
+          )}
+          {isAdmin && (
+            <StatCard
+              title="Patients aujourd'hui"
+              value={stats?.patientsToday || 0}
+              icon={Users}
+              variant="primary"
+            />
+          )}
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - filtered by role */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-4">Actions rapides</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30"
-              asChild
-            >
-              <Link to="/patients/nouveau">
-                <UserPlus className="h-6 w-6 text-primary" />
-                <span className="font-medium">Enregistrer un patient</span>
-                <span className="text-xs text-muted-foreground">Créer une carte QR</span>
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex-col gap-2 hover:bg-success/5 hover:border-success/30"
-              asChild
-            >
-              <Link to="/consultations">
-                <Stethoscope className="h-6 w-6 text-success" />
-                <span className="font-medium">Nouvelle consultation</span>
-                <span className="text-xs text-muted-foreground">Démarrer un examen</span>
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex-col gap-2 hover:bg-info/5 hover:border-info/30"
-              asChild
-            >
-              <Link to="/file-attente">
-                <Calendar className="h-6 w-6 text-info" />
-                <span className="font-medium">File d'attente</span>
-                <span className="text-xs text-muted-foreground">Gérer les rendez-vous</span>
-              </Link>
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-auto py-4 flex-col gap-2 hover:bg-warning/5 hover:border-warning/30"
-              asChild
-            >
-              <Link to="/facturation">
-                <Banknote className="h-6 w-6 text-warning" />
-                <span className="font-medium">Facturation</span>
-                <span className="text-xs text-muted-foreground">Encaisser un paiement</span>
-              </Link>
-            </Button>
+            {(isAccueil || isMedical) && (
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30"
+                asChild
+              >
+                <Link to="/patients/nouveau">
+                  <UserPlus className="h-6 w-6 text-primary" />
+                  <span className="font-medium">Enregistrer un patient</span>
+                  <span className="text-xs text-muted-foreground">Créer une carte QR</span>
+                </Link>
+              </Button>
+            )}
+            {isMedical && (
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2 hover:bg-success/5 hover:border-success/30"
+                asChild
+              >
+                <Link to="/consultations">
+                  <Stethoscope className="h-6 w-6 text-success" />
+                  <span className="font-medium">Nouvelle consultation</span>
+                  <span className="text-xs text-muted-foreground">Démarrer un examen</span>
+                </Link>
+              </Button>
+            )}
+            {(isAccueil || isMedical) && (
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2 hover:bg-info/5 hover:border-info/30"
+                asChild
+              >
+                <Link to="/file-attente">
+                  <Calendar className="h-6 w-6 text-info" />
+                  <span className="font-medium">File d'attente</span>
+                  <span className="text-xs text-muted-foreground">Gérer les rendez-vous</span>
+                </Link>
+              </Button>
+            )}
+            {isFinancial && (
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2 hover:bg-warning/5 hover:border-warning/30"
+                asChild
+              >
+                <Link to="/facturation">
+                  <Banknote className="h-6 w-6 text-warning" />
+                  <span className="font-medium">Facturation</span>
+                  <span className="text-xs text-muted-foreground">Encaisser un paiement</span>
+                </Link>
+              </Button>
+            )}
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                className="h-auto py-4 flex-col gap-2 hover:bg-primary/5 hover:border-primary/30"
+                asChild
+              >
+                <Link to="/parametres">
+                  <Users className="h-6 w-6 text-primary" />
+                  <span className="font-medium">Paramètres</span>
+                  <span className="text-xs text-muted-foreground">Gérer le système</span>
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Waiting List */}
-          <DashboardWaitingList visits={waitingVisits || []} isLoading={visitsLoading} />
+          {/* Waiting List - medical & accueil only */}
+          {canSeeWaitingList && (
+            <DashboardWaitingList visits={waitingVisits || []} isLoading={visitsLoading} />
+          )}
 
           {/* Right Column */}
           <div className="space-y-6">
-            {/* Pending Labs */}
-            <DashboardPendingLabs requests={pendingLabs || []} isLoading={labsLoading} />
+            {/* Pending Labs - medical & lab only */}
+            {canSeePendingLabs && (
+              <DashboardPendingLabs requests={pendingLabs || []} isLoading={labsLoading} />
+            )}
 
-            {/* Low Stock Alerts */}
-            <DashboardLowStock medications={lowStockMeds} isLoading={medsLoading} />
+            {/* Low Stock Alerts - medical & pharmacy only */}
+            {canSeeLowStock && (
+              <DashboardLowStock medications={lowStockMeds} isLoading={medsLoading} />
+            )}
           </div>
         </div>
       </div>

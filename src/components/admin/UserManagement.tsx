@@ -24,7 +24,7 @@ interface UserWithRole {
   created_at: string;
 }
 
-const ROLES: UserRole[] = ['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie'];
+const ROLES: UserRole[] = ['admin', 'accueil', 'medecin', 'infirmier', 'caissier', 'pharmacien', 'laborantin', 'imagerie', 'daf'];
 
 export function UserManagement() {
   const { toast } = useToast();

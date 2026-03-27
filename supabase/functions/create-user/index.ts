@@ -21,7 +21,7 @@ function getCorsHeaders(req: Request) {
   };
 }
 
-const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie"];
+const VALID_ROLES = ["admin", "accueil", "medecin", "infirmier", "caissier", "pharmacien", "laborantin", "imagerie", "daf"];
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrateur",
@@ -32,6 +32,7 @@ const ROLE_LABELS: Record<string, string> = {
   pharmacien: "Pharmacien(ne)",
   laborantin: "Laborantin(e)",
   imagerie: "Imagerie",
+  daf: "DAF",
 };
 
 serve(async (req) => {
