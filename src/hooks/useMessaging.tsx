@@ -235,31 +235,55 @@ export function useCreateConversation() {
 export function useClinicStaff() {
   const { user, role } = useAuth();
   const isSuperAdmin = role === 'super_admin';
+  const isDemoOrAdmin = role === 'demo' || role === 'admin';
 
   return useQuery({
-    queryKey: ['clinic_staff', isSuperAdmin],
+    queryKey: ['clinic_staff', isSuperAdmin, isDemoOrAdmin],
     queryFn: async () => {
       if (isSuperAdmin) {
-        // Super admin can only chat with admins
-        const { data: adminRoles, error: rolesError } = await supabase
+        // Super admin can only chat with admins and demo accounts
+        const { data: targetRoles, error: rolesError } = await supabase
           .from('user_roles')
-          .select('user_id')
-          .eq('role', 'admin');
+          .select('user_id, role')
+          .in('role', ['admin', 'demo']);
         if (rolesError) throw rolesError;
-        const adminIds = (adminRoles || []).map(r => r.user_id);
-        if (adminIds.length === 0) return [];
+        const targetIds = (targetRoles || []).map(r => r.user_id);
+        if (targetIds.length === 0) return [];
         const { data, error } = await supabase
           .from('profiles')
           .select('user_id, full_name, specialty')
-          .in('user_id', adminIds);
+          .in('user_id', targetIds);
         if (error) throw error;
         return (data || []).filter(p => p.user_id !== user?.id);
       } else {
-        const { data, error } = await supabase
+        // Fetch same-clinic staff
+        const { data: clinicStaff, error } = await supabase
           .from('profiles')
           .select('user_id, full_name, specialty');
         if (error) throw error;
-        return (data || []).filter(p => p.user_id !== user?.id);
+        let staff = (clinicStaff || []).filter(p => p.user_id !== user?.id);
+
+        // Admin and demo can also chat with super_admin
+        if (isDemoOrAdmin) {
+          const { data: superAdminRoles } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'super_admin');
+          const superAdminIds = (superAdminRoles || []).map(r => r.user_id);
+          if (superAdminIds.length > 0) {
+            const { data: superAdminProfiles } = await supabase
+              .from('profiles')
+              .select('user_id, full_name, specialty')
+              .in('user_id', superAdminIds);
+            const existingIds = new Set(staff.map(s => s.user_id));
+            (superAdminProfiles || []).forEach(p => {
+              if (!existingIds.has(p.user_id) && p.user_id !== user?.id) {
+                staff.push(p);
+              }
+            });
+          }
+        }
+        return staff;
       }
     },
     enabled: !!user,
