@@ -51,6 +51,17 @@ const Dashboard = () => {
   const { data: pendingLabs, isLoading: labsLoading } = usePendingLabRequests();
   const { data: medications, isLoading: medsLoading } = useMedications();
 
+  // Super admin license stats
+  const { data: licenses } = useQuery({
+    queryKey: ['licenses-dashboard'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('licenses').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: role === 'super_admin',
+  });
+
   const lowStockMeds = medications?.filter(m => m.stock_quantity <= m.alert_threshold) || [];
 
   const formatCurrency = (amount: number) =>
