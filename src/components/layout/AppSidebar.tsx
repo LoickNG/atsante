@@ -3,7 +3,7 @@ import { useSidebarCollapse } from './AppLayout';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronLeft, ChevronRight, LogOut, Activity, Type } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
@@ -11,6 +11,7 @@ import { getFilteredNavigation, getRoleLabel, getRoleColor } from '@/config/navi
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface AppSidebarProps {
   className?: string;
