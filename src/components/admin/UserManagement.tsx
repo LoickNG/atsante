@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getRoleLabel, getRoleColor } from '@/config/navigation';
 import { useSpecialties, getSpecialtyLabel } from '@/config/specialties';
 import { useServices } from '@/hooks/useServices';
+import { useLicenseStatus } from '@/hooks/useLicense';
 import { UserRole } from '@/types';
 import { UserPlus, Shield, Loader2, Search, Building2 } from 'lucide-react';
 import { z } from 'zod';
@@ -44,6 +45,7 @@ export function UserManagement() {
   const [newServiceId, setNewServiceId] = useState('');
   const specialtiesList = useSpecialties();
   const { data: services } = useServices();
+  const { canAddUser, license } = useLicenseStatus();
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -91,6 +93,11 @@ export function UserManagement() {
     }
     if (!newServiceId) {
       toast({ title: 'Erreur', description: 'Veuillez sélectionner un service', variant: 'destructive' }); return;
+    }
+    // Check license user limit
+    if (license && !canAddUser) {
+      toast({ title: 'Limite atteinte', description: `La licence autorise ${license.max_users} utilisateurs maximum. Contactez votre fournisseur.`, variant: 'destructive' });
+      return;
     }
 
     setCreating(true);
