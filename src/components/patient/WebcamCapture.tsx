@@ -7,14 +7,16 @@ interface WebcamCaptureProps {
   onCapture: (blob: Blob) => void;
   capturedUrl?: string | null;
   onClear?: () => void;
+  autoStart?: boolean;
 }
 
-export function WebcamCapture({ onCapture, capturedUrl, onClear }: WebcamCaptureProps) {
+export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = false }: WebcamCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const hasAutoStarted = useRef(false);
 
   const startCamera = useCallback(async () => {
     try {
@@ -39,6 +41,14 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear }: WebcamCapture
     streamRef.current = null;
     setStreaming(false);
   }, []);
+
+  // Auto-start camera if requested and no photo captured yet
+  useEffect(() => {
+    if (autoStart && !capturedUrl && !streaming && !hasAutoStarted.current) {
+      hasAutoStarted.current = true;
+      startCamera();
+    }
+  }, [autoStart, capturedUrl, streaming, startCamera]);
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
@@ -103,8 +113,8 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear }: WebcamCapture
           </div>
         </>
       ) : (
-        <>
-          <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/30">
+      <>
+          <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-destructive/40">
             <Camera className="h-8 w-8 text-muted-foreground" />
           </div>
           {error && <p className="text-xs text-destructive text-center">{error}</p>}
