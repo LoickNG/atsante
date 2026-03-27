@@ -18,7 +18,10 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
   const clinicName = clinic?.name || 'Ma Clinique';
   const clinicSubtitle = [clinic?.slogan, clinic?.city].filter(Boolean).join(' — ') || 'Clinique Médicale';
   const clinicPhone = clinic?.phone || '';
-  const clinicAddress = clinic?.address || '';
+  const clinicAddress = [clinic?.address, clinic?.city, clinic?.country].filter(Boolean).join(', ');
+  const clinicEmail = clinic?.email || '';
+  const clinicColor = clinic?.primary_color || '#2563eb';
+  const logoHtml = clinic?.logo_url ? `<img src="${clinic.logo_url}" style="height:40px;object-fit:contain;margin-right:10px;" />` : '';
 
   const handlePrint = () => {
     const patient = invoice.patient;
