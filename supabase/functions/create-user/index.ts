@@ -93,12 +93,11 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: `Un compte avec l'email ${email} existe déjà. Veuillez utiliser une autre adresse email.` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Create the user
-      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-        email: email.trim(),
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: full_name.trim(), must_change_password: true },
+      // Create the user via invite (sends invitation email automatically)
+      const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
+      const { data: newUser, error: createError } = await adminClient.auth.admin.inviteUserByEmail(email.trim(), {
+        data: { full_name: full_name.trim(), must_change_password: true },
+        redirectTo: `${origin}/auth?license_key=${encodeURIComponent(license.license_key)}&clinic_name=${encodeURIComponent(license.clinic_name)}`,
       });
       if (createError) {
         return new Response(JSON.stringify({ error: createError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -135,17 +134,11 @@ serve(async (req) => {
       // Increment current_users on license
       await adminClient.from("licenses").update({ current_users: license.current_users + 1 }).eq("id", license.id);
 
-      // Send password reset email
-      const origin = req.headers.get("Origin") || "https://atsante.lovable.app";
-      await adminClient.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${origin}/auth?change_password=true`,
-      });
-
       return new Response(JSON.stringify({
         success: true,
         user_id: newUser.user!.id,
         clinic_id: clinicId,
-        message: `Administrateur ${full_name} créé pour la clinique "${clinicDisplayName}". Un email a été envoyé à ${email}.`,
+        message: `Administrateur ${full_name} créé pour la clinique "${clinicDisplayName}". Un email d'invitation a été envoyé à ${email} avec le lien d'accès à la plateforme.`,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

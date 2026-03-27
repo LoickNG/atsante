@@ -25,6 +25,9 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
   const [showChangePassword, setShowChangePassword] = useState(false);
 
+  const licenseKey = searchParams.get('license_key');
+  const clinicName = searchParams.get('clinic_name');
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
@@ -36,6 +39,13 @@ export default function Auth() {
         if (mustChange) {
           setShowChangePassword(true);
         } else if (!showChangePassword) {
+          // Show welcome toast if coming from license invitation
+          if (licenseKey && clinicName) {
+            toast({
+              title: `Bienvenue sur ATSanté`,
+              description: `Votre clinique "${decodeURIComponent(clinicName)}" est prête. La licence a été activée automatiquement.`,
+            });
+          }
           navigate('/');
         }
       }

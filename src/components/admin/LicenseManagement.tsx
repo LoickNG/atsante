@@ -42,7 +42,7 @@ export function LicenseManagement() {
   // Admin creation dialog state
   const [adminDialogOpen, setAdminDialogOpen] = useState(false);
   const [selectedLicense, setSelectedLicense] = useState<License | null>(null);
-  const [adminForm, setAdminForm] = useState({ full_name: '', email: '', password: '' });
+  const [adminForm, setAdminForm] = useState({ full_name: '', email: '' });
   const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   const openCreate = () => {
@@ -96,18 +96,14 @@ export function LicenseManagement() {
 
   const openAdminDialog = (lic: License) => {
     setSelectedLicense(lic);
-    setAdminForm({ full_name: '', email: lic.contact_email || '', password: '' });
+    setAdminForm({ full_name: '', email: lic.contact_email || '' });
     setAdminDialogOpen(true);
   };
 
   const handleCreateAdmin = async () => {
     if (!selectedLicense) return;
-    if (!adminForm.full_name || !adminForm.email || !adminForm.password) {
-      toast({ title: 'Erreur', description: 'Tous les champs sont requis', variant: 'destructive' });
-      return;
-    }
-    if (adminForm.password.length < 6) {
-      toast({ title: 'Erreur', description: 'Mot de passe : 6 caractères minimum', variant: 'destructive' });
+    if (!adminForm.full_name || !adminForm.email) {
+      toast({ title: 'Erreur', description: 'Le nom et l\'email sont requis', variant: 'destructive' });
       return;
     }
 
@@ -116,7 +112,7 @@ export function LicenseManagement() {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email: adminForm.email,
-          password: adminForm.password,
+          password: 'temporary-invite', // Not used for invite flow
           full_name: adminForm.full_name,
           role: 'admin',
           license_id: selectedLicense.id,
@@ -126,9 +122,9 @@ export function LicenseManagement() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Succès', description: data?.message || 'Administrateur créé avec succès.' });
+      toast({ title: 'Succès', description: data?.message || 'Administrateur créé. Un email d\'invitation a été envoyé.' });
       setAdminDialogOpen(false);
-      setAdminForm({ full_name: '', email: '', password: '' });
+      setAdminForm({ full_name: '', email: '' });
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Impossible de créer le compte', variant: 'destructive' });
     } finally {
@@ -361,16 +357,7 @@ export function LicenseManagement() {
                 placeholder="admin@clinique.com"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Mot de passe temporaire *</Label>
-              <Input
-                type="password"
-                value={adminForm.password}
-                onChange={e => setAdminForm(f => ({ ...f, password: e.target.value }))}
-                placeholder="••••••••"
-              />
-              <p className="text-xs text-muted-foreground">L'administrateur sera invité à changer son mot de passe à la première connexion.</p>
-            </div>
+            <p className="text-xs text-muted-foreground">Un email d'invitation sera envoyé à l'administrateur avec un lien pour définir son mot de passe et accéder à sa clinique.</p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAdminDialogOpen(false)}>Annuler</Button>
