@@ -229,3 +229,52 @@ export function useClinicStaff() {
     enabled: !!user,
   });
 }
+
+export function useUnreadMessageCount() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['unread_message_count'],
+    queryFn: async () => {
+      // Get all conversations the user participates in with their last_read_at
+      const { data: parts, error: partsError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, last_read_at')
+        .eq('user_id', user!.id);
+      if (partsError) throw partsError;
+      if (!parts || parts.length === 0) return 0;
+
+      let total = 0;
+      for (const part of parts) {
+        let query = supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', part.conversation_id)
+          .neq('sender_id', user!.id);
+        if (part.last_read_at) {
+          query = query.gt('created_at', part.last_read_at);
+        }
+        const { count } = await query;
+        total += count || 0;
+      }
+      return total;
+    },
+    enabled: !!user,
+    refetchInterval: 30000, // poll every 30s
+  });
+
+  // Subscribe to new messages to refresh count
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('unread-count')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['unread_message_count'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, queryClient]);
+
+  return query;
+}
