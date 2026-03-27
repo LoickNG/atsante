@@ -411,9 +411,19 @@ const PatientDetail = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {c.status === 'termine' && role === 'medecin' && (
-                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleReopenConsultation(c.id, c.visit_id)} disabled={isReopening}>
-                                      {isReopening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
-                                      Rouvrir
+                                    <>
+                                      <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditConsultation(c as unknown as Consultation); setEditConsultationOpen(true); }}>
+                                        <Pencil className="h-3.5 w-3.5" />Modifier
+                                      </Button>
+                                      <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleReopenConsultation(c.id, c.visit_id)} disabled={isReopening}>
+                                        {isReopening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                                        Rouvrir
+                                      </Button>
+                                    </>
+                                  )}
+                                  {c.status === 'en_cours' && role === 'medecin' && (
+                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditConsultation(c as unknown as Consultation); setEditConsultationOpen(true); }}>
+                                      <Pencil className="h-3.5 w-3.5" />Modifier
                                     </Button>
                                   )}
                                   <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleOpenFollowUp(c.id)}>
