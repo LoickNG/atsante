@@ -29,12 +29,12 @@ function calculateAge(dateOfBirth: string) {
 export function PatientPDFExport({ patient, consultations, prescriptions, labRequests, imagingRequests, visits }: PatientPDFExportProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { data: clinic } = useClinicSettings();
 
   const handleExport = async () => {
     setLoading(true);
     try {
-      // Build HTML content for the report
-      const html = buildReportHTML(patient, consultations, prescriptions, labRequests, imagingRequests, visits);
+      const html = buildReportHTML(patient, consultations, prescriptions, labRequests, imagingRequests, visits, clinic);
       
       // Open in a new window for printing as PDF
       const printWindow = window.open('', '_blank');
