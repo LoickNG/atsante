@@ -9,10 +9,11 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Edit, Trash2, Key, Building2, Users, Calendar, Shield, UserPlus, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Key, Building2, Users, Calendar, Shield, UserPlus, Loader2, Mail, Eye } from 'lucide-react';
 import { useLicenses, useCreateLicense, useUpdateLicense, useDeleteLicense, ALL_MODULES, License } from '@/hooks/useLicenses';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -45,6 +46,44 @@ export function LicenseManagement() {
   const [adminForm, setAdminForm] = useState({ full_name: '', email: '' });
   const [creatingAdmin, setCreatingAdmin] = useState(false);
 
+  // License detail dialog state
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [detailLicense, setDetailLicense] = useState<License | null>(null);
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  // Fetch users for the selected license detail
+  const { data: licenseUsers = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['license-users', detailLicense?.license_key],
+    queryFn: async () => {
+      if (!detailLicense) return [];
+      // Find clinic_settings with this license key
+      const { data: clinic } = await supabase
+        .from('clinic_settings')
+        .select('id')
+        .eq('activated_license_key', detailLicense.license_key)
+        .single();
+      if (!clinic) return [];
+      // Get profiles linked to this clinic
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email, specialty, created_at, service_id')
+        .eq('clinic_id', clinic.id);
+      if (!profiles || profiles.length === 0) return [];
+      // Get roles for these users
+      const userIds = profiles.map(p => p.user_id);
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+      const roleMap = new Map((roles || []).map(r => [r.user_id, r.role]));
+      return profiles.map(p => ({
+        ...p,
+        role: roleMap.get(p.user_id) || 'inconnu',
+      }));
+    },
+    enabled: !!detailLicense && detailDialogOpen,
+  });
+
   const openCreate = () => {
     setEditing(null);
     setForm(defaultForm);
@@ -66,6 +105,11 @@ export function LicenseManagement() {
       notes: lic.notes || '',
     });
     setOpen(true);
+  };
+
+  const openDetailDialog = (lic: License) => {
+    setDetailLicense(lic);
+    setDetailDialogOpen(true);
   };
 
   const handleSubmit = async () => {
@@ -112,7 +156,7 @@ export function LicenseManagement() {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email: adminForm.email,
-          password: 'temporary-invite', // Not used for invite flow
+          password: 'temporary-invite',
           full_name: adminForm.full_name,
           role: 'admin',
           license_id: selectedLicense.id,
@@ -130,6 +174,38 @@ export function LicenseManagement() {
     } finally {
       setCreatingAdmin(false);
     }
+  };
+
+  const handleResendInvite = async (email: string, licenseKey: string) => {
+    setResendingEmail(email);
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-invite', {
+        body: { email, license_key: licenseKey },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: 'Succès', description: data?.message || `Invitation renvoyée à ${email}` });
+    } catch (error: any) {
+      toast({ title: 'Erreur', description: error.message || 'Impossible de renvoyer l\'invitation', variant: 'destructive' });
+    } finally {
+      setResendingEmail(null);
+    }
+  };
+
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      admin: 'Administrateur',
+      medecin: 'Médecin',
+      infirmier: 'Infirmier',
+      caissier: 'Caissier',
+      pharmacien: 'Pharmacien',
+      laborantin: 'Laborantin',
+      imagerie: 'Imagerie',
+      accueil: 'Accueil',
+      daf: 'DAF',
+      super_admin: 'Super Admin',
+    };
+    return labels[role] || role;
   };
 
   const getExpiryStatus = (lic: License) => {
@@ -243,17 +319,17 @@ export function LicenseManagement() {
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Shield className="h-4 w-4 text-green-500" />
+                <Shield className="h-4 w-4" />
                 Actives
               </div>
-              <p className="text-2xl font-bold mt-1 text-green-600">{licenses.filter(l => l.is_active && differenceInDays(parseISO(l.expiry_date), new Date()) >= 0).length}</p>
+              <p className="text-2xl font-bold mt-1">{licenses.filter(l => l.is_active && differenceInDays(parseISO(l.expiry_date), new Date()) >= 0).length}</p>
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 text-orange-500" />
+                <Calendar className="h-4 w-4" />
                 Expirant bientôt
               </div>
-              <p className="text-2xl font-bold mt-1 text-orange-600">{licenses.filter(l => { const d = differenceInDays(parseISO(l.expiry_date), new Date()); return d >= 0 && d < 30; }).length}</p>
+              <p className="text-2xl font-bold mt-1">{licenses.filter(l => { const d = differenceInDays(parseISO(l.expiry_date), new Date()); return d >= 0 && d < 30; }).length}</p>
             </Card>
             <Card className="p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -306,14 +382,17 @@ export function LicenseManagement() {
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="outline" onClick={() => openDetailDialog(lic)} title="Voir les utilisateurs">
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => openAdminDialog(lic)} title="Créer l'administrateur">
                             <UserPlus className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => openEdit(lic)}>
+                          <Button size="sm" variant="outline" onClick={() => openEdit(lic)} title="Modifier">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="destructive" onClick={() => deleteLicense.mutate(lic.id)}>
+                          <Button size="sm" variant="destructive" onClick={() => deleteLicense.mutate(lic.id)} title="Supprimer">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -366,6 +445,117 @@ export function LicenseManagement() {
               Créer l'administrateur
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog to view license details & users */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {detailLicense?.clinic_name} — Détails de la licence
+            </DialogTitle>
+          </DialogHeader>
+          {detailLicense && (
+            <div className="space-y-6 py-4">
+              {/* License info summary */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Clé de licence</p>
+                  <code className="text-sm bg-muted px-2 py-1 rounded">{detailLicense.license_key}</code>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Statut</p>
+                  <Badge variant={getExpiryStatus(detailLicense).variant}>
+                    {getExpiryStatus(detailLicense).label}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Utilisateurs</p>
+                  <p className="text-lg font-semibold">{detailLicense.current_users} / {detailLicense.max_users}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Expiration</p>
+                  <p className="text-sm">{format(parseISO(detailLicense.expiry_date), 'dd MMMM yyyy', { locale: fr })}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Modules activés</p>
+                  <div className="flex flex-wrap gap-1">
+                    {detailLicense.enabled_modules.map(m => (
+                      <Badge key={m} variant="outline" className="text-xs">{m}</Badge>
+                    ))}
+                  </div>
+                </div>
+                {detailLicense.contact_email && (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">Contact</p>
+                    <p className="text-sm">{detailLicense.contact_name} — {detailLicense.contact_email}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Users list */}
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Utilisateurs ({licenseUsers.length})
+                </h3>
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : licenseUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Aucun utilisateur créé pour cette licence</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nom</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Rôle</TableHead>
+                        <TableHead>Spécialité</TableHead>
+                        <TableHead>Créé le</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {licenseUsers.map(user => (
+                        <TableRow key={user.user_id}>
+                          <TableCell className="font-medium">{user.full_name}</TableCell>
+                          <TableCell className="text-sm">{user.email}</TableCell>
+                          <TableCell>
+                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                              {getRoleLabel(user.role)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{user.specialty || '—'}</TableCell>
+                          <TableCell className="text-sm">
+                            {format(new Date(user.created_at), 'dd/MM/yyyy', { locale: fr })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleResendInvite(user.email, detailLicense.license_key)}
+                              disabled={resendingEmail === user.email}
+                              title="Renvoyer l'invitation"
+                            >
+                              {resendingEmail === user.email ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Mail className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
