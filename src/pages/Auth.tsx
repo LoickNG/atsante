@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Activity, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logoAtsante from '@/assets/logo-atsante.png';
 import { z } from 'zod';
 import { ChangePasswordDialog } from '@/components/auth/ChangePasswordDialog';
 
@@ -204,9 +205,7 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-              <Activity className="h-7 w-7 text-primary-foreground" />
-            </div>
+            <img src={logoAtsante} alt="ATSanté" className="h-16 w-16 object-contain" />
           </div>
           <CardTitle className="text-2xl font-bold">ATSanté</CardTitle>
           <CardDescription>Système de Gestion Hospitalier</CardDescription>
