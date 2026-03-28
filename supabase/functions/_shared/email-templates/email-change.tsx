@@ -9,12 +9,15 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Section,
   Text,
   Hr,
 } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://wziwaoqxnteklnuwpnpi.supabase.co/storage/v1/object/public/email-assets/logo-atsante.png'
 
 interface EmailChangeEmailProps {
   siteName: string
@@ -35,7 +38,7 @@ export const EmailChangeEmail = ({
     <Body style={main}>
       <Container style={container}>
         <Section style={header}>
-          <Text style={logoText}>🏥 ATSanté</Text>
+          <Img src={LOGO_URL} alt="ATSanté" width="48" height="48" style={{ margin: '0 auto', display: 'block' }} />
         </Section>
         <Hr style={divider} />
         <Heading style={h1}>Confirmer le changement d'email</Heading>
