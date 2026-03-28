@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronLeft, ChevronRight, LogOut, Activity, Type } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import logoAtsante from '@/assets/logo-atsante.png';
 import { NotificationBell } from './NotificationBell';
 import { getFilteredNavigation, getRoleLabel, getRoleColor } from '@/config/navigation';
 import { Badge } from '@/components/ui/badge';
@@ -58,9 +59,7 @@ export function AppSidebar({
       {/* Header */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-              <Type className="h-5 w-5 text-sidebar-primary-foreground" />
-            </div>
+            <img src={logoAtsante} alt="ATSanté" className="h-9 w-9 object-contain" />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">
                 ATSanté
@@ -70,9 +69,7 @@ export function AppSidebar({
               </span>
             </div>
           </div>}
-        {collapsed && <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Activity className="h-5 w-5 text-sidebar-primary-foreground" />
-          </div>}
+        {collapsed && <img src={logoAtsante} alt="ATSanté" className="mx-auto h-9 w-9 object-contain" />}
       </div>
 
       {/* Navigation */}
