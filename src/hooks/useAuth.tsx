@@ -1,7 +1,9 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types';
+import { useSessionGuard, clearSession } from '@/hooks/useSessionGuard';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
