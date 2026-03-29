@@ -1,7 +1,9 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types';
+import { useSessionGuard, clearSession } from '@/hooks/useSessionGuard';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -88,7 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleForceLogout = useCallback(async () => {
+    toast.error("Session expirée", {
+      description: "Votre compte est connecté sur un autre appareil. Vous avez été déconnecté.",
+    });
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setRole(null);
+    setServiceCode(null);
+  }, []);
+
+  // Session guard: heartbeat + force logout if another device logs in
+  useSessionGuard(user?.id, handleForceLogout);
+
   const signOut = async () => {
+    if (user?.id) {
+      await clearSession(user.id);
+    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

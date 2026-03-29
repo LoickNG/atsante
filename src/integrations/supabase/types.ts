@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_sessions: {
+        Row: {
+          clinic_id: string | null
+          created_at: string
+          id: string
+          last_active_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string | null
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_sessions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       births: {
         Row: {
           apgar_10min: number | null
@@ -2267,6 +2302,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_active_session: {
+        Args: { p_session_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      clear_session: { Args: { p_user_id: string }; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -2315,6 +2355,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      upsert_session: {
+        Args: { p_session_id: string; p_user_id: string }
+        Returns: undefined
       }
       user_belongs_to_clinic: {
         Args: { _clinic_id: string; _user_id: string }

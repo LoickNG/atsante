@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { checkExistingSession, registerSession } from '@/hooks/useSessionGuard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -120,7 +121,7 @@ export default function Auth() {
     if (!validateForm(false)) return;
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -133,11 +134,24 @@ export default function Auth() {
           : error.message,
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: 'Connexion réussie',
-        description: 'Bienvenue sur ATSanté',
-      });
+    } else if (data.session) {
+      // Check if this user already has an active session elsewhere
+      const hasActiveSession = await checkExistingSession(data.session.user.id);
+      if (hasActiveSession) {
+        await supabase.auth.signOut();
+        toast({
+          title: 'Session déjà active',
+          description: 'Ce compte est déjà connecté sur un autre appareil. Veuillez d\'abord vous déconnecter de l\'autre session.',
+          variant: 'destructive',
+        });
+      } else {
+        // Register this session
+        await registerSession(data.session.user.id);
+        toast({
+          title: 'Connexion réussie',
+          description: 'Bienvenue sur ATSanté',
+        });
+      }
     }
     setLoading(false);
   };
