@@ -90,7 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const handleForceLogout = useCallback(async () => {
+    toast.error("Session expirée", {
+      description: "Votre compte est connecté sur un autre appareil. Vous avez été déconnecté.",
+    });
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setRole(null);
+    setServiceCode(null);
+  }, []);
+
+  // Session guard: heartbeat + force logout if another device logs in
+  useSessionGuard(user?.id, handleForceLogout);
+
   const signOut = async () => {
+    if (user?.id) {
+      await clearSession(user.id);
+    }
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
