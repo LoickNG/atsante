@@ -184,7 +184,7 @@ export function UserManagement() {
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Créer un compte</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
               <DialogHeader>
                 <DialogTitle>Créer un nouveau compte</DialogTitle>
               </DialogHeader>
