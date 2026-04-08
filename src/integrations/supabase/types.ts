@@ -1998,6 +1998,7 @@ export type Database = {
       }
       specialties: {
         Row: {
+          clinic_id: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -2005,6 +2006,7 @@ export type Database = {
           value: string
         }
         Insert: {
+          clinic_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -2012,13 +2014,22 @@ export type Database = {
           value: string
         }
         Update: {
+          clinic_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
           label?: string
           value?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "specialties_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinic_settings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_movements: {
         Row: {
