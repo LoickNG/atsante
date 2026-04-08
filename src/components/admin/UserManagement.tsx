@@ -128,12 +128,16 @@ export function UserManagement() {
 
   const handleChangeRole = async (userId: string, role: UserRole) => {
     try {
+      // Get the admin's clinic_id for RLS compliance
+      const { data: myProfile } = await supabase.from('profiles').select('clinic_id').eq('user_id', (await supabase.auth.getUser()).data.user?.id).single();
+      const clinicId = myProfile?.clinic_id;
+
       const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', userId).single();
       if (existing) {
-        const { error } = await supabase.from('user_roles').update({ role } as any).eq('user_id', userId);
+        const { error } = await supabase.from('user_roles').update({ role, clinic_id: clinicId } as any).eq('user_id', userId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('user_roles').insert({ user_id: userId, role } as any);
+        const { error } = await supabase.from('user_roles').insert({ user_id: userId, role, clinic_id: clinicId } as any);
         if (error) throw error;
       }
       toast({ title: 'Rôle mis à jour' });
