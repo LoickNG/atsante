@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
@@ -35,6 +34,7 @@ export function UserManagement() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -46,6 +46,7 @@ export function UserManagement() {
   const specialtiesList = useSpecialties();
   const { data: services } = useServices();
   const { canAddUser, license } = useLicenseStatus();
+  const nativeSelectClassName = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -94,6 +95,9 @@ export function UserManagement() {
     if (!newServiceId) {
       toast({ title: 'Erreur', description: 'Veuillez sélectionner un service', variant: 'destructive' }); return;
     }
+    if (newRole === 'medecin' && !newSpecialty) {
+      toast({ title: 'Erreur', description: 'Veuillez sélectionner une spécialité pour le médecin', variant: 'destructive' }); return;
+    }
     // Check license user limit
     if (license && !canAddUser) {
       toast({ title: 'Limite atteinte', description: `La licence autorise ${license.max_users} utilisateurs maximum. Contactez votre fournisseur.`, variant: 'destructive' });
@@ -104,9 +108,9 @@ export function UserManagement() {
     try {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
-          email: newEmail,
+          email: newEmail.trim(),
           password: newPassword,
-          full_name: newFullName,
+          full_name: newFullName.trim(),
           role: newRole,
           specialty: newRole === 'medecin' ? newSpecialty : undefined,
           service_id: newServiceId,
@@ -118,7 +122,7 @@ export function UserManagement() {
       toast({ title: 'Succès', description: data?.message || `Compte créé pour ${newFullName}.` });
       setDialogOpen(false);
       setNewEmail(''); setNewFullName(''); setNewPassword(''); setNewRole('accueil'); setNewSpecialty(''); setNewServiceId('');
-      fetchUsers();
+      await fetchUsers();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message || 'Impossible de créer le compte', variant: 'destructive' });
     } finally {
@@ -127,12 +131,15 @@ export function UserManagement() {
   };
 
   const handleChangeRole = async (userId: string, role: UserRole) => {
+    if (!role) return;
+
+    setUpdatingRoleUserId(userId);
     try {
       // Get the admin's clinic_id for RLS compliance
       const { data: myProfile } = await supabase.from('profiles').select('clinic_id').eq('user_id', (await supabase.auth.getUser()).data.user?.id).single();
       const clinicId = myProfile?.clinic_id;
 
-      const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', userId).single();
+      const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', userId).maybeSingle();
       if (existing) {
         const { error } = await supabase.from('user_roles').update({ role, clinic_id: clinicId } as any).eq('user_id', userId);
         if (error) throw error;
@@ -141,9 +148,11 @@ export function UserManagement() {
         if (error) throw error;
       }
       toast({ title: 'Rôle mis à jour' });
-      fetchUsers();
+      await fetchUsers();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    } finally {
+      setUpdatingRoleUserId(null);
     }
   };
 
@@ -184,7 +193,7 @@ export function UserManagement() {
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" />Créer un compte</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Créer un nouveau compte</DialogTitle>
               </DialogHeader>
@@ -204,38 +213,31 @@ export function UserManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Rôle</Label>
-                    <Select value={newRole} onValueChange={v => setNewRole(v as UserRole)}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {ROLES.map(r => (
-                          <SelectItem key={r} value={r}>{getRoleLabel(r)}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select value={newRole} onChange={e => setNewRole(e.target.value as UserRole)} className={nativeSelectClassName}>
+                      {ROLES.map(r => (
+                        <option key={r} value={r}>{getRoleLabel(r)}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-2">
                     <Label>Service</Label>
-                    <Select value={newServiceId} onValueChange={setNewServiceId}>
-                      <SelectTrigger><SelectValue placeholder="Choisir un service" /></SelectTrigger>
-                      <SelectContent>
-                        {services?.map(s => (
-                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select value={newServiceId} onChange={e => setNewServiceId(e.target.value)} className={nativeSelectClassName}>
+                      <option value="">Choisir un service</option>
+                      {services?.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 {newRole === 'medecin' && (
                   <div className="space-y-2">
                     <Label>Spécialité *</Label>
-                    <Select value={newSpecialty} onValueChange={setNewSpecialty}>
-                      <SelectTrigger><SelectValue placeholder="Choisir une spécialité" /></SelectTrigger>
-                      <SelectContent>
-                        {specialtiesList.map(s => (
-                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select value={newSpecialty} onChange={e => setNewSpecialty(e.target.value)} className={nativeSelectClassName}>
+                      <option value="">Choisir une spécialité</option>
+                      {specialtiesList.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </div>
@@ -307,16 +309,17 @@ export function UserManagement() {
                       ) : '-'}
                     </TableCell>
                     <TableCell>
-                      <Select value={u.role || ''} onValueChange={v => handleChangeRole(u.user_id, v as UserRole)}>
-                        <SelectTrigger className="w-[150px]">
-                          <SelectValue placeholder="Assigner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ROLES.map(r => (
-                            <SelectItem key={r} value={r}>{getRoleLabel(r)}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={u.role || ''}
+                        onChange={e => handleChangeRole(u.user_id, e.target.value as UserRole)}
+                        className={`${nativeSelectClassName} w-[150px]`}
+                        disabled={updatingRoleUserId === u.user_id}
+                      >
+                        <option value="" disabled>Assigner</option>
+                        {ROLES.map(r => (
+                          <option key={r} value={r}>{getRoleLabel(r)}</option>
+                        ))}
+                      </select>
                     </TableCell>
                     <TableCell>
                       <Select value={u.service_id || ''} onValueChange={v => handleChangeService(u.user_id, v)}>
