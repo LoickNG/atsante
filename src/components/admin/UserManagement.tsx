@@ -322,16 +322,16 @@ export function UserManagement() {
                       </select>
                     </TableCell>
                     <TableCell>
-                      <Select value={u.service_id || ''} onValueChange={v => handleChangeService(u.user_id, v)}>
-                        <SelectTrigger className="w-[150px]">
-                          <SelectValue placeholder="Assigner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {services?.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={u.service_id || ''}
+                        onChange={e => handleChangeService(u.user_id, e.target.value)}
+                        className={`${nativeSelectClassName} w-[150px]`}
+                      >
+                        <option value="">Assigner</option>
+                        {services?.map(s => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
                     </TableCell>
                   </TableRow>
                 ))}
