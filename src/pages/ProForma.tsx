@@ -104,18 +104,40 @@ export default function ProForma() {
     }));
 
     try {
-      await createInvoice.mutateAsync({
-        patient_id: selectedPatient.id,
-        created_by: user!.id,
-        items: invoiceItems,
-        convention_id: patientConvention?.id,
-        company_amount: companyAmount,
-        insurance_amount: insuranceAmount,
-        patient_amount: patientAmount,
-        is_proforma: true,
-        discount_percent: discountPercent,
-        discount_amount: discountAmt,
-      } as any);
+      if (selectedPatient) {
+        await createInvoice.mutateAsync({
+          patient_id: selectedPatient.id,
+          created_by: user!.id,
+          items: invoiceItems,
+          convention_id: patientConvention?.id,
+          company_amount: companyAmount,
+          insurance_amount: insuranceAmount,
+          patient_amount: patientAmount,
+          is_proforma: true,
+          discount_percent: discountPercent,
+          discount_amount: discountAmt,
+        } as any);
+      } else {
+        // Manual patient name — create a minimal patient record first
+        const nameParts = manualPatientName.trim().split(/\s+/);
+        const firstName = nameParts[0] || manualPatientName.trim();
+        const lastName = nameParts.slice(1).join(' ') || '-';
+        const { data: newPatient, error: patErr } = await supabase
+          .from('patients')
+          .insert({ first_name: firstName, last_name: lastName, code: '', date_of_birth: '2000-01-01', gender: 'M', phone: '-' })
+          .select()
+          .single();
+        if (patErr) throw patErr;
+        await createInvoice.mutateAsync({
+          patient_id: newPatient.id,
+          created_by: user!.id,
+          items: invoiceItems,
+          is_proforma: true,
+          discount_percent: discountPercent,
+          discount_amount: discountAmt,
+          patient_amount: total,
+        } as any);
+      }
       toast({ title: 'Facture Pro Forma générée', description: `Montant : ${formatCurrency(total)}` });
       navigate('/facturation');
     } catch (error: any) {
