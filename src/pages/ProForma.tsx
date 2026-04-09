@@ -34,6 +34,8 @@ export default function ProForma() {
 
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [manualPatientName, setManualPatientName] = useState('');
+  const [useManualName, setUseManualName] = useState(false);
   const [patientConvention, setPatientConvention] = useState<ConventionWithRelations | null>(null);
   const [items, setItems] = useState<ProFormaItem[]>([{ description: '', quantity: 1, unit_price: 0 }]);
   const [discountPercent, setDiscountPercent] = useState(0);
