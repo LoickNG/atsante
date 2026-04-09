@@ -34,6 +34,8 @@ export default function ProForma() {
 
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [manualPatientName, setManualPatientName] = useState('');
+  const [useManualName, setUseManualName] = useState(false);
   const [patientConvention, setPatientConvention] = useState<ConventionWithRelations | null>(null);
   const [items, setItems] = useState<ProFormaItem[]>([{ description: '', quantity: 1, unit_price: 0 }]);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -88,8 +90,9 @@ export default function ProForma() {
   const patientAmount = patientConvention ? total - companyAmount - insuranceAmount : total;
 
   const handleGenerate = async () => {
-    if (!selectedPatient || validItems.length === 0) {
-      toast({ title: 'Erreur', description: 'Sélectionnez un patient et ajoutez au moins une ligne valide.', variant: 'destructive' });
+    const hasPatient = selectedPatient || (useManualName && manualPatientName.trim());
+    if (!hasPatient || validItems.length === 0) {
+      toast({ title: 'Erreur', description: 'Indiquez un patient et ajoutez au moins une ligne valide.', variant: 'destructive' });
       return;
     }
 
@@ -101,18 +104,40 @@ export default function ProForma() {
     }));
 
     try {
-      await createInvoice.mutateAsync({
-        patient_id: selectedPatient.id,
-        created_by: user!.id,
-        items: invoiceItems,
-        convention_id: patientConvention?.id,
-        company_amount: companyAmount,
-        insurance_amount: insuranceAmount,
-        patient_amount: patientAmount,
-        is_proforma: true,
-        discount_percent: discountPercent,
-        discount_amount: discountAmt,
-      } as any);
+      if (selectedPatient) {
+        await createInvoice.mutateAsync({
+          patient_id: selectedPatient.id,
+          created_by: user!.id,
+          items: invoiceItems,
+          convention_id: patientConvention?.id,
+          company_amount: companyAmount,
+          insurance_amount: insuranceAmount,
+          patient_amount: patientAmount,
+          is_proforma: true,
+          discount_percent: discountPercent,
+          discount_amount: discountAmt,
+        } as any);
+      } else {
+        // Manual patient name — create a minimal patient record first
+        const nameParts = manualPatientName.trim().split(/\s+/);
+        const firstName = nameParts[0] || manualPatientName.trim();
+        const lastName = nameParts.slice(1).join(' ') || '-';
+        const { data: newPatient, error: patErr } = await supabase
+          .from('patients')
+          .insert({ first_name: firstName, last_name: lastName, code: '', date_of_birth: '2000-01-01', gender: 'M', phone: '-' })
+          .select()
+          .single();
+        if (patErr) throw patErr;
+        await createInvoice.mutateAsync({
+          patient_id: newPatient.id,
+          created_by: user!.id,
+          items: invoiceItems,
+          is_proforma: true,
+          discount_percent: discountPercent,
+          discount_amount: discountAmt,
+          patient_amount: total,
+        } as any);
+      }
       toast({ title: 'Facture Pro Forma générée', description: `Montant : ${formatCurrency(total)}` });
       navigate('/facturation');
     } catch (error: any) {
@@ -162,6 +187,20 @@ export default function ProForma() {
                   Changer
                 </Button>
               </div>
+            ) : useManualName ? (
+              <div className="space-y-2">
+                <Label className="font-semibold">Nom du patient</Label>
+                <Input
+                  placeholder="Entrez le nom complet du patient..."
+                  value={manualPatientName}
+                  onChange={e => setManualPatientName(e.target.value)}
+                  className="h-12 text-base"
+                  autoFocus
+                />
+                <Button variant="link" className="text-xs p-0 h-auto" onClick={() => { setUseManualName(false); setManualPatientName(''); }}>
+                  ← Rechercher dans la liste des patients
+                </Button>
+              </div>
             ) : (
               <div className="space-y-2">
                 <Label className="font-semibold">Patient</Label>
@@ -192,6 +231,9 @@ export default function ProForma() {
                 {patientSearch.length > 0 && searchResults && searchResults.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-3">Aucun patient trouvé</p>
                 )}
+                <Button variant="link" className="text-xs p-0 h-auto" onClick={() => setUseManualName(true)}>
+                  Patient non enregistré ? Saisir un nom manuellement
+                </Button>
               </div>
             )}
 
@@ -329,7 +371,7 @@ export default function ProForma() {
                 className="w-full gap-2 h-12"
                 size="lg"
                 onClick={handleGenerate}
-                disabled={!selectedPatient || validItems.length === 0 || createInvoice.isPending}
+                disabled={(!selectedPatient && !(useManualName && manualPatientName.trim())) || validItems.length === 0 || createInvoice.isPending}
               >
                 {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 <Receipt className="h-5 w-5" />
