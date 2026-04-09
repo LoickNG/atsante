@@ -187,6 +187,20 @@ export default function ProForma() {
                   Changer
                 </Button>
               </div>
+            ) : useManualName ? (
+              <div className="space-y-2">
+                <Label className="font-semibold">Nom du patient</Label>
+                <Input
+                  placeholder="Entrez le nom complet du patient..."
+                  value={manualPatientName}
+                  onChange={e => setManualPatientName(e.target.value)}
+                  className="h-12 text-base"
+                  autoFocus
+                />
+                <Button variant="link" className="text-xs p-0 h-auto" onClick={() => { setUseManualName(false); setManualPatientName(''); }}>
+                  ← Rechercher dans la liste des patients
+                </Button>
+              </div>
             ) : (
               <div className="space-y-2">
                 <Label className="font-semibold">Patient</Label>
@@ -217,6 +231,9 @@ export default function ProForma() {
                 {patientSearch.length > 0 && searchResults && searchResults.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-3">Aucun patient trouvé</p>
                 )}
+                <Button variant="link" className="text-xs p-0 h-auto" onClick={() => setUseManualName(true)}>
+                  Patient non enregistré ? Saisir un nom manuellement
+                </Button>
               </div>
             )}
 
