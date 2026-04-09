@@ -90,8 +90,9 @@ export default function ProForma() {
   const patientAmount = patientConvention ? total - companyAmount - insuranceAmount : total;
 
   const handleGenerate = async () => {
-    if (!selectedPatient || validItems.length === 0) {
-      toast({ title: 'Erreur', description: 'Sélectionnez un patient et ajoutez au moins une ligne valide.', variant: 'destructive' });
+    const hasPatient = selectedPatient || (useManualName && manualPatientName.trim());
+    if (!hasPatient || validItems.length === 0) {
+      toast({ title: 'Erreur', description: 'Indiquez un patient et ajoutez au moins une ligne valide.', variant: 'destructive' });
       return;
     }
 
