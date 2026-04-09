@@ -371,7 +371,7 @@ export default function ProForma() {
                 className="w-full gap-2 h-12"
                 size="lg"
                 onClick={handleGenerate}
-                disabled={!selectedPatient || validItems.length === 0 || createInvoice.isPending}
+                disabled={(!selectedPatient && !(useManualName && manualPatientName.trim())) || validItems.length === 0 || createInvoice.isPending}
               >
                 {createInvoice.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 <Receipt className="h-5 w-5" />
