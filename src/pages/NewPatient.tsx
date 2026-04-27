@@ -160,8 +160,15 @@ const NewPatient = () => {
     }
   };
 
-  const handlePrintCard = () => { window.print(); };
+  const handlePrintCard = () => {
+    setShowQRDialog(false);
+    setShowCardPreview(true);
+  };
   const handleCloseDialog = () => { setShowQRDialog(false); navigate('/patients'); };
+  const handleCardPreviewClose = (open: boolean) => {
+    setShowCardPreview(open);
+    if (!open) navigate('/patients');
+  };
 
   const selectedConvention = activeConventions?.find(c => c.id === formData.conventionId);
 
