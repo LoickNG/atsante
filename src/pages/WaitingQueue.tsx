@@ -209,11 +209,12 @@ const WaitingQueue = () => {
         heart_rate: heartRate ? parseInt(heartRate) : null,
         weight: weight ? parseFloat(weight) : null,
         height: height ? parseFloat(height) : null,
+        spo2: spo2 ? parseInt(spo2) : null,
       } as any);
       toast.success('Signes vitaux enregistrés');
       setIsVitalsDialogOpen(false);
       setVitalsVisitId('');
-      setTemperature(''); setBloodPressure(''); setHeartRate(''); setWeight(''); setHeight('');
+      setTemperature(''); setBloodPressure(''); setHeartRate(''); setWeight(''); setHeight(''); setSpo2('');
     } catch (error) {
       toast.error('Erreur lors de l\'enregistrement');
     }
