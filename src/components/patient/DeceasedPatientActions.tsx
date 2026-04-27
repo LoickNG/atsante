@@ -10,6 +10,7 @@ import { printDeathCertificate } from './DeathCertificates';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 interface DeceasedPatientActionsProps {
   patient: Patient | null;
