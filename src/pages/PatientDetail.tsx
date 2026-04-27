@@ -828,31 +828,17 @@ const PatientDetail = () => {
         </div>
       </div>
 
-      {/* Follow-up Notes Dialog */}
-      <Dialog open={followUpDialogOpen} onOpenChange={setFollowUpDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un commentaire de suivi</DialogTitle>
-            <DialogDescription>
-              Ajoutez un commentaire basé sur les résultats d'analyses ou le suivi du patient
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            placeholder="Ex: Résultats NFS normaux, poursuivre le traitement..."
-            className="min-h-[120px]"
-            value={followUpNote}
-            onChange={(e) => setFollowUpNote(e.target.value)}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFollowUpDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleSaveFollowUp} disabled={!followUpNote.trim() || updateConsultation.isPending} className="gap-1.5">
-              {updateConsultation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      {/* Follow-up & Actions Dialog */}
+      {selectedConsultationId && id && (
+        <FollowUpActionsDialog
+          open={followUpDialogOpen}
+          onOpenChange={setFollowUpDialogOpen}
+          patientId={id}
+          consultationId={selectedConsultationId}
+          visitId={selectedVisitId}
+          existingNotes={selectedExistingNotes}
+        />
+      )}
       {/* Edit Patient Dialog */}
       {patient && (
         <>
