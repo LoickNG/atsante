@@ -173,7 +173,7 @@ export function printResultDocument(opts: PrintResultOptions) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>${opts.title}</title>
+<head><meta charset="UTF-8">${NO_CACHE_META}<title>${opts.title}</title>
 <style>${buildStyles(h.clinicColor)}</style>
 </head>
 <body>
@@ -212,7 +212,7 @@ export function printMultiResultDocument(opts: PrintMultiResultOptions) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>${opts.documentTitle}</title>
+<head><meta charset="UTF-8">${NO_CACHE_META}<title>${opts.documentTitle}</title>
 <style>${buildStyles(h.clinicColor)}</style>
 </head>
 <body>
