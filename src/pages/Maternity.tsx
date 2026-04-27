@@ -72,9 +72,9 @@ const Maternity = () => {
   const createBirth = useCreateBirth();
   const createPrenatalVisit = useCreatePrenatalVisit();
 
-  // Restrict access: only users assigned to maternité service (or accueil for admissions)
+  // Restrict access: maternity service staff, all doctors, accueil and admin
   const isMaternityStaff = serviceCode === 'maternite';
-  const canAccessMaternity = isMaternityStaff || role === 'accueil' || role === 'admin';
+  const canAccessMaternity = isMaternityStaff || role === 'medecin' || role === 'accueil' || role === 'admin' || role === 'super_admin' || role === 'demo';
 
   // Admission form
   const [admForm, setAdmForm] = useState({
