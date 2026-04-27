@@ -573,6 +573,10 @@ const WaitingQueue = () => {
                 <Label className="text-xs text-muted-foreground">Poids (kg)</Label>
                 <Input type="number" step="0.1" placeholder="70" value={weight} onChange={e => setWeight(e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">SpO₂ (%)</Label>
+                <Input type="number" min="0" max="100" placeholder="98" value={spo2} onChange={e => setSpo2(e.target.value)} />
+              </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Taille (cm)</Label>
                 <Input type="number" placeholder="170" value={height} onChange={e => setHeight(e.target.value)} />
