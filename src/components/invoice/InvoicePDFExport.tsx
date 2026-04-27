@@ -172,6 +172,19 @@ export function InvoicePDFExport({ invoice }: InvoicePDFExportProps) {
     <tbody>${paymentRows}</tbody>
   </table>` : ''}
 
+  <div class="signatures" style="margin-top:50px;display:flex;justify-content:space-between;gap:40px;page-break-inside:avoid">
+    <div style="flex:1">
+      <div style="font-size:11px;color:#555;margin-bottom:4px;font-weight:600">Signature du client</div>
+      <div style="border:1px solid #cbd5e1;border-radius:4px;height:90px;background:#fafafa"></div>
+      <div style="font-size:9px;color:#888;margin-top:4px;text-align:center">Lu et approuvé — Date et signature</div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:11px;color:#555;margin-bottom:4px;font-weight:600">Cachet et signature ${clinicName}</div>
+      <div style="border:1px solid #cbd5e1;border-radius:4px;height:90px;background:#fafafa"></div>
+      <div style="font-size:9px;color:#888;margin-top:4px;text-align:center">Caissier / Responsable</div>
+    </div>
+  </div>
+
   <div class="footer">
     ${isProforma ? '<p style="font-size:11px;font-weight:bold;color:#dc2626;margin-bottom:8px">⚠ Ce document est un devis estimatif (Pro Forma) et ne constitue pas une facture définitive.</p>' : ''}
     <p>Document confidentiel — ${isProforma ? 'Pro Forma' : 'Facture'} ${invoice.invoice_number}</p>
