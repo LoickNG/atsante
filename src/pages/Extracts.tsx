@@ -72,6 +72,7 @@ export default function Extracts() {
 
   const { data: invoices, isLoading: invoicesLoading } = useInvoices();
   const { data: conventions } = useConventions();
+  const { data: clinic } = useClinicSettings();
   const { data: companies } = usePartnerCompanies();
   const { data: insurances } = useInsuranceCompanies();
 
