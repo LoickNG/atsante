@@ -14,6 +14,8 @@ import {
 import { useInvoices, type InvoiceWithDetails } from '@/hooks/useBilling';
 import { useConventions, usePartnerCompanies, useInsuranceCompanies } from '@/hooks/useConventions';
 import * as XLSX from 'xlsx';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { buildClinicHeader, buildClinicHeaderHtml, buildClinicFooterHtml } from '@/utils/printResult';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
@@ -70,6 +72,7 @@ export default function Extracts() {
 
   const { data: invoices, isLoading: invoicesLoading } = useInvoices();
   const { data: conventions } = useConventions();
+  const { data: clinic } = useClinicSettings();
   const { data: companies } = usePartnerCompanies();
   const { data: insurances } = useInsuranceCompanies();
 
@@ -185,7 +188,8 @@ export default function Extracts() {
       totalAmount,
       periodLabel,
       conventions || [],
-      extractType
+      extractType,
+      clinic
     );
 
     const w = window.open('', '_blank');
@@ -397,11 +401,16 @@ function buildExtractHTML(
   totalAmount: number,
   periodLabel: string,
   conventions: any[],
-  extractType: ExtractType
+  extractType: ExtractType,
+  clinic?: any
 ): string {
   const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
   const typeLabel = type === 'company' ? 'Société' : 'Assurance';
   const amountLabel = type === 'company' ? 'Part société' : 'Part assurance';
+  const h = buildClinicHeader(clinic);
+  const headerHtml = buildClinicHeaderHtml(clinic);
+  const footerHtml = buildClinicFooterHtml(clinic);
+  const accent = h.clinicColor;
 
   const rows = invoices.map(inv => {
     const amount = type === 'company' ? Number(inv.company_amount) : Number(inv.insurance_amount);
@@ -414,7 +423,7 @@ function buildExtractHTML(
         <td>${conv?.name || '—'}</td>
         <td>${new Date(inv.created_at).toLocaleDateString('fr-FR')}</td>
         <td style="text-align:right">${new Intl.NumberFormat('fr-FR').format(Number(inv.total_amount))} FCFA</td>
-        <td style="text-align:right;font-weight:bold;color:#2563eb">${new Intl.NumberFormat('fr-FR').format(amount)} FCFA</td>
+        <td style="text-align:right;font-weight:bold;color:${accent}">${new Intl.NumberFormat('fr-FR').format(amount)} FCFA</td>
       </tr>`;
   }).join('');
 
@@ -426,42 +435,34 @@ function buildExtractHTML(
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'Segoe UI',Tahoma,sans-serif; font-size:11px; color:#1a1a1a; padding:15mm; }
-  .header { display:flex; justify-content:space-between; border-bottom:3px solid #2563eb; padding-bottom:12px; margin-bottom:20px; }
-  .header h1 { font-size:20px; color:#2563eb; }
-  .header .sub { font-size:10px; color:#666; }
-  .meta { background:#f0f4ff; padding:14px; border-radius:6px; margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .doc-title { text-align:center; margin-bottom:20px; padding:10px; background:${accent}11; border-radius:6px; }
+  .doc-title h2 { font-size:16px; color:${accent}; text-transform:uppercase; letter-spacing:1px; }
+  .meta { background:${accent}11; padding:14px; border-radius:6px; margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .meta .label { font-size:10px; color:#666; font-weight:600; }
   .meta .value { font-size:12px; font-weight:bold; }
   table { width:100%; border-collapse:collapse; font-size:10px; margin-bottom:20px; }
   th, td { padding:6px 8px; border:1px solid #e5e7eb; text-align:left; }
   th { background:#f9fafb; font-weight:600; }
-  .total-row { background:#f0f4ff; font-weight:bold; }
-  .total-row td { border-top:2px solid #2563eb; }
-  .footer { margin-top:40px; border-top:1px solid #ddd; padding-top:15px; }
-  .footer .signatures { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:30px; }
-  .footer .sig-block { border-top:1px solid #999; padding-top:8px; text-align:center; font-size:10px; color:#666; }
-  .summary { text-align:right; font-size:14px; margin-bottom:20px; padding:10px; background:#f0f4ff; border-radius:6px; }
+  .total-row { background:${accent}11; font-weight:bold; }
+  .total-row td { border-top:2px solid ${accent}; }
+  .footer-block { margin-top:40px; border-top:1px solid #ddd; padding-top:15px; }
+  .signatures { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:30px; }
+  .sig-block { border-top:1px solid #999; padding-top:8px; text-align:center; font-size:10px; color:#666; }
+  .summary { text-align:right; font-size:14px; margin-bottom:20px; padding:10px; background:${accent}11; border-radius:6px; }
   @media print { body { padding:10mm; } }
 </style>
 </head>
 <body>
-  <div class="header">
-    <div>
-      <h1>SantéPro</h1>
-      <div class="sub">Clinique Médicale</div>
-      <div class="sub" style="margin-top:4px;font-weight:bold;font-size:13px">RELEVÉ DE PRESTATIONS</div>
-    </div>
-    <div style="text-align:right">
-      <div class="sub">Document généré le</div>
-      <div style="font-size:12px;font-weight:bold">${today}</div>
-    </div>
-  </div>
+  ${headerHtml}
+
+  <div class="doc-title"><h2>Relevé de prestations — ${typeLabel}</h2></div>
 
   <div class="meta">
     <div><span class="label">Destinataire :</span><br><span class="value">${entityName}</span></div>
     <div><span class="label">Type :</span><br><span class="value">${typeLabel}</span></div>
     <div><span class="label">Période :</span><br><span class="value">${periodLabel}</span></div>
     <div><span class="label">Nombre de factures :</span><br><span class="value">${invoices.length}</span></div>
+    <div><span class="label">Date d'édition :</span><br><span class="value">${today}</span></div>
   </div>
 
   <table>
@@ -480,23 +481,23 @@ function buildExtractHTML(
       ${rows}
       <tr class="total-row">
         <td colspan="6" style="text-align:right">TOTAL DÛ</td>
-        <td style="text-align:right;color:#2563eb;font-size:12px">${new Intl.NumberFormat('fr-FR').format(totalAmount)} FCFA</td>
+        <td style="text-align:right;color:${accent};font-size:12px">${new Intl.NumberFormat('fr-FR').format(totalAmount)} FCFA</td>
       </tr>
     </tbody>
   </table>
 
   <div class="summary">
-    Montant total à régler : <strong style="color:#2563eb;font-size:16px">${new Intl.NumberFormat('fr-FR').format(totalAmount)} FCFA</strong>
+    Montant total à régler : <strong style="color:${accent};font-size:16px">${new Intl.NumberFormat('fr-FR').format(totalAmount)} FCFA</strong>
   </div>
 
-  <div class="footer">
+  <div class="footer-block">
     <p style="font-size:10px;color:#666;margin-bottom:5px">Ce document constitue un relevé des prestations médicales effectuées dans le cadre de la convention en vigueur.</p>
     <p style="font-size:10px;color:#666">Merci de procéder au règlement dans les délais convenus.</p>
-    
+
     <div class="signatures">
       <div>
         <div style="height:60px"></div>
-        <div class="sig-block">Cachet et signature<br>SantéPro</div>
+        <div class="sig-block">Cachet et signature<br>${h.clinicName}</div>
       </div>
       <div>
         <div style="height:60px"></div>
@@ -504,6 +505,8 @@ function buildExtractHTML(
       </div>
     </div>
   </div>
+
+  ${footerHtml}
 </body>
 </html>`;
 }
