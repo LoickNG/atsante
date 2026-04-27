@@ -51,6 +51,7 @@ interface PrescriptionItem {
 
 const Consultations = () => {
   const { user } = useAuth();
+  const { data: clinic } = useClinicSettings();
   const navigate = useNavigate();
   const { data: queueVisits, isLoading: queueLoading } = useWaitingQueue();
   const { data: medications } = useMedications();
