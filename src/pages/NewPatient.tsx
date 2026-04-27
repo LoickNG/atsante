@@ -38,6 +38,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useCreatePatient, useUpdatePatient, Patient } from '@/hooks/usePatients';
 import { usePartnerCompanies, useActiveConventions } from '@/hooks/useConventions';
 import { WebcamCapture } from '@/components/patient/WebcamCapture';
+import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
 
 const NewPatient = () => {
   const navigate = useNavigate();
