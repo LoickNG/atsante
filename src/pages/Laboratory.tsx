@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
   CardContent,
@@ -32,6 +33,10 @@ import {
   Search,
   CalendarIcon,
   X,
+  Upload,
+  Paperclip,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
