@@ -36,8 +36,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
-import { useClinicSettings } from '@/hooks/useClinicSettings';
-import { buildClinicHeaderHtml, buildClinicFooterHtml, buildClinicHeader } from '@/utils/printResult';
+import { useClinicSettings, useRefreshClinicSettings } from '@/hooks/useClinicSettings';
+import { buildClinicHeaderHtml, buildClinicFooterHtml, buildClinicHeader, NO_CACHE_META } from '@/utils/printResult';
 
 interface PrescriptionItem {
   medicationId: string;
@@ -52,6 +52,7 @@ interface PrescriptionItem {
 const Consultations = () => {
   const { user } = useAuth();
   const { data: clinic } = useClinicSettings();
+  const refreshClinic = useRefreshClinicSettings();
   const navigate = useNavigate();
   const { data: queueVisits, isLoading: queueLoading } = useWaitingQueue();
   const { data: medications } = useMedications();
@@ -161,13 +162,15 @@ const Consultations = () => {
     setPrescriptions(prescriptions.filter((_, i) => i !== index));
   };
 
-  const handlePrintPrescription = () => {
+  const handlePrintPrescription = async () => {
     if (!selectedPatient || prescriptions.length === 0) return;
-    const h = buildClinicHeader(clinic);
-    const headerHtml = buildClinicHeaderHtml(clinic);
-    const footerHtml = buildClinicFooterHtml(clinic);
+    // Force le rechargement des paramètres clinique avant impression
+    const freshClinic = (await refreshClinic()) ?? clinic;
+    const h = buildClinicHeader(freshClinic);
+    const headerHtml = buildClinicHeaderHtml(freshClinic);
+    const footerHtml = buildClinicFooterHtml(freshClinic);
     const html = `<!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><title>Ordonnance — ${selectedPatient.last_name} ${selectedPatient.first_name}</title>
+<html lang="fr"><head><meta charset="UTF-8">${NO_CACHE_META}<title>Ordonnance — ${selectedPatient.last_name} ${selectedPatient.first_name}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color:#1a1a1a; padding: 15mm; max-width: 800px; margin: 0 auto; }
