@@ -196,6 +196,7 @@ const WaitingQueue = () => {
     setHeartRate(visit.heart_rate ? String(visit.heart_rate) : '');
     setWeight(visit.weight ? String(visit.weight) : '');
     setHeight(visit.height ? String(visit.height) : '');
+    setSpo2(visit.spo2 ? String(visit.spo2) : '');
     setIsVitalsDialogOpen(true);
   };
 
