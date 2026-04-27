@@ -678,7 +678,6 @@ ${footerHtml}
                               <Checkbox checked={selectedLabTests.includes(act.id)} onCheckedChange={() => toggleLabTest(act.id)} />
                               <div className="flex-1">
                                 <p className="font-medium text-sm">{act.name}</p>
-                                <p className="text-xs text-muted-foreground">{Number(act.unit_price).toLocaleString()} FCFA</p>
                               </div>
                               {selectedLabTests.includes(act.id) && <Check className="h-4 w-4 text-primary" />}
                             </label>
@@ -716,7 +715,6 @@ ${footerHtml}
                               <Checkbox checked={selectedImagingExams.includes(act.id)} onCheckedChange={() => toggleImagingExam(act.id)} />
                               <div className="flex-1">
                                 <p className="font-medium text-sm">{act.name}</p>
-                                <p className="text-xs text-muted-foreground">{Number(act.unit_price).toLocaleString()} FCFA</p>
                               </div>
                               {selectedImagingExams.includes(act.id) && <Check className="h-4 w-4 text-primary" />}
                             </label>
