@@ -35,8 +35,8 @@ import { useImagingRequests } from '@/hooks/useImagingRequests';
 import { useAuth } from '@/hooks/useAuth';
 import { useHospitalizations } from '@/hooks/useHospitalizations';
 import { useStaffProfiles } from '@/hooks/useStaffProfiles';
-import { useClinicSettings } from '@/hooks/useClinicSettings';
-import { buildClinicHeader, buildClinicHeaderHtml, buildClinicFooterHtml } from '@/utils/printResult';
+import { useClinicSettings, useRefreshClinicSettings } from '@/hooks/useClinicSettings';
+import { buildClinicHeader, buildClinicHeaderHtml, buildClinicFooterHtml, NO_CACHE_META } from '@/utils/printResult';
 import { toast } from 'sonner';
 
 const PatientDetail = () => {
@@ -53,6 +53,7 @@ const PatientDetail = () => {
   const updateVisit = useUpdateVisit();
   const { getStaffName } = useStaffProfiles();
   const { data: clinicSettings } = useClinicSettings();
+  const refreshClinic = useRefreshClinicSettings();
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
@@ -163,15 +164,17 @@ const PatientDetail = () => {
     }
   };
 
-  const handlePrintPrescriptions = (consultationId: string) => {
+  const handlePrintPrescriptions = async (consultationId: string) => {
     const presc = prescriptionsByConsultation[consultationId] || [];
     if (presc.length === 0) return;
     const consultation = (consultations || []).find(c => c.id === consultationId);
-    const h = buildClinicHeader(clinicSettings);
-    const headerHtml = buildClinicHeaderHtml(clinicSettings);
-    const footerHtml = buildClinicFooterHtml(clinicSettings);
+    // Force la récupération des dernières infos clinique (bypass cache PWA)
+    const freshClinic = (await refreshClinic()) ?? clinicSettings;
+    const h = buildClinicHeader(freshClinic);
+    const headerHtml = buildClinicHeaderHtml(freshClinic);
+    const footerHtml = buildClinicFooterHtml(freshClinic);
     const html = `<!DOCTYPE html>
-      <html lang="fr"><head><meta charset="UTF-8"><title>Ordonnance — ${patient.last_name} ${patient.first_name}</title>
+      <html lang="fr"><head><meta charset="UTF-8">${NO_CACHE_META}<title>Ordonnance — ${patient.last_name} ${patient.first_name}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color:#1a1a1a; padding: 15mm; max-width: 800px; margin: 0 auto; }

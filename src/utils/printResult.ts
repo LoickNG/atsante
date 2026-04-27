@@ -35,11 +35,27 @@ export function buildClinicHeader(clinic: ClinicSettings | undefined) {
   const clinicEmail = clinic?.email || '';
   const clinicWebsite = (clinic as any)?.website || '';
   const clinicColor = clinic?.primary_color || '#1e40af';
-  const logoHtml = clinic?.logo_url
-    ? `<img src="${clinic.logo_url}" style="height:48px;object-fit:contain;" />`
+  // Cache-buster sur le logo : empêche les anciennes versions stockées
+  // par le Service Worker PWA d'apparaître dans les impressions.
+  const logoSrc = clinic?.logo_url
+    ? `${clinic.logo_url}${clinic.logo_url.includes('?') ? '&' : '?'}t=${Date.now()}`
+    : '';
+  const logoHtml = logoSrc
+    ? `<img src="${logoSrc}" style="height:48px;object-fit:contain;" crossorigin="anonymous" />`
     : '';
   return { clinicName, clinicSlogan, clinicAddress, clinicPhone, clinicEmail, clinicWebsite, clinicColor, logoHtml };
 }
+
+/**
+ * Bloc <meta> à insérer dans le <head> de chaque document imprimé pour
+ * garantir que le navigateur (et le Service Worker PWA) n'utilisent jamais
+ * une version mise en cache du HTML d'impression.
+ */
+export const NO_CACHE_META = `
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="generated-at" content="${Date.now()}" />`;
 
 /**
  * Reusable HTML <header> block for any printed clinic document.
@@ -157,7 +173,7 @@ export function printResultDocument(opts: PrintResultOptions) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>${opts.title}</title>
+<head><meta charset="UTF-8">${NO_CACHE_META}<title>${opts.title}</title>
 <style>${buildStyles(h.clinicColor)}</style>
 </head>
 <body>
@@ -196,7 +212,7 @@ export function printMultiResultDocument(opts: PrintMultiResultOptions) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>${opts.documentTitle}</title>
+<head><meta charset="UTF-8">${NO_CACHE_META}<title>${opts.documentTitle}</title>
 <style>${buildStyles(h.clinicColor)}</style>
 </head>
 <body>
