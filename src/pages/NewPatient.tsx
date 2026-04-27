@@ -46,6 +46,7 @@ const NewPatient = () => {
   const updatePatient = useUpdatePatient();
   const { data: companies } = usePartnerCompanies();
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showCardPreview, setShowCardPreview] = useState(false);
   const [createdPatient, setCreatedPatient] = useState<Patient | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const { data: activeConventions } = useActiveConventions(selectedCompanyId || undefined);
