@@ -419,6 +419,56 @@ export function FollowUpActionsDialog({
               </Button>
             </DialogFooter>
           </TabsContent>
+
+          {/* Orienter / Réassigner */}
+          <TabsContent value="refer" className="space-y-3 pt-4">
+            <div>
+              <Label>Médecin destinataire *</Label>
+              <Select value={targetDoctorId} onValueChange={setTargetDoctorId}>
+                <SelectTrigger><SelectValue placeholder="Choisir un médecin..." /></SelectTrigger>
+                <SelectContent>
+                  {(doctors || []).filter(d => d.user_id !== user?.id).map(d => (
+                    <SelectItem key={d.user_id} value={d.user_id}>
+                      Dr. {d.full_name}{d.specialty ? ` — ${d.specialty}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Motif / Note (optionnel)</Label>
+              <Textarea
+                value={refReason}
+                onChange={(e) => setRefReason(e.target.value)}
+                placeholder="Ex: Avis cardiologique, suite de prise en charge..."
+                className="min-h-[80px]"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <strong>Orienter</strong> : remet la visite en file d'attente pour le médecin choisi.<br />
+              <strong>Réassigner</strong> : transfère la consultation en cours au médecin choisi.
+            </p>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={close}>Annuler</Button>
+              <Button
+                variant="secondary"
+                onClick={handleReassign}
+                disabled={!targetDoctorId || updateConsultation.isPending}
+                className="gap-1.5"
+              >
+                {updateConsultation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                Réassigner
+              </Button>
+              <Button
+                onClick={handleRefer}
+                disabled={!targetDoctorId || !visitId || updateVisit.isPending}
+                className="gap-1.5"
+              >
+                {updateVisit.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Orienter
+              </Button>
+            </DialogFooter>
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
