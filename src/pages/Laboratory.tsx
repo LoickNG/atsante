@@ -535,6 +535,33 @@ const Laboratory = () => {
                                               <p className="whitespace-pre-wrap">{request.results}</p>
                                             </div>
                                           )}
+                                          {(() => {
+                                            const rf = (request as any).result_files;
+                                            const files: { name: string; url: string }[] = (() => {
+                                              if (!rf) return [];
+                                              try {
+                                                const p = typeof rf === 'string' ? JSON.parse(rf) : rf;
+                                                return Array.isArray(p) ? p : [];
+                                              } catch { return []; }
+                                            })();
+                                            if (files.length === 0) return null;
+                                            return (
+                                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                                {files.map((f, i) => (
+                                                  <a
+                                                    key={i}
+                                                    href={f.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border bg-background hover:bg-muted"
+                                                  >
+                                                    <Paperclip className="h-3 w-3" />
+                                                    {f.name}
+                                                  </a>
+                                                ))}
+                                              </div>
+                                            );
+                                          })()}
                                         </div>
                                       ))}
                                     </div>
