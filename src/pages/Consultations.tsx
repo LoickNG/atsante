@@ -36,6 +36,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { buildClinicHeaderHtml, buildClinicFooterHtml, buildClinicHeader } from '@/utils/printResult';
 
 interface PrescriptionItem {
   medicationId: string;
@@ -49,6 +51,7 @@ interface PrescriptionItem {
 
 const Consultations = () => {
   const { user } = useAuth();
+  const { data: clinic } = useClinicSettings();
   const navigate = useNavigate();
   const { data: queueVisits, isLoading: queueLoading } = useWaitingQueue();
   const { data: medications } = useMedications();
@@ -160,52 +163,52 @@ const Consultations = () => {
 
   const handlePrintPrescription = () => {
     if (!selectedPatient || prescriptions.length === 0) return;
-    const html = `
-      <html><head><title>Ordonnance</title>
-      <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 700px; margin: 0 auto; }
-        h1 { font-size: 20px; color: #1a365d; border-bottom: 2px solid #1a365d; padding-bottom: 8px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h2 { margin: 0; font-size: 24px; color: #1a365d; }
-        .header p { margin: 2px 0; color: #666; font-size: 12px; }
-        .patient-info { background: #f7fafc; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; }
-        .patient-info p { margin: 4px 0; font-size: 14px; }
-        .med { padding: 12px 0; border-bottom: 1px dashed #e2e8f0; }
-        .med:last-child { border-bottom: none; }
-        .med-name { font-weight: 700; font-size: 15px; }
-        .med-detail { color: #555; font-size: 13px; margin-top: 4px; }
-        .med-instructions { font-style: italic; color: #888; font-size: 12px; margin-top: 2px; }
-        .footer { margin-top: 40px; display: flex; justify-content: space-between; }
-        .footer div { text-align: center; }
-        .footer .line { border-top: 1px solid #333; width: 200px; margin-top: 60px; padding-top: 5px; font-size: 12px; }
-        @media print { body { padding: 20px; } }
-      </style></head><body>
-      <div class="header">
-        <h2>ATSanté</h2>
-        <p>Centre Médical</p>
-        <p>Ordonnance Médicale</p>
-      </div>
-      <div class="patient-info">
-        <p><strong>Patient :</strong> ${selectedPatient.first_name} ${selectedPatient.last_name}</p>
-        <p><strong>Code :</strong> ${selectedPatient.code}</p>
-        <p><strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-      </div>
-      <h1>Prescription</h1>
-      ${prescriptions.map((p, i) => {
-        const medName = p.isCustom ? p.medicationName : (medications || []).find(m => m.id === p.medicationId)?.name || p.medicationName;
-        return `<div class="med">
-          <div class="med-name">${i + 1}. ${medName || 'Médicament'}</div>
-          <div class="med-detail">${p.dosage} — ${p.frequency} — ${p.duration}</div>
-          ${p.instructions ? `<div class="med-instructions">"${p.instructions}"</div>` : ''}
-        </div>`;
-      }).join('')}
-      <div class="footer">
-        <div><div class="line">Date et cachet</div></div>
-        <div><div class="line">Signature du médecin</div></div>
-      </div>
-      </body></html>`;
+    const h = buildClinicHeader(clinic);
+    const headerHtml = buildClinicHeaderHtml(clinic);
+    const footerHtml = buildClinicFooterHtml(clinic);
+    const html = `<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><title>Ordonnance — ${selectedPatient.last_name} ${selectedPatient.first_name}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color:#1a1a1a; padding: 15mm; max-width: 800px; margin: 0 auto; }
+  .doc-title { text-align:center; margin-bottom:20px; padding:10px; background:${h.clinicColor}11; border-radius:6px; }
+  .doc-title h2 { font-size:16px; color:${h.clinicColor}; text-transform:uppercase; letter-spacing:1px; }
+  .patient-info { background:#f8fafc; padding:12px 16px; border-radius:6px; margin-bottom:20px; border:1px solid #e2e8f0; }
+  .patient-info p { margin:4px 0; font-size:13px; }
+  .med { padding:12px 0; border-bottom:1px dashed #e2e8f0; }
+  .med:last-child { border-bottom:none; }
+  .med-name { font-weight:700; font-size:14px; color:${h.clinicColor}; }
+  .med-detail { color:#444; font-size:12px; margin-top:4px; }
+  .med-instructions { font-style:italic; color:#777; font-size:11px; margin-top:2px; }
+  .signatures { margin-top:50px; display:flex; justify-content:space-between; }
+  .sig { text-align:center; }
+  .sig .line { border-top:1px solid #333; width:200px; margin-top:60px; padding-top:5px; font-size:11px; }
+  @media print { body { padding:10mm; } }
+</style></head><body>
+${headerHtml}
+<div class="doc-title"><h2>Ordonnance Médicale</h2></div>
+<div class="patient-info">
+  <p><strong>Patient :</strong> ${selectedPatient.first_name} ${selectedPatient.last_name}</p>
+  <p><strong>Code :</strong> ${selectedPatient.code}</p>
+  <p><strong>Date :</strong> ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+</div>
+${prescriptions.map((p, i) => {
+  const medName = p.isCustom ? p.medicationName : (medications || []).find(m => m.id === p.medicationId)?.name || p.medicationName;
+  return `<div class="med">
+    <div class="med-name">${i + 1}. ${medName || 'Médicament'}</div>
+    <div class="med-detail">${p.dosage} — ${p.frequency} — ${p.duration}</div>
+    ${p.instructions ? `<div class="med-instructions">"${p.instructions}"</div>` : ''}
+  </div>`;
+}).join('')}
+<div class="signatures">
+  <div class="sig"><div class="line">Date et cachet</div></div>
+  <div class="sig"><div class="line">Signature du médecin</div></div>
+</div>
+${footerHtml}
+<script>setTimeout(function(){ window.print(); }, 300);<\/script>
+</body></html>`;
     const w = window.open('', '_blank');
-    if (w) { w.document.write(html); w.document.close(); w.print(); }
+    if (w) { w.document.write(html); w.document.close(); }
   };
 
   const handleSaveConsultation = async () => {

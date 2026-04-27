@@ -10,6 +10,7 @@ import { printDeathCertificate } from './DeathCertificates';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
 
 interface DeceasedPatientActionsProps {
   patient: Patient | null;
@@ -19,6 +20,7 @@ interface DeceasedPatientActionsProps {
 
 export function DeceasedPatientActions({ patient, open, onOpenChange }: DeceasedPatientActionsProps) {
   const { user } = useAuth();
+  const { data: clinic } = useClinicSettings();
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -79,7 +81,7 @@ export function DeceasedPatientActions({ patient, open, onOpenChange }: Deceased
             <Button
               variant="outline"
               className="justify-start gap-2 h-auto py-3"
-              onClick={() => printDeathCertificate(patient, 'genre', doctorName)}
+              onClick={() => printDeathCertificate(patient, 'genre', doctorName, clinic)}
             >
               <FileText className="h-5 w-5 text-primary" />
               <div className="text-left">
@@ -91,7 +93,7 @@ export function DeceasedPatientActions({ patient, open, onOpenChange }: Deceased
             <Button
               variant="outline"
               className="justify-start gap-2 h-auto py-3"
-              onClick={() => printDeathCertificate(patient, 'cause', doctorName)}
+              onClick={() => printDeathCertificate(patient, 'cause', doctorName, clinic)}
             >
               <FileText className="h-5 w-5 text-destructive" />
               <div className="text-left">

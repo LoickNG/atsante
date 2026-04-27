@@ -27,17 +27,47 @@ interface PrintMultiResultOptions {
   items: PrintResultItem[];
 }
 
-function buildClinicHeader(clinic: ClinicSettings | undefined) {
+export function buildClinicHeader(clinic: ClinicSettings | undefined) {
   const clinicName = clinic?.name || 'Ma Clinique';
   const clinicSlogan = clinic?.slogan || '';
   const clinicAddress = [clinic?.address, clinic?.city, clinic?.country].filter(Boolean).join(', ');
   const clinicPhone = [clinic?.phone, clinic?.phone2].filter(Boolean).join(' / ');
   const clinicEmail = clinic?.email || '';
+  const clinicWebsite = (clinic as any)?.website || '';
   const clinicColor = clinic?.primary_color || '#1e40af';
   const logoHtml = clinic?.logo_url
-    ? `<img src="${clinic.logo_url}" style="height:40px;object-fit:contain;" />`
+    ? `<img src="${clinic.logo_url}" style="height:48px;object-fit:contain;" />`
     : '';
-  return { clinicName, clinicSlogan, clinicAddress, clinicPhone, clinicEmail, clinicColor, logoHtml };
+  return { clinicName, clinicSlogan, clinicAddress, clinicPhone, clinicEmail, clinicWebsite, clinicColor, logoHtml };
+}
+
+/**
+ * Reusable HTML <header> block for any printed clinic document.
+ * Use the same look across prescriptions, lab/imaging results, certificates, etc.
+ */
+export function buildClinicHeaderHtml(clinic: ClinicSettings | undefined): string {
+  const h = buildClinicHeader(clinic);
+  return `
+  <div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid ${h.clinicColor};padding-bottom:12px;margin-bottom:20px;">
+    ${h.logoHtml}
+    <div style="flex:1;">
+      <h1 style="font-size:20px;color:${h.clinicColor};margin:0 0 2px 0;">${h.clinicName}</h1>
+      ${h.clinicSlogan ? `<div style="font-size:10px;color:#666;font-style:italic;">${h.clinicSlogan}</div>` : ''}
+      <div style="font-size:9px;color:#888;margin-top:4px;line-height:1.4;">
+        ${h.clinicAddress ? h.clinicAddress + '<br/>' : ''}
+        ${h.clinicPhone ? 'Tél: ' + h.clinicPhone : ''}${h.clinicEmail ? ' | ' + h.clinicEmail : ''}${h.clinicWebsite ? ' | ' + h.clinicWebsite : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+export function buildClinicFooterHtml(clinic: ClinicSettings | undefined): string {
+  const h = buildClinicHeader(clinic);
+  const today = new Date().toLocaleDateString('fr-FR');
+  return `
+  <div style="margin-top:40px;border-top:1px solid #e2e8f0;padding-top:10px;text-align:center;font-size:8px;color:#aaa;">
+    ${h.clinicName}${h.clinicAddress ? ' — ' + h.clinicAddress : ''}${h.clinicPhone ? ' — Tél: ' + h.clinicPhone : ''} — Imprimé le ${today}
+  </div>`;
 }
 
 function buildStyles(clinicColor: string) {
