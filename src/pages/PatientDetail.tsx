@@ -24,6 +24,7 @@ import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialo
 import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
+import { FollowUpActionsDialog } from '@/components/patient/FollowUpActionsDialog';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
 import { useVisits, useUpdateVisit } from '@/hooks/useVisits';
@@ -54,6 +55,8 @@ const PatientDetail = () => {
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
+  const [selectedVisitId, setSelectedVisitId] = useState<string | undefined>(undefined);
+  const [selectedExistingNotes, setSelectedExistingNotes] = useState<any[]>([]);
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -126,7 +129,10 @@ const PatientDetail = () => {
   }, {} as Record<string, typeof patientPrescriptions>);
 
   const handleOpenFollowUp = (consultationId: string) => {
+    const c = (consultations || []).find((x: any) => x.id === consultationId);
     setSelectedConsultationId(consultationId);
+    setSelectedVisitId(c?.visit_id);
+    setSelectedExistingNotes(Array.isArray(c?.follow_up_notes) ? (c?.follow_up_notes as any[]) : []);
     setFollowUpNote('');
     setFollowUpDialogOpen(true);
   };
@@ -822,31 +828,17 @@ const PatientDetail = () => {
         </div>
       </div>
 
-      {/* Follow-up Notes Dialog */}
-      <Dialog open={followUpDialogOpen} onOpenChange={setFollowUpDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un commentaire de suivi</DialogTitle>
-            <DialogDescription>
-              Ajoutez un commentaire basé sur les résultats d'analyses ou le suivi du patient
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            placeholder="Ex: Résultats NFS normaux, poursuivre le traitement..."
-            className="min-h-[120px]"
-            value={followUpNote}
-            onChange={(e) => setFollowUpNote(e.target.value)}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setFollowUpDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleSaveFollowUp} disabled={!followUpNote.trim() || updateConsultation.isPending} className="gap-1.5">
-              {updateConsultation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      {/* Follow-up & Actions Dialog */}
+      {selectedConsultationId && id && (
+        <FollowUpActionsDialog
+          open={followUpDialogOpen}
+          onOpenChange={setFollowUpDialogOpen}
+          patientId={id}
+          consultationId={selectedConsultationId}
+          visitId={selectedVisitId}
+          existingNotes={selectedExistingNotes}
+        />
+      )}
       {/* Edit Patient Dialog */}
       {patient && (
         <>
