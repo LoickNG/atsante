@@ -135,7 +135,6 @@ export function FollowUpActionsDialog({
     }
     try {
       await createPresc.mutateAsync({
-        patient_id: patientId,
         consultation_id: consultationId,
         medication_id: medId || null,
         medication_name: !medId ? medName.trim() : null,
@@ -144,7 +143,6 @@ export function FollowUpActionsDialog({
         duration: duration.trim(),
         quantity,
         instructions: instructions.trim() || null,
-        prescribed_by: user?.id,
       } as any);
       toast.success('Médicament ajouté à l\'ordonnance');
       close();
