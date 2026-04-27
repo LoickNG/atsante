@@ -24,6 +24,7 @@ import { DeclareDeceasedDialog } from '@/components/patient/DeclareDeceasedDialo
 import { DeceasedPatientActions } from '@/components/patient/DeceasedPatientActions';
 import { QRCodeSVG } from 'qrcode.react';
 import { PatientPDFExport } from '@/components/patient/PatientPDFExport';
+import { FollowUpActionsDialog } from '@/components/patient/FollowUpActionsDialog';
 import { cn } from '@/lib/utils';
 import { usePatient } from '@/hooks/usePatients';
 import { useVisits, useUpdateVisit } from '@/hooks/useVisits';
