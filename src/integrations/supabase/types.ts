@@ -1056,6 +1056,7 @@ export type Database = {
           patient_id: string
           priority: string
           requested_at: string
+          result_files: Json | null
           result_values: Json | null
           results: string | null
           status: string
@@ -1071,6 +1072,7 @@ export type Database = {
           patient_id: string
           priority?: string
           requested_at?: string
+          result_files?: Json | null
           result_values?: Json | null
           results?: string | null
           status?: string
@@ -1086,6 +1088,7 @@ export type Database = {
           patient_id?: string
           priority?: string
           requested_at?: string
+          result_files?: Json | null
           result_values?: Json | null
           results?: string | null
           status?: string
