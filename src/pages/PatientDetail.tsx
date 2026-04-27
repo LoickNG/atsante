@@ -590,6 +590,24 @@ const PatientDetail = () => {
                                 <p className="whitespace-pre-wrap">{lab.results}</p>
                               </div>
                             )}
+                            {Array.isArray((lab as any).result_files) && (lab as any).result_files.length > 0 && (
+                              <div className="mt-2 p-3 bg-background rounded border">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Fichiers joints ({(lab as any).result_files.length}) :</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(lab as any).result_files.map((f: any, i: number) => {
+                                    const url = typeof f === 'string' ? f : f.url;
+                                    const name = typeof f === 'string' ? `Fichier ${i + 1}` : (f.name || `Fichier ${i + 1}`);
+                                    const isImg = /\.(png|jpe?g|gif|webp)$/i.test(url || '');
+                                    return (
+                                      <a key={i} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-2 py-1 rounded border bg-muted/50 hover:bg-muted text-xs">
+                                        {isImg ? <ImageIcon className="h-3 w-3" /> : <FlaskConical className="h-3 w-3" />}
+                                        <span className="truncate max-w-[160px]">{name}</span>
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-2">
                               <span>Demandé le {formatDateTime(lab.requested_at)}</span>
                               {lab.completed_at && <span>• Terminé le {formatDateTime(lab.completed_at)}</span>}
