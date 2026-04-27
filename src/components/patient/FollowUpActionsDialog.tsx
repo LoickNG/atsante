@@ -75,12 +75,19 @@ export function FollowUpActionsDialog({
   const [hospReason, setHospReason] = useState('');
   const createHosp = useCreateHospitalization();
 
+  // Orientation / Réassignation
+  const { data: doctors } = useDoctors();
+  const [targetDoctorId, setTargetDoctorId] = useState<string>('');
+  const [refReason, setRefReason] = useState('');
+  const updateVisit = useUpdateVisit();
+
   const reset = () => {
     setFollowUpNote('');
     setLabType(''); setLabPriority('normale');
     setImgType('radio'); setImgBodyPart(''); setImgPriority('normale');
     setMedId(''); setMedName(''); setDosage(''); setFrequency(''); setDuration(''); setQuantity(1); setInstructions('');
     setRoomId(''); setHospReason('');
+    setTargetDoctorId(''); setRefReason('');
     setTab('suivi');
   };
 
