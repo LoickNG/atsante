@@ -14,6 +14,8 @@ import {
 import { useInvoices, type InvoiceWithDetails } from '@/hooks/useBilling';
 import { useConventions, usePartnerCompanies, useInsuranceCompanies } from '@/hooks/useConventions';
 import * as XLSX from 'xlsx';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { buildClinicHeader, buildClinicHeaderHtml, buildClinicFooterHtml } from '@/utils/printResult';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('fr-FR', { style: 'decimal', minimumFractionDigits: 0 }).format(amount) + ' FCFA';
