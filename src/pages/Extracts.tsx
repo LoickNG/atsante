@@ -188,7 +188,8 @@ export default function Extracts() {
       totalAmount,
       periodLabel,
       conventions || [],
-      extractType
+      extractType,
+      clinic
     );
 
     const w = window.open('', '_blank');
