@@ -81,6 +81,7 @@ const WaitingQueue = () => {
   const [heartRate, setHeartRate] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
+  const [spo2, setSpo2] = useState('');
 
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString('fr-FR', {
@@ -195,6 +196,7 @@ const WaitingQueue = () => {
     setHeartRate(visit.heart_rate ? String(visit.heart_rate) : '');
     setWeight(visit.weight ? String(visit.weight) : '');
     setHeight(visit.height ? String(visit.height) : '');
+    setSpo2(visit.spo2 ? String(visit.spo2) : '');
     setIsVitalsDialogOpen(true);
   };
 
@@ -207,11 +209,12 @@ const WaitingQueue = () => {
         heart_rate: heartRate ? parseInt(heartRate) : null,
         weight: weight ? parseFloat(weight) : null,
         height: height ? parseFloat(height) : null,
+        spo2: spo2 ? parseInt(spo2) : null,
       } as any);
       toast.success('Signes vitaux enregistrés');
       setIsVitalsDialogOpen(false);
       setVitalsVisitId('');
-      setTemperature(''); setBloodPressure(''); setHeartRate(''); setWeight(''); setHeight('');
+      setTemperature(''); setBloodPressure(''); setHeartRate(''); setWeight(''); setHeight(''); setSpo2('');
     } catch (error) {
       toast.error('Erreur lors de l\'enregistrement');
     }
@@ -463,6 +466,7 @@ const WaitingQueue = () => {
                         {(visit as any).temperature && <Badge variant="outline" className="text-[10px] gap-1"><Thermometer className="h-2.5 w-2.5" />{(visit as any).temperature}°C</Badge>}
                         {(visit as any).blood_pressure && <Badge variant="outline" className="text-[10px]">🩸 {(visit as any).blood_pressure}</Badge>}
                         {(visit as any).heart_rate && <Badge variant="outline" className="text-[10px] gap-1"><Heart className="h-2.5 w-2.5" />{(visit as any).heart_rate} bpm</Badge>}
+                        {(visit as any).spo2 && <Badge variant="outline" className="text-[10px]">SpO₂ {(visit as any).spo2}%</Badge>}
                         {(visit as any).weight && <Badge variant="outline" className="text-[10px]">⚖️ {(visit as any).weight} kg</Badge>}
                         {(visit as any).height && <Badge variant="outline" className="text-[10px]">📏 {(visit as any).height} cm</Badge>}
                       </div>
@@ -569,6 +573,10 @@ const WaitingQueue = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Poids (kg)</Label>
                 <Input type="number" step="0.1" placeholder="70" value={weight} onChange={e => setWeight(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">SpO₂ (%)</Label>
+                <Input type="number" min="0" max="100" placeholder="98" value={spo2} onChange={e => setSpo2(e.target.value)} />
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Taille (cm)</Label>
