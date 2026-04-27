@@ -20,6 +20,7 @@ interface DeceasedPatientActionsProps {
 
 export function DeceasedPatientActions({ patient, open, onOpenChange }: DeceasedPatientActionsProps) {
   const { user } = useAuth();
+  const { data: clinic } = useClinicSettings();
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
