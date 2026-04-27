@@ -8,14 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquarePlus, FlaskConical, ImageIcon, Pill, BedDouble, Send, Loader2 } from 'lucide-react';
+import { MessageSquarePlus, FlaskConical, ImageIcon, Pill, BedDouble, Send, Loader2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateLabRequest } from '@/hooks/useLabRequests';
 import { useCreateImagingRequest } from '@/hooks/useImagingRequests';
 import { useCreatePrescription } from '@/hooks/usePrescriptions';
 import { useCreateHospitalization, useAvailableRooms } from '@/hooks/useHospitalizations';
 import { useUpdateConsultation } from '@/hooks/useConsultations';
+import { useUpdateVisit } from '@/hooks/useVisits';
 import { useMedications } from '@/hooks/useMedications';
+import { useDoctors } from '@/hooks/useDoctors';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Props {
