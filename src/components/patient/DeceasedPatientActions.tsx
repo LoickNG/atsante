@@ -93,7 +93,7 @@ export function DeceasedPatientActions({ patient, open, onOpenChange }: Deceased
             <Button
               variant="outline"
               className="justify-start gap-2 h-auto py-3"
-              onClick={() => printDeathCertificate(patient, 'cause', doctorName)}
+              onClick={() => printDeathCertificate(patient, 'cause', doctorName, clinic)}
             >
               <FileText className="h-5 w-5 text-destructive" />
               <div className="text-left">
