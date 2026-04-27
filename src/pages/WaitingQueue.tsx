@@ -466,6 +466,7 @@ const WaitingQueue = () => {
                         {(visit as any).temperature && <Badge variant="outline" className="text-[10px] gap-1"><Thermometer className="h-2.5 w-2.5" />{(visit as any).temperature}°C</Badge>}
                         {(visit as any).blood_pressure && <Badge variant="outline" className="text-[10px]">🩸 {(visit as any).blood_pressure}</Badge>}
                         {(visit as any).heart_rate && <Badge variant="outline" className="text-[10px] gap-1"><Heart className="h-2.5 w-2.5" />{(visit as any).heart_rate} bpm</Badge>}
+                        {(visit as any).spo2 && <Badge variant="outline" className="text-[10px]">SpO₂ {(visit as any).spo2}%</Badge>}
                         {(visit as any).weight && <Badge variant="outline" className="text-[10px]">⚖️ {(visit as any).weight} kg</Badge>}
                         {(visit as any).height && <Badge variant="outline" className="text-[10px]">📏 {(visit as any).height} cm</Badge>}
                       </div>
