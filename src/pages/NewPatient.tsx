@@ -146,7 +146,7 @@ const NewPatient = () => {
       }
 
       setCreatedPatient(finalPatient);
-      setShowQRDialog(true);
+      setShowCardPreview(true);
       
       toast.success(
         <div className="flex flex-col gap-1">
