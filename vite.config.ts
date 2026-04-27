@@ -55,6 +55,23 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {
+            // Toujours récupérer les paramètres de la clinique en frais (logo, nom, couleur, etc.)
+            // pour que les en-têtes d'impression soient à jour.
+            urlPattern: /\/rest\/v1\/clinic_settings.*$/,
+            handler: "NetworkOnly",
+            options: { cacheName: "clinic-settings-no-cache" },
+          },
+          {
+            // Logos stockés dans Supabase Storage (bucket email-assets, etc.)
+            // StaleWhileRevalidate : affichage rapide mais mise à jour systématique en arrière-plan.
+            urlPattern: /\/storage\/v1\/object\/public\/(email-assets|profile-photos)\/.*$/,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "clinic-logos",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 },
+            },
+          },
+          {
             urlPattern: /^https:\/\/.*supabase.*$/,
             handler: "NetworkFirst",
             options: {
