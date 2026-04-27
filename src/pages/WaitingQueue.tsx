@@ -81,6 +81,7 @@ const WaitingQueue = () => {
   const [heartRate, setHeartRate] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
+  const [spo2, setSpo2] = useState('');
 
   const formatTime = (dateStr: string) => {
     return new Date(dateStr).toLocaleTimeString('fr-FR', {
