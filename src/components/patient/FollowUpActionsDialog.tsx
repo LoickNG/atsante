@@ -175,6 +175,57 @@ export function FollowUpActionsDialog({
     } catch (e: any) { toast.error('Erreur: ' + e.message); }
   };
 
+  const doctorName = (id: string) => doctors?.find(d => d.user_id === id)?.full_name || 'le confrère';
+
+  // Orienter : ajoute une note + remet la visite en attente sur un autre médecin
+  const handleRefer = async () => {
+    if (!targetDoctorId) { toast.error('Sélectionnez un médecin'); return; }
+    if (!visitId) { toast.error('Visite introuvable'); return; }
+    try {
+      const note = {
+        date: new Date().toISOString(),
+        author: user?.email || 'Médecin',
+        text: `Patient orienté vers ${doctorName(targetDoctorId)}${refReason.trim() ? ' — Motif: ' + refReason.trim() : ''}`,
+      };
+      await updateConsultation.mutateAsync({
+        id: consultationId,
+        follow_up_notes: [...existingNotes, note] as any,
+      });
+      await updateVisit.mutateAsync({
+        id: visitId,
+        assigned_doctor_id: targetDoctorId,
+        status: 'en_attente',
+      } as any);
+      toast.success(`Patient orienté vers ${doctorName(targetDoctorId)}`);
+      close();
+    } catch (e: any) { toast.error('Erreur: ' + e.message); }
+  };
+
+  // Réassigner : change le médecin titulaire de la consultation en cours
+  const handleReassign = async () => {
+    if (!targetDoctorId) { toast.error('Sélectionnez un médecin'); return; }
+    try {
+      const note = {
+        date: new Date().toISOString(),
+        author: user?.email || 'Médecin',
+        text: `Consultation réassignée à ${doctorName(targetDoctorId)}${refReason.trim() ? ' — ' + refReason.trim() : ''}`,
+      };
+      await updateConsultation.mutateAsync({
+        id: consultationId,
+        doctor_id: targetDoctorId,
+        follow_up_notes: [...existingNotes, note] as any,
+      } as any);
+      if (visitId) {
+        await updateVisit.mutateAsync({
+          id: visitId,
+          assigned_doctor_id: targetDoctorId,
+        } as any);
+      }
+      toast.success(`Consultation réassignée à ${doctorName(targetDoctorId)}`);
+      close();
+    } catch (e: any) { toast.error('Erreur: ' + e.message); }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && close()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
