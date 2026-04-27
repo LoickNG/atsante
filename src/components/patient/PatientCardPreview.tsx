@@ -17,7 +17,35 @@ interface PatientCardPreviewProps {
 
 export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardPreviewProps) {
   const { data: clinicSettings } = useClinicSettings();
-  
+
+  const { data: company } = useQuery({
+    queryKey: ['partner_company', patient?.company_id],
+    queryFn: async () => {
+      if (!patient?.company_id) return null;
+      const { data } = await supabase
+        .from('partner_companies')
+        .select('name, code')
+        .eq('id', patient.company_id)
+        .single();
+      return data;
+    },
+    enabled: !!patient?.company_id,
+  });
+
+  const { data: convention } = useQuery({
+    queryKey: ['convention', patient?.convention_id],
+    queryFn: async () => {
+      if (!patient?.convention_id) return null;
+      const { data } = await supabase
+        .from('conventions')
+        .select('name')
+        .eq('id', patient.convention_id)
+        .single();
+      return data;
+    },
+    enabled: !!patient?.convention_id,
+  });
+
   if (!patient) return null;
 
   const HOSPITAL = {
@@ -28,34 +56,6 @@ export function PatientCardPreview({ patient, open, onOpenChange }: PatientCardP
     logo_url: clinicSettings?.logo_url || '',
     color: clinicSettings?.primary_color || '#2a9d8f',
   };
-
-  const { data: company } = useQuery({
-    queryKey: ['partner_company', patient.company_id],
-    queryFn: async () => {
-      if (!patient.company_id) return null;
-      const { data } = await supabase
-        .from('partner_companies')
-        .select('name, code')
-        .eq('id', patient.company_id)
-        .single();
-      return data;
-    },
-    enabled: !!patient.company_id,
-  });
-
-  const { data: convention } = useQuery({
-    queryKey: ['convention', patient.convention_id],
-    queryFn: async () => {
-      if (!patient.convention_id) return null;
-      const { data } = await supabase
-        .from('conventions')
-        .select('name')
-        .eq('id', patient.convention_id)
-        .single();
-      return data;
-    },
-    enabled: !!patient.convention_id,
-  });
 
   const calculateAge = (dob: string) => {
     const today = new Date();
