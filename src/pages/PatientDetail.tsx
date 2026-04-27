@@ -55,6 +55,8 @@ const PatientDetail = () => {
 
   const [followUpDialogOpen, setFollowUpDialogOpen] = useState(false);
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
+  const [selectedVisitId, setSelectedVisitId] = useState<string | undefined>(undefined);
+  const [selectedExistingNotes, setSelectedExistingNotes] = useState<any[]>([]);
   const [followUpNote, setFollowUpNote] = useState('');
   const [isReopening, setIsReopening] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
