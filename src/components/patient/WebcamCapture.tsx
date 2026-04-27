@@ -145,10 +145,27 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = fal
           <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-destructive/40">
             <Camera className="h-8 w-8 text-muted-foreground" />
           </div>
-          {error && <p className="text-xs text-destructive text-center">{error}</p>}
-          <Button type="button" variant="outline" size="sm" onClick={startCamera} className="gap-1">
-            <Camera className="h-3 w-3" />Prendre une photo
-          </Button>
+          {error && <p className="text-xs text-destructive text-center max-w-xs">{error}</p>}
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button type="button" variant="outline" size="sm" onClick={startCamera} className="gap-1">
+              <Camera className="h-3 w-3" />Prendre une photo
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1">
+              <Upload className="h-3 w-3" />Importer
+            </Button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onCapture(file);
+              e.target.value = '';
+            }}
+          />
         </>
       )}
     </div>
