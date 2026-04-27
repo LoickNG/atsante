@@ -38,6 +38,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useCreatePatient, useUpdatePatient, Patient } from '@/hooks/usePatients';
 import { usePartnerCompanies, useActiveConventions } from '@/hooks/useConventions';
 import { WebcamCapture } from '@/components/patient/WebcamCapture';
+import { PatientCardPreview } from '@/components/patient/PatientCardPreview';
 
 const NewPatient = () => {
   const navigate = useNavigate();
@@ -45,6 +46,7 @@ const NewPatient = () => {
   const updatePatient = useUpdatePatient();
   const { data: companies } = usePartnerCompanies();
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showCardPreview, setShowCardPreview] = useState(false);
   const [createdPatient, setCreatedPatient] = useState<Patient | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const { data: activeConventions } = useActiveConventions(selectedCompanyId || undefined);
@@ -158,8 +160,15 @@ const NewPatient = () => {
     }
   };
 
-  const handlePrintCard = () => { window.print(); };
+  const handlePrintCard = () => {
+    setShowQRDialog(false);
+    setShowCardPreview(true);
+  };
   const handleCloseDialog = () => { setShowQRDialog(false); navigate('/patients'); };
+  const handleCardPreviewClose = (open: boolean) => {
+    setShowCardPreview(open);
+    if (!open) navigate('/patients');
+  };
 
   const selectedConvention = activeConventions?.find(c => c.id === formData.conventionId);
 
@@ -414,6 +423,12 @@ const NewPatient = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        <PatientCardPreview
+          patient={createdPatient}
+          open={showCardPreview}
+          onOpenChange={handleCardPreviewClose}
+        />
       </div>
     </AppLayout>
   );

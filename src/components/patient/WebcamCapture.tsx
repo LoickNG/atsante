@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Camera, RotateCcw, X } from 'lucide-react';
+import { Camera, RotateCcw, X, Upload } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface WebcamCaptureProps {
@@ -13,6 +13,7 @@ interface WebcamCaptureProps {
 export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = false }: WebcamCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -21,18 +22,46 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = fal
   const startCamera = useCallback(async () => {
     try {
       setError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 320, facingMode: 'user' },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setError("Votre navigateur ne supporte pas l'accès à la caméra. Utilisez Chrome, Edge ou Firefox récents.");
+        return;
       }
+      if (!window.isSecureContext) {
+        setError("L'accès à la caméra nécessite HTTPS. Ouvrez l'application via une URL sécurisée.");
+        return;
+      }
+      // Try with ideal constraints, fallback to basic if it fails
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          audio: false,
+        });
+      } catch (innerErr) {
+        console.warn('Webcam: ideal constraints failed, trying basic', innerErr);
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+      streamRef.current = stream;
       setStreaming(true);
-    } catch {
-      setError("Impossible d'accéder à la caméra. Vérifiez les permissions.");
+      // Wait for next tick so the <video> element is mounted before assigning the stream
+      setTimeout(async () => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          try { await videoRef.current.play(); } catch (e) { console.warn('video.play() failed', e); }
+        }
+      }, 50);
+    } catch (err: any) {
+      console.error('Webcam error:', err);
+      const name = err?.name || '';
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        setError("Accès à la caméra refusé. Autorisez la caméra dans les paramètres du navigateur.");
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        setError("Aucune caméra détectée sur cet appareil.");
+      } else if (name === 'NotReadableError') {
+        setError("La caméra est utilisée par une autre application. Fermez les autres apps et réessayez.");
+      } else {
+        setError(`Impossible d'accéder à la caméra (${name || 'erreur inconnue'}). Cliquez sur "Prendre une photo" pour réessayer.`);
+      }
     }
   }, []);
 
@@ -117,10 +146,27 @@ export function WebcamCapture({ onCapture, capturedUrl, onClear, autoStart = fal
           <div className="h-28 w-28 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-destructive/40">
             <Camera className="h-8 w-8 text-muted-foreground" />
           </div>
-          {error && <p className="text-xs text-destructive text-center">{error}</p>}
-          <Button type="button" variant="outline" size="sm" onClick={startCamera} className="gap-1">
-            <Camera className="h-3 w-3" />Prendre une photo
-          </Button>
+          {error && <p className="text-xs text-destructive text-center max-w-xs">{error}</p>}
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button type="button" variant="outline" size="sm" onClick={startCamera} className="gap-1">
+              <Camera className="h-3 w-3" />Prendre une photo
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-1">
+              <Upload className="h-3 w-3" />Importer
+            </Button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onCapture(file);
+              e.target.value = '';
+            }}
+          />
         </>
       )}
     </div>
