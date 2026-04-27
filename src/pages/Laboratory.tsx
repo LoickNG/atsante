@@ -48,7 +48,7 @@ import { useLabRequests, usePendingLabRequests, useUpdateLabRequest, LabRequestW
 import { useAuth } from '@/hooks/useAuth';
 import { PatientSearchSelect } from '@/components/PatientSearchSelect';
 import { Patient } from '@/hooks/usePatients';
-import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { useClinicSettings, useRefreshClinicSettings } from '@/hooks/useClinicSettings';
 import { printMultiResultDocument } from '@/utils/printResult';
 import { Link } from 'react-router-dom';
 
@@ -65,6 +65,7 @@ const Laboratory = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { data: clinicData } = useClinicSettings();
+  const refreshClinic = useRefreshClinicSettings();
 
   const { data: allRequests, isLoading } = useLabRequests();
   const { data: pendingRequests } = usePendingLabRequests();
@@ -468,9 +469,10 @@ const Laboratory = () => {
                                     </CardDescription>
                                   </div>
                                 </div>
-                                <Button size="sm" className="gap-1.5" onClick={() => {
+                                <Button size="sm" className="gap-1.5" onClick={async () => {
+                                  const fresh = (await refreshClinic()) ?? clinicData;
                                   printMultiResultDocument({
-                                    clinic: clinicData,
+                                    clinic: fresh,
                                     patientName,
                                     patientCode,
                                     documentTitle: 'Résultats d\'Analyses de Laboratoire',
@@ -499,9 +501,10 @@ const Laboratory = () => {
                                         <Badge variant="outline" className="text-[10px]">{requests.length} examen(s)</Badge>
                                       </div>
                                       {requests.length > 1 && (
-                                        <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={() => {
+                                        <Button size="sm" variant="outline" className="gap-1.5 h-7 text-xs" onClick={async () => {
+                                          const fresh = (await refreshClinic()) ?? clinicData;
                                           printMultiResultDocument({
-                                            clinic: clinicData,
+                                            clinic: fresh,
                                             patientName,
                                             patientCode,
                                             documentTitle: 'Résultats d\'Analyses de Laboratoire',
