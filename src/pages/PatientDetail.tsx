@@ -188,7 +188,6 @@ const PatientDetail = () => {
       <div class="patient-info">
         <p><strong>Patient :</strong> ${patient.first_name} ${patient.last_name}</p>
         <p><strong>Code :</strong> ${patient.code}</p>
-        <p><strong>Diagnostic :</strong> ${consultation?.diagnosis || 'N/A'}</p>
         <p><strong>Date :</strong> ${consultation ? formatDate(consultation.date) : formatDate(new Date().toISOString())}</p>
       </div>
       <h1>Prescription</h1>

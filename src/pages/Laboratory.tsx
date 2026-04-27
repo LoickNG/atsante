@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { AppLayout, PageHeader } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
   CardContent,
@@ -32,6 +33,10 @@ import {
   Search,
   CalendarIcon,
   X,
+  Upload,
+  Paperclip,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
@@ -55,6 +60,9 @@ const Laboratory = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
@@ -103,12 +111,51 @@ const Laboratory = () => {
   const handleOpenResultDialog = (request: LabRequestWithPatient) => {
     setSelectedRequest(request);
     setResultText(request.results || '');
+    const existing = (request as any).result_files;
+    if (existing) {
+      try {
+        const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
+        setUploadedFiles(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setUploadedFiles([]);
+      }
+    } else {
+      setUploadedFiles([]);
+    }
     setIsResultDialogOpen(true);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedRequest) return;
+    setIsUploading(true);
+    try {
+      const newFiles: { name: string; url: string }[] = [];
+      for (const file of Array.from(files)) {
+        const path = `${selectedRequest.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from('lab-files').upload(path, file);
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('lab-files').getPublicUrl(path);
+        newFiles.push({ name: file.name, url: urlData.publicUrl });
+      }
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast.success(`${newFiles.length} fichier(s) téléchargé(s)`);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error("Erreur lors du téléchargement");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSaveResults = async () => {
-    if (!selectedRequest || !resultText.trim()) {
-      toast.error('Veuillez saisir les résultats');
+    if (!selectedRequest || (!resultText.trim() && uploadedFiles.length === 0)) {
+      toast.error('Veuillez saisir les résultats ou joindre un fichier');
       return;
     }
     try {
@@ -116,13 +163,15 @@ const Laboratory = () => {
         id: selectedRequest.id,
         status: 'termine',
         results: resultText,
+        result_files: uploadedFiles.length > 0 ? (uploadedFiles as any) : null,
         validated_by: user?.id,
         validated_at: new Date().toISOString(),
         completed_at: new Date().toISOString(),
-      });
+      } as any);
       setIsResultDialogOpen(false);
       setSelectedRequest(null);
       setResultText('');
+      setUploadedFiles([]);
       toast.success('Résultats enregistrés et validés');
     } catch {
       toast.error("Erreur lors de l'enregistrement");
@@ -486,6 +535,33 @@ const Laboratory = () => {
                                               <p className="whitespace-pre-wrap">{request.results}</p>
                                             </div>
                                           )}
+                                          {(() => {
+                                            const rf = (request as any).result_files;
+                                            const files: { name: string; url: string }[] = (() => {
+                                              if (!rf) return [];
+                                              try {
+                                                const p = typeof rf === 'string' ? JSON.parse(rf) : rf;
+                                                return Array.isArray(p) ? p : [];
+                                              } catch { return []; }
+                                            })();
+                                            if (files.length === 0) return null;
+                                            return (
+                                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                                {files.map((f, i) => (
+                                                  <a
+                                                    key={i}
+                                                    href={f.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border bg-background hover:bg-muted"
+                                                  >
+                                                    <Paperclip className="h-3 w-3" />
+                                                    {f.name}
+                                                  </a>
+                                                ))}
+                                              </div>
+                                            );
+                                          })()}
                                         </div>
                                       ))}
                                     </div>
@@ -518,10 +594,69 @@ const Laboratory = () => {
                 <Label>Résultats de l'analyse</Label>
                 <Textarea
                   placeholder="Saisissez les résultats de l'analyse..."
-                  className="min-h-[200px] mt-2"
+                  className="min-h-[180px] mt-2"
                   value={resultText}
                   onChange={(e) => setResultText(e.target.value)}
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Paperclip className="h-4 w-4" />
+                    Fichiers joints (PDF, images, etc.)
+                  </Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                    Ajouter un fichier
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </div>
+                {uploadedFiles.length === 0 ? (
+                  <p className="text-xs text-muted-foreground border border-dashed rounded-md p-3 text-center">
+                    Aucun fichier joint
+                  </p>
+                ) : (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 border rounded-md bg-muted/30 text-sm">
+                        <Paperclip className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 truncate hover:underline flex items-center gap-1"
+                        >
+                          {file.name}
+                          <ExternalLink className="h-3 w-3 opacity-50" />
+                        </a>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 text-destructive"
+                          onClick={() => handleRemoveFile(idx)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>

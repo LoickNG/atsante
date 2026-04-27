@@ -1,9 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileDown, Loader2 } from 'lucide-react';
+import { FileDown, Loader2, CalendarIcon, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Patient } from '@/hooks/usePatients';
 import { useClinicSettings } from '@/hooks/useClinicSettings';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface PatientPDFExportProps {
   patient: Patient;
@@ -26,17 +38,80 @@ function calculateAge(dateOfBirth: string) {
   return age;
 }
 
+type FilterMode = 'all' | 'period' | 'visits';
+
 export function PatientPDFExport({ patient, consultations, prescriptions, labRequests, imagingRequests, visits }: PatientPDFExportProps) {
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [filterMode, setFilterMode] = useState<FilterMode>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [selectedVisitIds, setSelectedVisitIds] = useState<string[]>([]);
   const { toast } = useToast();
   const { data: clinic } = useClinicSettings();
 
+  const sortedVisits = useMemo(
+    () => [...(visits || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [visits]
+  );
+
+  const toggleVisit = (id: string) => {
+    setSelectedVisitIds(prev => prev.includes(id) ? prev.filter(v => v !== id) : [...prev, id]);
+  };
+
+  const applyFilters = () => {
+    let v = visits || [];
+    let c = consultations || [];
+    let p = prescriptions || [];
+    let l = labRequests || [];
+    let i = imagingRequests || [];
+
+    if (filterMode === 'period') {
+      const inRange = (d: string) => {
+        const date = new Date(d);
+        if (dateFrom && isBefore(date, startOfDay(dateFrom))) return false;
+        if (dateTo && isAfter(date, endOfDay(dateTo))) return false;
+        return true;
+      };
+      v = v.filter(x => inRange(x.date));
+      c = c.filter(x => inRange(x.date));
+      p = p.filter(x => inRange(x.created_at));
+      l = l.filter(x => inRange(x.requested_at));
+      i = i.filter(x => inRange(x.requested_at));
+    } else if (filterMode === 'visits') {
+      const ids = new Set(selectedVisitIds);
+      v = v.filter(x => ids.has(x.id));
+      c = c.filter(x => ids.has(x.visit_id));
+      const consultationIds = new Set(c.map(x => x.id));
+      p = p.filter(x => consultationIds.has(x.consultation_id));
+      l = l.filter(x => ids.has(x.visit_id) || consultationIds.has(x.consultation_id));
+      i = i.filter(x => ids.has(x.visit_id) || consultationIds.has(x.consultation_id));
+    }
+
+    return { v, c, p, l, i };
+  };
+
   const handleExport = async () => {
+    if (filterMode === 'period' && !dateFrom && !dateTo) {
+      toast({ title: 'Sélectionnez une période', variant: 'destructive' });
+      return;
+    }
+    if (filterMode === 'visits' && selectedVisitIds.length === 0) {
+      toast({ title: 'Sélectionnez au moins une visite', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
-      const html = buildReportHTML(patient, consultations, prescriptions, labRequests, imagingRequests, visits, clinic);
-      
-      // Open in a new window for printing as PDF
+      const { v, c, p, l, i } = applyFilters();
+      const periodLabel =
+        filterMode === 'period'
+          ? `Période : ${dateFrom ? format(dateFrom, 'dd/MM/yyyy', { locale: fr }) : '...'} → ${dateTo ? format(dateTo, 'dd/MM/yyyy', { locale: fr }) : '...'}`
+          : filterMode === 'visits'
+          ? `${selectedVisitIds.length} visite(s) sélectionnée(s)`
+          : 'Dossier complet';
+
+      const html = buildReportHTML(patient, c, p, l, i, v, clinic, periodLabel);
+
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         toast({ title: 'Erreur', description: 'Autorisez les popups pour exporter le PDF', variant: 'destructive' });
@@ -44,16 +119,11 @@ export function PatientPDFExport({ patient, consultations, prescriptions, labReq
       }
       printWindow.document.write(html);
       printWindow.document.close();
-      
-      // Wait for content to load then trigger print
-      printWindow.onload = () => {
-        printWindow.print();
-      };
-      // Fallback if onload doesn't fire
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
 
+      printWindow.onload = () => printWindow.print();
+      setTimeout(() => printWindow.print(), 500);
+
+      setOpen(false);
       toast({ title: 'Rapport généré', description: 'Utilisez "Enregistrer en PDF" dans la boîte d\'impression' });
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -63,10 +133,119 @@ export function PatientPDFExport({ patient, consultations, prescriptions, labReq
   };
 
   return (
-    <Button variant="outline" className="gap-2" onClick={handleExport} disabled={loading}>
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-      Exporter PDF
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full gap-2">
+          <FileDown className="h-4 w-4" />
+          Exporter PDF
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Exporter le dossier médical</DialogTitle>
+          <DialogDescription>
+            Choisissez ce que vous souhaitez inclure dans le document imprimé.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <RadioGroup value={filterMode} onValueChange={(v) => setFilterMode(v as FilterMode)}>
+            <div className="flex items-start gap-2 p-3 rounded-md border hover:bg-muted/40">
+              <RadioGroupItem value="all" id="opt-all" className="mt-1" />
+              <Label htmlFor="opt-all" className="cursor-pointer flex-1">
+                <div className="font-medium">Dossier complet</div>
+                <div className="text-xs text-muted-foreground">Tout l'historique du patient</div>
+              </Label>
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-md border hover:bg-muted/40">
+              <RadioGroupItem value="period" id="opt-period" className="mt-1" />
+              <Label htmlFor="opt-period" className="cursor-pointer flex-1">
+                <div className="font-medium">Filtrer par période</div>
+                <div className="text-xs text-muted-foreground">Choisir une plage de dates</div>
+              </Label>
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-md border hover:bg-muted/40">
+              <RadioGroupItem value="visits" id="opt-visits" className="mt-1" />
+              <Label htmlFor="opt-visits" className="cursor-pointer flex-1">
+                <div className="font-medium">Sélectionner des visites</div>
+                <div className="text-xs text-muted-foreground">{visits?.length || 0} visite(s) disponible(s)</div>
+              </Label>
+            </div>
+          </RadioGroup>
+
+          {filterMode === 'period' && (
+            <div className="flex items-center gap-2 flex-wrap p-3 rounded-md bg-muted/30">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("gap-1.5", !dateFrom && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, 'dd MMM yyyy', { locale: fr }) : 'Du'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn("gap-1.5", !dateTo && "text-muted-foreground")}>
+                    <CalendarIcon className="h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, 'dd MMM yyyy', { locale: fr }) : 'Au'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              {(dateFrom || dateTo) && (
+                <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          )}
+
+          {filterMode === 'visits' && (
+            <div className="border rounded-md">
+              <div className="flex items-center justify-between p-2 border-b bg-muted/30">
+                <span className="text-xs font-medium">{selectedVisitIds.length} sélectionnée(s) sur {sortedVisits.length}</span>
+                <Button variant="ghost" size="sm" className="h-7 text-xs"
+                  onClick={() => setSelectedVisitIds(selectedVisitIds.length === sortedVisits.length ? [] : sortedVisits.map(v => v.id))}>
+                  {selectedVisitIds.length === sortedVisits.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+                </Button>
+              </div>
+              <ScrollArea className="h-56">
+                <div className="p-2 space-y-1">
+                  {sortedVisits.length === 0 ? (
+                    <p className="text-center text-xs text-muted-foreground py-4">Aucune visite</p>
+                  ) : sortedVisits.map(v => (
+                    <label key={v.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                      <Checkbox
+                        checked={selectedVisitIds.includes(v.id)}
+                        onCheckedChange={() => toggleVisit(v.id)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium capitalize">{v.type || 'Visite'}</div>
+                        <div className="text-xs text-muted-foreground">{formatDateTime(v.date)}</div>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{v.status}</span>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
+          <Button onClick={handleExport} disabled={loading} className="gap-2">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            Générer le PDF
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -77,7 +256,8 @@ function buildReportHTML(
   labRequests: any[],
   imagingRequests: any[],
   visits: any[],
-  clinic?: any
+  clinic?: any,
+  periodLabel?: string
 ): string {
   const age = calculateAge(patient.date_of_birth);
   const today = formatDate(new Date().toISOString());
@@ -116,7 +296,7 @@ function buildReportHTML(
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .map(p => `
       <tr>
-        <td>${p.medications?.name || 'Médicament'}</td>
+        <td>${p.medications?.name || p.medication_name || 'Médicament'}</td>
         <td>${p.dosage}</td>
         <td>${p.frequency}</td>
         <td>${p.duration}</td>
@@ -163,6 +343,7 @@ function buildReportHTML(
   .header h1 { font-size: 20px; color: ${clinicColor}; }
   .header .clinic-info { font-size: 10px; color: #666; }
   .header .report-date { text-align: right; font-size: 10px; color: #666; }
+  .filter-banner { background: ${clinicColor}11; border-left: 3px solid ${clinicColor}; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 11px; color: #444; }
   .patient-info { background: #f0f4ff; padding: 14px; border-radius: 6px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .patient-info .patient-name { font-size: 16px; font-weight: bold; grid-column: 1/-1; margin-bottom: 4px; }
   .patient-info .info-item { font-size: 11px; }
@@ -195,13 +376,15 @@ function buildReportHTML(
       ${logoHtml}
       <div>
         <h1>${clinicName}</h1>
-        <div class="clinic-info">${clinicSubtitle ? clinicSubtitle + ' — ' : ''}Rapport Médical Complet</div>
+        <div class="clinic-info">${clinicSubtitle ? clinicSubtitle + ' — ' : ''}Rapport Médical</div>
         ${clinicAddress ? `<div class="clinic-info">${clinicAddress}</div>` : ''}
         ${clinicPhone ? `<div class="clinic-info">Tél: ${clinicPhone}${clinicEmail ? ' — ' + clinicEmail : ''}</div>` : ''}
       </div>
     </div>
     <div class="report-date">Généré le ${today}</div>
   </div>
+
+  ${periodLabel ? `<div class="filter-banner"><strong>Filtre :</strong> ${periodLabel}</div>` : ''}
 
   <div class="patient-info">
     <div class="patient-name">${patient.first_name} ${patient.last_name}</div>
