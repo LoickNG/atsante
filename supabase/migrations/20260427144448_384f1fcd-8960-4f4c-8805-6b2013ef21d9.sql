@@ -1,0 +1,1 @@
+ALTER TABLE public.visits ADD COLUMN IF NOT EXISTS spo2 integer;

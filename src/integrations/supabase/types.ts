@@ -2241,6 +2241,7 @@ export type Database = {
           notes: string | null
           patient_id: string
           specialty: string | null
+          spo2: number | null
           status: string
           temperature: number | null
           type: string
@@ -2259,6 +2260,7 @@ export type Database = {
           notes?: string | null
           patient_id: string
           specialty?: string | null
+          spo2?: number | null
           status?: string
           temperature?: number | null
           type: string
@@ -2277,6 +2279,7 @@ export type Database = {
           notes?: string | null
           patient_id?: string
           specialty?: string | null
+          spo2?: number | null
           status?: string
           temperature?: number | null
           type?: string
