@@ -423,6 +423,12 @@ const NewPatient = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        <PatientCardPreview
+          patient={createdPatient}
+          open={showCardPreview}
+          onOpenChange={handleCardPreviewClose}
+        />
       </div>
     </AppLayout>
   );
