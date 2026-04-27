@@ -36,6 +36,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { SPECIALTIES, getSpecialtyLabel } from '@/config/specialties';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
+import { useClinicSettings } from '@/hooks/useClinicSettings';
+import { buildClinicHeaderHtml, buildClinicFooterHtml, buildClinicHeader } from '@/utils/printResult';
 
 interface PrescriptionItem {
   medicationId: string;
