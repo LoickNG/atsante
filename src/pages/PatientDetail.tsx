@@ -129,7 +129,10 @@ const PatientDetail = () => {
   }, {} as Record<string, typeof patientPrescriptions>);
 
   const handleOpenFollowUp = (consultationId: string) => {
+    const c = (consultations || []).find((x: any) => x.id === consultationId);
     setSelectedConsultationId(consultationId);
+    setSelectedVisitId(c?.visit_id);
+    setSelectedExistingNotes(Array.isArray(c?.follow_up_notes) ? (c?.follow_up_notes as any[]) : []);
     setFollowUpNote('');
     setFollowUpDialogOpen(true);
   };
