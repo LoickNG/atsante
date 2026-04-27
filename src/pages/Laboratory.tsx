@@ -60,6 +60,9 @@ const Laboratory = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { data: clinicData } = useClinicSettings();
 
@@ -108,12 +111,51 @@ const Laboratory = () => {
   const handleOpenResultDialog = (request: LabRequestWithPatient) => {
     setSelectedRequest(request);
     setResultText(request.results || '');
+    const existing = (request as any).result_files;
+    if (existing) {
+      try {
+        const parsed = typeof existing === 'string' ? JSON.parse(existing) : existing;
+        setUploadedFiles(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setUploadedFiles([]);
+      }
+    } else {
+      setUploadedFiles([]);
+    }
     setIsResultDialogOpen(true);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !selectedRequest) return;
+    setIsUploading(true);
+    try {
+      const newFiles: { name: string; url: string }[] = [];
+      for (const file of Array.from(files)) {
+        const path = `${selectedRequest.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from('lab-files').upload(path, file);
+        if (error) throw error;
+        const { data: urlData } = supabase.storage.from('lab-files').getPublicUrl(path);
+        newFiles.push({ name: file.name, url: urlData.publicUrl });
+      }
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast.success(`${newFiles.length} fichier(s) téléchargé(s)`);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error("Erreur lors du téléchargement");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSaveResults = async () => {
-    if (!selectedRequest || !resultText.trim()) {
-      toast.error('Veuillez saisir les résultats');
+    if (!selectedRequest || (!resultText.trim() && uploadedFiles.length === 0)) {
+      toast.error('Veuillez saisir les résultats ou joindre un fichier');
       return;
     }
     try {
@@ -121,13 +163,15 @@ const Laboratory = () => {
         id: selectedRequest.id,
         status: 'termine',
         results: resultText,
+        result_files: uploadedFiles.length > 0 ? (uploadedFiles as any) : null,
         validated_by: user?.id,
         validated_at: new Date().toISOString(),
         completed_at: new Date().toISOString(),
-      });
+      } as any);
       setIsResultDialogOpen(false);
       setSelectedRequest(null);
       setResultText('');
+      setUploadedFiles([]);
       toast.success('Résultats enregistrés et validés');
     } catch {
       toast.error("Erreur lors de l'enregistrement");
