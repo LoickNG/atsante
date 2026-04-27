@@ -237,12 +237,13 @@ export function FollowUpActionsDialog({
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="mt-2">
-          <TabsList className="grid grid-cols-5 w-full">
+          <TabsList className="grid grid-cols-6 w-full">
             <TabsTrigger value="suivi" className="gap-1.5"><MessageSquarePlus className="h-4 w-4" />Note</TabsTrigger>
             <TabsTrigger value="lab" className="gap-1.5"><FlaskConical className="h-4 w-4" />Analyse</TabsTrigger>
             <TabsTrigger value="img" className="gap-1.5"><ImageIcon className="h-4 w-4" />Imagerie</TabsTrigger>
             <TabsTrigger value="presc" className="gap-1.5"><Pill className="h-4 w-4" />Ordonnance</TabsTrigger>
             <TabsTrigger value="hosp" className="gap-1.5"><BedDouble className="h-4 w-4" />Hospi.</TabsTrigger>
+            <TabsTrigger value="refer" className="gap-1.5"><UserPlus className="h-4 w-4" />Orienter</TabsTrigger>
           </TabsList>
 
           {/* Suivi */}
