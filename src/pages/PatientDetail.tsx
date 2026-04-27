@@ -652,6 +652,24 @@ const PatientDetail = () => {
                                 <p className="whitespace-pre-wrap">{img.report}</p>
                               </div>
                             )}
+                            {img.image_url && (
+                              <div className="mt-2 p-3 bg-background rounded border">
+                                <p className="text-xs font-medium text-muted-foreground mb-2">Fichiers joints :</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {img.image_url.split(',').map((u, i) => {
+                                    const url = u.trim();
+                                    if (!url) return null;
+                                    const isImg = /\.(png|jpe?g|gif|webp)$/i.test(url);
+                                    return (
+                                      <a key={i} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-2 py-1 rounded border bg-muted/50 hover:bg-muted text-xs">
+                                        <ImageIcon className="h-3 w-3" />
+                                        <span className="truncate max-w-[160px]">{isImg ? `Image ${i + 1}` : `Fichier ${i + 1}`}</span>
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-2">
                               <span>Demandé le {formatDateTime(img.requested_at)}</span>
                               {img.completed_at && <span>• Réalisé le {formatDateTime(img.completed_at)}</span>}
